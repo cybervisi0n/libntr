@@ -1,6 +1,57 @@
 #include <nitro/os.h>
 #include <nitro/code32.h>
 
+#ifdef SDK_PORT
+void OS_EnableITCM( void )
+{
+
+}
+
+void OS_DisableITCM( void )
+{
+
+}
+
+void OS_SetITCMParam( register u32 param )
+{
+  
+}
+
+u32 OS_GetITCMParam( void )
+{
+  return 0;
+}
+
+void OS_EnableDTCM( void )
+{
+
+}
+
+void OS_DisableDTCM( void )
+{
+
+}
+
+void OS_SetDTCMParam( register u32 param )
+{
+
+}
+
+u32 OS_GetDTCMParam( void )
+{
+  return 0;
+}
+
+void OS_SetDTCMAddress( register u32 address )
+{
+
+}
+
+u32 OS_GetDTCMAddress( void )
+{
+  return 0;
+}
+#else
 asm void OS_EnableITCM (void)
 {
     mrc p15, 0, r0, c1, c0, 0
@@ -84,5 +135,5 @@ asm u32 OS_GetDTCMAddress (void)
     and r0, r0, r1
     bx lr
 }
-
+#endif
 #include <nitro/codereset.h>

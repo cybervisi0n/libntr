@@ -362,10 +362,17 @@ typedef enum WMInfoCode {
 typedef void (*WMcallbackFunc) (void * arg);
 typedef void (*WMCallbackFunc) (void * arg);
 
+#ifdef SDK_BUILD_ARM
 #define WM_ARM9WM_BUF_SIZE      512
 #define WM_ARM7WM_BUF_SIZE      (256 + 512)
 #define WM_STATUS_BUF_SIZE      2048
 #define WM_FIFO_BUF_SIZE        256
+#else
+#define WM_ARM9WM_BUF_SIZE      1024
+#define WM_ARM7WM_BUF_SIZE      (512 + 1024)
+#define WM_STATUS_BUF_SIZE      4096
+#define WM_FIFO_BUF_SIZE        512
+#endif
 
 #define WM_SYSTEM_BUF_SIZE      (WM_ARM9WM_BUF_SIZE + WM_ARM7WM_BUF_SIZE + WM_STATUS_BUF_SIZE + WM_FIFO_BUF_SIZE + WM_FIFO_BUF_SIZE)
 #define WM_BSS_DESC_SIZE        192

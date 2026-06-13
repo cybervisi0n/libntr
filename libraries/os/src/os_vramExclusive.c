@@ -4,6 +4,22 @@
 static u32 OSi_vramExclusive;
 static u16 OSi_vramLockId[OS_VRAM_BANK_KINDS];
 
+#ifdef SDK_PORT
+static u32 OsCountZeroBits( u32 bitmap )
+{   
+
+    u32 res = 0;
+    if( bitmap == 0 )
+    {
+        return 32;
+    }
+    while (!(bitmap & (1 << (32 - 1)))) {
+        bitmap = (bitmap << 1);
+        res++;
+    }
+    return res;
+}
+#else
 #include <nitro/code32.h>
 
 static asm u32 OsCountZeroBits (u32 bitmap)
@@ -13,6 +29,7 @@ static asm u32 OsCountZeroBits (u32 bitmap)
 }
 
 #include <nitro/codereset.h>
+#endif
 
 void OSi_InitVramExclusive (void)
 {

@@ -41,6 +41,12 @@ void SND_AlarmInit(void);
     void SNDi_CallAlarmHandler(int alarmNo);
 #endif
 
+#ifdef SDK_X86
+    void SNDi_IncAlarmId(int alarmNo);
+    u8 SNDi_SetAlarmHandler(int alarmNo, SNDAlarmHandler handler, void * arg);
+    void SNDi_CallAlarmHandler(int alarmNo);
+#endif 
+
 #ifdef __cplusplus
 }
 #endif

@@ -4,6 +4,21 @@ void _ISDbgLib_Initialize(void);
 void _ISDbgLib_AllocateEmualtor(void);
 void _ISDbgLib_FreeEmulator(void);
 
+#ifdef SDK_PORT
+void    _ISDbgLib_Initialize(void)
+{
+    return;
+}
+void    _ISDbgLib_AllocateEmualtor(void)
+{
+    return;
+}
+void    _ISDbgLib_FreeEmulator(void)
+{
+    return;
+}
+#endif
+
 s32 OS_LockByWord_IrqAndFiq(u16 lockID, OSLockWord * lockp, void (*ctrlFuncp)(void));
 s32 OS_UnlockByWord_IrqAndFiq(u16 lockID, OSLockWord * lockp, void (*ctrlFuncp)(void));
 s32 OS_TryLockByWord_IrqAndFiq(u16 lockID, OSLockWord * lockp, void (*crtlFuncp)(void));
@@ -35,6 +50,13 @@ static void OSi_WaitByLoop(void);
 #else
     #define OSi_ANYP_LOCK_ID_FLAG  HW_LOCK_ID_FLAG_SUB
     #define OSi_ANYP_LOCK_ID_START OS_SUBP_LOCK_ID_START
+#endif
+
+#ifdef SDK_PORT
+
+void SVC_WaitByLoop(s32 count){
+    return;
+}
 #endif
 
 static inline void OSi_WaitByLoop (void)
@@ -77,7 +99,8 @@ void OS_InitLock (void)
         (void)OS_LockByWord(OS_MAINP_SYSTEM_LOCK_ID, lockp, NULL);
     }
 
-#else
+#endif
+#ifdef SDK_ARM7
     {
         lockp->extension = 0;
         while (lockp->ownerID != OS_MAINP_SYSTEM_LOCK_ID) {
@@ -224,11 +247,17 @@ s32 OS_UnlockCartridge (u16 lockID)
     return lastLockFlag;
 }
 
+#ifdef SDK_PORT
+s32 OS_UnLockCartridge (u16 lockID) {
+    return 0;
+}
+#else
 asm s32 OS_UnLockCartridge (u16 lockID)
 {
     ldr r1, = OS_UnlockCartridge
     bx r1
 }
+#endif
 
 s32 OS_TryLockCartridge (u16 lockID)
 {
@@ -313,11 +342,17 @@ s32 OS_UnlockCard (u16 lockID)
 #endif
 }
 
+#ifdef SDK_PORT
+s32 OS_UnLockCard (u16 lockID) {
+    return 0;
+}
+#else
 asm s32 OS_UnLockCard (u16 lockID)
 {
     ldr r1, = OS_UnlockCard
     bx r1
 }
+#endif
 
 s32 OS_TryLockCard (u16 lockID)
 {
@@ -347,6 +382,17 @@ u16 OS_ReadOwnerOfLockWord (OSLockWord * lockp)
     return lockp->ownerID;
 }
 
+#ifdef SDK_PORT
+s32 OS_GetLockID( void )
+{
+    return 0;
+}
+
+void OS_ReleaseLockID( u16 lockID )
+{
+    return;
+}
+#else
 #include <nitro/code32.h>
 
 asm s32 OS_GetLockID (void)
@@ -451,5 +497,6 @@ asm void OS_ReleaseLockID (register u16 lockID)
     str r2, [r3, #0]
     bx lr
 }
+#endif
 
 #include <nitro/codereset.h>

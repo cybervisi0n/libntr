@@ -4,9 +4,15 @@
 extern void CTRDGi_InitCommon(void);
 extern void CTRDGi_SendtoPxi(u32 data);
 
+#ifdef SDK_PORT
+static void CTRDGi_CallbackForInitModuleInfo(PXIFifoTag tag, u64 data, BOOL err);
+static void CTRDGi_PulledOutCallback(PXIFifoTag tag, u64 data, BOOL err);
+static void CTRDGi_CallbackForSetPhi(PXIFifoTag tag, u64 data, BOOL err);
+#else
 static void CTRDGi_CallbackForInitModuleInfo(PXIFifoTag tag, u32 data, BOOL err);
 static void CTRDGi_PulledOutCallback(PXIFifoTag tag, u32 data, BOOL err);
 static void CTRDGi_CallbackForSetPhi(PXIFifoTag tag, u32 data, BOOL err);
+#endif
 
 extern CTRDGWork CTRDGi_Work;
 
@@ -35,8 +41,10 @@ void CTRDG_Init (void)
 #ifndef SDK_SMALL_BUILD
 	PXI_Init();
 
+    #ifndef SDK_PORT
 	while (!PXI_IsCallbackReady(PXI_FIFO_TAG_CTRDG, PXI_PROC_ARM7)) {
 	}
+    #endif
 	PXI_SetFifoRecvCallback(PXI_FIFO_TAG_CTRDG, CTRDGi_CallbackForInitModuleInfo);
 
 	CTRDGi_InitModuleInfo();
@@ -53,7 +61,7 @@ void CTRDG_Init (void)
 
 	PXI_SetFifoRecvCallback(PXI_FIFO_TAG_CTRDG_PHI, CTRDGi_CallbackForSetPhi);
 
-#if defined(SDK_ARM9)
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
 	CTRDG_Enable(FALSE);
 #endif
 #endif
@@ -135,7 +143,11 @@ void CTRDGi_InitModuleInfo (void)
 #endif
 }
 
+#ifdef SDK_PORT
+static void CTRDGi_CallbackForInitModuleInfo (PXIFifoTag tag, u64 data, BOOL err)
+#else
 static void CTRDGi_CallbackForInitModuleInfo (PXIFifoTag tag, u32 data, BOOL err)
+#endif
 {
 #pragma unused( tag, err )
 
@@ -150,7 +162,11 @@ static void CTRDGi_CallbackForInitModuleInfo (PXIFifoTag tag, u32 data, BOOL err
 	}
 }
 
+#ifdef SDK_PORT
+static void CTRDGi_PulledOutCallback (PXIFifoTag tag, u64 data, BOOL err)
+#else
 static void CTRDGi_PulledOutCallback (PXIFifoTag tag, u32 data, BOOL err)
+#endif
 {
 #pragma unused( tag, err )
 
@@ -210,7 +226,7 @@ void CTRDG_CheckPulledOut (void)
 	}
 
 	if (isCartridgePullOut) {
-		CTRDGi_PulledOutCallback(PXI_FIFO_TAG_CTRDG, CTRDG_PXI_COMMAND_PULLED_OUT, NULL);
+		CTRDGi_PulledOutCallback(PXI_FIFO_TAG_CTRDG, CTRDG_PXI_COMMAND_PULLED_OUT, 0);
 	}
 }
 
@@ -232,7 +248,11 @@ void CTRDG_SetPhiClock (CTRDGPhiClock clock)
 	}
 }
 
+#ifdef SDK_PORT
+static void CTRDGi_CallbackForSetPhi (PXIFifoTag tag, u64 data, BOOL err)
+#else
 static void CTRDGi_CallbackForSetPhi (PXIFifoTag tag, u32 data, BOOL err)
+#endif
 {
 #pragma unused(tag, data, err)
 	CTRDGi_Lock = FALSE;

@@ -37,13 +37,21 @@ typedef enum {
 static inline void OS_SetTimerCount (OSTimer id, u16 count)
 {
 	SDK_ASSERT(OS_TIMER_0 <= id && id <= OS_TIMER_3);
+    #ifdef SDK_PORT
+    *((REGType16 *)(REG_TM0CNT_L_ADDR + id * 4)) = count;
+    #else
 	*((REGType16 *)((u32)REG_TM0CNT_L_ADDR + id * 4)) = count;
+    #endif
 }
 
 static inline void OS_SetTimerControl (OSTimer id, u16 control)
 {
 	SDK_ASSERT(OS_TIMER_0 <= id && id <= OS_TIMER_3);
+    #ifdef SDK_PORT
+    *((REGType16 *)(REG_TM0CNT_H_ADDR + id * 4)) = control;
+    #else
 	*((REGType16 *)((u32)REG_TM0CNT_H_ADDR + id * 4)) = control;
+    #endif
 }
 
 void OS_StartTimer(OSTimer id, u16 count, OSTimerPrescaler preScale);

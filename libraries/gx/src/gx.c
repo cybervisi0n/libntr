@@ -13,7 +13,7 @@
 
 u32 GXi_DmaId = GX_DEFAULT_DMAID;
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9)) || defined(SDK_PORT)
     vu16 GXi_VRamLockId = 0;
 #endif
 
@@ -21,7 +21,11 @@ void GX_Init (void)
 {
 	const u16 bg_mtx_elem_one = 1 << 8;
 
+    #ifdef SDK_PORT
+    s_reg_GX_POWCNT |= (1 << REG_GX_POWCNT_DSEL_SHIFT);
+    #else
 	reg_GX_POWCNT |= (1 << REG_GX_POWCNT_DSEL_SHIFT);
+    #endif
 	GX_SetPower(GX_POWER_ALL);
 	GXi_PowerLCD(TRUE);
 	GX_InitGXState();
@@ -43,18 +47,37 @@ void GX_Init (void)
 	reg_GX_DISPSTAT = 0;
 	reg_GX_DISPCNT = 0;
 	if (GXi_DmaId != GX_DMA_NOT_USE) {
+        #ifdef SDK_PORT
+		MI_DmaFill32(GXi_DmaId, (void *)REG_BG0CNT_ADDR, 0,
+		             REG_DISP_MMEM_FIFO_OFFSET - REG_BG0CNT_OFFSET);
+        #else
 		MI_DmaFill32(GXi_DmaId, (void *)REG_BG0CNT_ADDR, 0,
 		             REG_DISP_MMEM_FIFO_ADDR - REG_BG0CNT_ADDR);
+        #endif
 		reg_GX_MASTER_BRIGHT = 0;
 
+        #ifdef SDK_PORT
+		MI_DmaFill32(GXi_DmaId, (void *)REG_DB_DISPCNT_ADDR, 0,
+		             REG_DB_MASTER_BRIGHT_OFFSET - REG_DB_DISPCNT_OFFSET + 4);
+        #else
 		MI_DmaFill32(GXi_DmaId, (void *)REG_DB_DISPCNT_ADDR, 0,
 		             REG_DB_MASTER_BRIGHT_ADDR - REG_DB_DISPCNT_ADDR + 4);
+        #endif
 	} else {
+        #ifdef SDK_PORT
+		MI_CpuFill32((void *)REG_BG0CNT_ADDR, 0, REG_DISP_MMEM_FIFO_OFFSET - REG_BG0CNT_OFFSET);
+        #else
 		MI_CpuFill32((void *)REG_BG0CNT_ADDR, 0, REG_DISP_MMEM_FIFO_ADDR - REG_BG0CNT_ADDR);
+        #endif
 		reg_GX_MASTER_BRIGHT = 0;
 
+        #ifdef SDK_PORT
+		MI_CpuFill32((void *)REG_DB_DISPCNT_ADDR, 0,
+		             REG_DB_MASTER_BRIGHT_OFFSET - REG_DB_DISPCNT_OFFSET + 4);
+        #else
 		MI_CpuFill32((void *)REG_DB_DISPCNT_ADDR, 0,
 		             REG_DB_MASTER_BRIGHT_ADDR - REG_DB_DISPCNT_ADDR + 4);
+        #endif
 	}
 
 	reg_G2_BG2PA = bg_mtx_elem_one;

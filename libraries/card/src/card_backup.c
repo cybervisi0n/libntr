@@ -3,7 +3,7 @@
 #include "../include/card_spi.h"
 #include "../include/card_common.h"
 
-#if defined(SDK_ARM9)
+#if(defined(SDK_ARM9) || defined(SDK_PORT))
 
 #include <nitro/version_begin.h>
 SDK_DEFINE_MIDDLEWARE(cardi_backup_assert, "NINTENDO", "BACKUP");

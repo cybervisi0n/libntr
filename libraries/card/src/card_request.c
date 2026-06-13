@@ -1,11 +1,15 @@
-#if defined(SDK_ARM9)
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
 
 #include <nitro.h>
 
 #include "../include/card_common.h"
 #include "../include/card_spi.h"
 
+#ifdef SDK_PORT
+void CARDi_OnFifoRecv (PXIFifoTag tag, u64 data, BOOL err)
+#else
 void CARDi_OnFifoRecv (PXIFifoTag tag, u32 data, BOOL err)
+#endif
 {
 #pragma unused(data)
 	if ((tag == PXI_FIFO_TAG_FS) && err) {
@@ -37,9 +41,11 @@ BOOL CARDi_Request (CARDiCommon *p, int req_type, int retry_count)
 {
 	if ((p->flag & CARD_STAT_INIT_CMD) == 0) {
 		p->flag |= CARD_STAT_INIT_CMD;
+        #ifndef SDK_PORT
 		while (!PXI_IsCallbackReady(PXI_FIFO_TAG_FS, PXI_PROC_ARM7)) {
 			OS_SpinWait(100);
 		}
+        #endif
 
 		(void)CARDi_Request(p, CARD_REQ_INIT, 1);
 	}
@@ -59,9 +65,11 @@ BOOL CARDi_Request (CARDiCommon *p, int req_type, int retry_count)
 		}
 		{
 			OSIntrMode bak_psr = OS_DisableInterrupts();
+            #ifndef SDK_PORT
 			while ((p->flag & CARD_STAT_REQ) != 0) {
 				OS_SleepThread(NULL);
 			}
+            #endif
 			(void)OS_RestoreInterrupts(bak_psr);
 		}
 		DC_InvalidateRange(p->cmd, sizeof(*p->cmd));

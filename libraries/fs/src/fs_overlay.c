@@ -22,9 +22,15 @@ int _ISDbgLib_UnregistOverlayInfo(OVERLAYPROC nProc, u32 nAddrRAM, u32 nSize);
 #define FS_OVERLAY_DIGEST_SIZE    DGT_HASH2_DIGEST_SIZE
 
 #if defined(SDK_TS)
+#ifdef SDK_BUILD_ARM
     extern u8 SDK_OVERLAYTABLE_DIGEST[];
     extern u8 SDK_OVERLAY_DIGEST[];
     extern u8 SDK_OVERLAY_DIGEST_END[];
+#else
+    u8 SDK_OVERLAYTABLE_DIGEST[2];
+    u8 SDK_OVERLAY_DIGEST[2];
+    u8 SDK_OVERLAY_DIGEST_END[2];
+#endif
 #endif
 
 static const u8 fsi_def_digest_key[64] = {
@@ -219,7 +225,9 @@ static BOOL FSi_CompareDigest (const u8 *spec_digest, void *src, int len)
 
 	MI_CpuClear8(digest, sizeof(digest));
 	MI_CpuCopy8(fsi_digest_key_ptr, digest_key, (u32)fsi_digest_key_len);
+    #ifdef SDK_BUILD_ARM
 	DGT_Hash2CalcHmac(digest, src, len, digest_key, fsi_digest_key_len);
+    #endif
 
 	for (i = 0; i < sizeof(digest); i += sizeof(u32)) {
 		if (*(const u32 *)(digest + i) != *(const u32 *)(spec_digest + i))
@@ -262,10 +270,12 @@ void FS_StartOverlay (FSOverlayInfo *p_ovi)
 #endif
 
 #if !defined(SDK_FINALROM)
+    #ifdef SDK_BUILD_ARM
 	(void)_ISDbgLib_RegistOverlayInfo((p_ovi->target == MI_PROCESSOR_ARM9)
 	                                  ? OVERLAYPROC_ARM9 : OVERLAYPROC_ARM7,
 	                                  (u32)FS_GetOverlayAddress(p_ovi),
 	                                  p_ovi->file_pos.offset, FS_GetOverlayImageSize(p_ovi));
+    #endif
 #endif
 
 	{
@@ -280,6 +290,10 @@ void FS_StartOverlay (FSOverlayInfo *p_ovi)
 	}
 
 }
+
+#ifndef SDK_BUILD_ARM
+MWiDestructorChain *__global_destructor_chain;
+#endif
 
 void FS_EndOverlay (FSOverlayInfo *p_ovi)
 {
@@ -337,10 +351,12 @@ void FS_EndOverlay (FSOverlayInfo *p_ovi)
 	}
 
 #if !defined(SDK_FINALROM)
+    #ifdef SDK_BUILD_ARM
 	(void)_ISDbgLib_UnregistOverlayInfo((p_ovi->target ==
 	                                     MI_PROCESSOR_ARM9) ? OVERLAYPROC_ARM9 : OVERLAYPROC_ARM7,
 	                                    (u32)FS_GetOverlayAddress(p_ovi),
 	                                    FS_GetOverlayImageSize(p_ovi));
+    #endif
 #endif
 
 }
@@ -430,10 +446,12 @@ BOOL FS_UnloadOverlayImage (FSOverlayInfo *p_ovi)
             FSi_ReadRomDirect(base + fat_info.top,
                             ovi.header.ram_address, fat_info.bottom - fat_info.top);
 
+            #ifdef SDK_BUILD_ARM
             (void)_ISDbgLib_RegistOverlayInfo((ovi.target ==
                                             MI_PROCESSOR_ARM9) ? OVERLAYPROC_ARM9 : OVERLAYPROC_ARM7,
                                             (u32)FS_GetOverlayAddress(&ovi),
                                             (u32)(base + fat_info.top), FS_GetOverlayImageSize(&ovi));
+            #endif
 
             FS_StartOverlay(&ovi);
         }
@@ -454,11 +472,13 @@ void FS_AttachOverlayTable (MIProcessor target, const void *ptr, u32 len)
 {
 #ifdef  SDK_TS
 	if ((ptr != NULL) && (target == MI_PROCESSOR_ARM9)) {
+        #ifdef SDK_BUILD_ARM
 		int bak_ovt_mode = DGT_SetOverlayTableMode(TRUE);
 		if (!FSi_CompareDigest((const u8 *)SDK_OVERLAYTABLE_DIGEST, (void *)ptr, (int)len)) {
 			OS_TPanic("FS_AttachOverlayTable() failed! (invalid overlay-table data)");
 		}
 		(void)DGT_SetOverlayTableMode(bak_ovt_mode);
+        #endif
 	}
 #endif
 

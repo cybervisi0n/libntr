@@ -10,6 +10,10 @@
     #ifdef SDK_ARM7
         #include <nitro/hw/ARM7/ioreg_SND.h>
     #endif
+    #ifdef SDK_PORT
+        #include <nitro/hw/X86/ioreg_SND.h>
+        #include <simulator/sim_snd.h>
+    #endif
 #else
     #define HW_CPU_CLOCK_ARM7    33513982
 #endif
@@ -57,6 +61,40 @@ extern "C" {
 #define SND_CHANNEL_REG_OFFSET(ch)    ((ch) << 4)
 
 #ifdef SDK_ARM9
+    #define REG_SND_SOUND0CNT_E_SHIFT                          31
+    #define REG_SND_SOUND0CNT_E_SIZE                           1
+    #define REG_SND_SOUND0CNT_E_MASK                           0x80000000
+
+    #define REG_SND_SOUND0CNT_FORMAT_SHIFT                     29
+    #define REG_SND_SOUND0CNT_FORMAT_SIZE                      2
+    #define REG_SND_SOUND0CNT_FORMAT_MASK                      0x60000000
+
+    #define REG_SND_SOUND0CNT_REPEAT_SHIFT                     27
+    #define REG_SND_SOUND0CNT_REPEAT_SIZE                      2
+    #define REG_SND_SOUND0CNT_REPEAT_MASK                      0x18000000
+
+    #define REG_SND_SOUND0CNT_DUTY_SHIFT                       24
+    #define REG_SND_SOUND0CNT_DUTY_SIZE                        3
+    #define REG_SND_SOUND0CNT_DUTY_MASK                        0x07000000
+
+    #define REG_SND_SOUND0CNT_PAN_SHIFT                        16
+    #define REG_SND_SOUND0CNT_PAN_SIZE                         7
+    #define REG_SND_SOUND0CNT_PAN_MASK                         0x007f0000
+
+    #define REG_SND_SOUND0CNT_HOLD_SHIFT                       15
+    #define REG_SND_SOUND0CNT_HOLD_SIZE                        1
+    #define REG_SND_SOUND0CNT_HOLD_MASK                        0x00008000
+
+    #define REG_SND_SOUND0CNT_SHIFT_SHIFT                      8
+    #define REG_SND_SOUND0CNT_SHIFT_SIZE                       2
+    #define REG_SND_SOUND0CNT_SHIFT_MASK                       0x00000300
+
+    #define REG_SND_SOUND0CNT_VOLUME_SHIFT                     0
+    #define REG_SND_SOUND0CNT_VOLUME_SIZE                      7
+    #define REG_SND_SOUND0CNT_VOLUME_MASK                      0x0000007f
+#endif
+
+#ifdef SDK_X86
     #define REG_SND_SOUND0CNT_E_SHIFT                          31
     #define REG_SND_SOUND0CNT_E_SIZE                           1
     #define REG_SND_SOUND0CNT_E_MASK                           0x80000000
@@ -156,6 +194,10 @@ typedef enum {
     #endif
 #endif
 
+#ifdef SDK_PORT
+    void SND_StartChannel7(int chNo);
+#endif
+
 #ifdef SDK_ARM7
     void SND_SetupChannelPcm(int chNo,
                             const void * dataaddr,
@@ -176,6 +218,26 @@ typedef enum {
     BOOL SND_IsChannelActive(int chNo);
     void SND_SetMasterPan(int pan);
     u32 SND_GetChannelControl(int chNo);
+#endif
+
+#ifdef SDK_PORT
+void SND_SetupChannelPcm7(int chNo,
+                         const void *dataaddr,
+                         SNDWaveFormat format,
+                         SNDChannelLoop loop,
+                         int loopStart,
+                         int loopLen, int volume, SNDChannelDataShift shift, int timer, int pan);
+void SND_SetupChannelPsg7(int chNo,
+                         SNDDuty duty,
+                         int volume, SNDChannelDataShift shift, int timer, int pan);
+void SND_SetupChannelNoise7(int chNo, int volume, SNDChannelDataShift shift, int timer, int pan);
+void SND_StopChannel7(int chNo, s32 flags);
+void SND_SetChannelVolume7(int chNo, int volume, SNDChannelDataShift shift);
+void SND_SetChannelTimer7(int chNo, int timer);
+void SND_SetChannelPan7(int chNo, int pan);
+BOOL SND_IsChannelActive7(int chNo);
+void SND_SetMasterPan7(int pan);
+u32 SND_GetChannelControl7(int chNo);
 #endif
 
 #ifdef SDK_ARM7

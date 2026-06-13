@@ -20,4 +20,8 @@
 
 #define FX_Mul(v1, v2)                 FX_MulInline (v1, v2)
 #define FX_Mul32x64c(v32, v64c)        FX_Mul32x64cInline (v32, v64c)
+#ifdef SDK_PORT
+#define MATH_CountLeadingZeros(x)      MATH_CountLeadingZerosFunc (x)
+#else
 #define MATH_CountLeadingZeros(x)      MATH_CountLeadingZerosInline (x)
+#endif

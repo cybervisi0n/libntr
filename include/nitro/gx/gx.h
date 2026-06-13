@@ -2,8 +2,13 @@
 #define NITRO_GX_GX_H_
 
 #include <nitro/gx/gxcommon.h>
+#ifdef SDK_PORT
+#include <nitro/hw/X86/ioreg_GX.h>
+#include <nitro/hw/X86/ioreg_GXS.h>
+#else
 #include <nitro/hw/ARM9/ioreg_GX.h>
 #include <nitro/hw/ARM9/ioreg_GXS.h>
+#endif
 
 #if !(defined(SDK_WIN32) || defined(SDK_FROM_TOOL))
     #include <nitro/mi.h>
@@ -290,12 +295,22 @@ int GXx_GetMasterBrightness_(vu16 * reg);
 
 static inline GXDispCnt GX_GetDispCnt (void)
 {
+    #if(defined(SDK_PORT) && defined(__cplusplus))
+    GXDispCnt a;
+    return a;
+    #else
 	return *(volatile GXDispCnt *)REG_DISPCNT_ADDR;
+    #endif
 }
 
 static inline GXSDispCnt GXS_GetDispCnt (void)
 {
+    #if(defined(SDK_PORT) && defined(__cplusplus))
+    GXSDispCnt a;
+    return a;
+    #else
 	return *(volatile GXSDispCnt *)REG_DB_DISPCNT_ADDR;
+    #endif
 }
 
 static inline GXBGScrOffset GX_GetBGScrOffset ()

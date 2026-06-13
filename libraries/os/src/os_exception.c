@@ -8,9 +8,15 @@
     #define OSi_ExPrintf OS_Printf
 #endif
 
+#ifdef SDK_PORT
+static void OSi_ExceptionHandler(void);
+static void OSi_GetAndDisplayContext(void);
+static void OSi_SetExContext(void);
+#else
 static asm void OSi_ExceptionHandler(void);
 static asm void OSi_GetAndDisplayContext(void);
 static asm void OSi_SetExContext(void);
+#endif
 static void OSi_DisplayExContext(void);
 
 typedef struct {
@@ -26,6 +32,7 @@ static OSExceptionHandler OSi_UserExceptionHandler;
 static void * OSi_UserExceptionHandlerArg;
 static void * OSi_DebuggerHandler = NULL;
 
+#ifndef SDK_PORT
 #include <nitro/code32.h>
 
 asm void OS_SetExceptionVectorUpper (void)
@@ -45,6 +52,7 @@ asm void OS_SetExceptionVectorLower (void)
 }
 
 #include <nitro/codereset.h>
+#endif
 
 #define HW_EXCP_VECTOR_BUF_FOR_DEBUGGER  0x027ffd9c
 
@@ -149,6 +157,12 @@ void OS_SetUserExceptionHandler (OSExceptionHandler handler, void * arg)
     OSi_UserExceptionHandlerArg = arg;
 }
 
+#ifdef SDK_PORT
+void OSi_ExceptionHandler (void)
+{
+    
+}
+#else
 #include <nitro/code32.h>
 
 asm void OSi_ExceptionHandler (void)
@@ -261,6 +275,7 @@ static asm void OSi_SetExContext (void)
     msr CPSR_cxsf, r0
     bx lr
 }
+#endif
 
 static void OSi_DisplayExContext (void)
 {
@@ -285,6 +300,7 @@ static void OSi_DisplayExContext (void)
 #endif
     OSi_ExPrintf("\n\n");
 #endif
+#ifndef SDK_PORT
     if (OSi_UserExceptionHandler) {
         asm {
             mrs r2, CPSR
@@ -313,6 +329,7 @@ static void OSi_DisplayExContext (void)
             msr CPSR_cxsf, r2
         }
     }
+#endif
 }
 
 #include <nitro/codereset.h>

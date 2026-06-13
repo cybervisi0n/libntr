@@ -30,6 +30,16 @@ typedef struct {
 	u8 reserved_A[9];
 	u8 game_version;
 	u8 property;
+	#ifdef SDK_PORT
+	u32 main_rom_offset;
+	u32 main_entry_address;
+	u32 main_ram_address;
+	u32 main_size;
+	u32 sub_rom_offset;
+	u32 sub_entry_address;
+	u32 sub_ram_address;
+	u32 sub_size;
+	#else
 	void * main_rom_offset;
 	void * main_entry_address;
 	void * main_ram_address;
@@ -38,6 +48,7 @@ typedef struct {
 	void * sub_entry_address;
 	void * sub_ram_address;
 	u32 sub_size;
+	#endif
 	CARDRomRegion fnt;
 	CARDRomRegion fat;
 	CARDRomRegion main_ovt;

@@ -69,7 +69,7 @@ void SVC_UncompressRL8(const void * srcp, void * destp);
     BOOL SVC_IsMmemExpanded(void);
 #endif
 
-#if defined(SDK_ARM7) || (defined(SDK_ARM9) && defined(SDK_TS))
+#if defined(SDK_ARM7) || (defined(SDK_ARM9) && defined(SDK_TS)) || defined(SDK_PORT)
     s32 SVC_Div(s32 number, s32 denom);
     s32 SVC_DivRem(s32 number, s32 denom);
     u16 SVC_Sqrt(u32 src);

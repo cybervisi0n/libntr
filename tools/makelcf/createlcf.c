@@ -3,8 +3,12 @@
 #include <strings.h>
 #include <stdarg.h>  // va_start(),va_end()
 
+
 #ifndef _WIN32
     #define SDK_ARM9
+    #ifdef SDK_PORT
+    #undef SDK_PORT
+    #endif
     #include <nitro/memorymap.h>
 #else
     #include <io.h> // setmode()

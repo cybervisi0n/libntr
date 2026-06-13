@@ -1,7 +1,11 @@
 #include <nitro/gx/gx_load.h>
 #include <nitro/gx/gx_vramcnt.h>
 #include <nitro/gx/gx_bgcnt.h>
+#ifdef SDK_PORT
+#include <nitro/hw/X86/mmap_global.h>
+#else
 #include <nitro/hw/ARM9/mmap_global.h>
+#endif
 #include <nitro/mi/dma.h>
 
 #include "../include/gxstate.h"
@@ -69,13 +73,21 @@ void GXS_LoadOAM (const void *pSrc, u32 offset, u32 szByte)
 
 void GX_LoadOBJ (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN4_ASSERT(offset);
 	SDK_ALIGN4_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+    ptr = (u64)G2_GetOBJCharPtr();
+    #else
 	ptr = (u32)G2_GetOBJCharPtr();
+    #endif
 
 	GX_RegionCheck_OBJ(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy32(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -83,13 +95,21 @@ void GX_LoadOBJ (const void *pSrc, u32 offset, u32 szByte)
 
 void GXS_LoadOBJ (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN4_ASSERT(offset);
 	SDK_ALIGN4_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+	ptr = (u64)G2S_GetOBJCharPtr();
+    #else
 	ptr = (u32)G2S_GetOBJCharPtr();
+    #endif
 
 	GX_RegionCheck_SubOBJ(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy32(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -97,13 +117,21 @@ void GXS_LoadOBJ (const void *pSrc, u32 offset, u32 szByte)
 
 void GX_LoadBG0Scr (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN2_ASSERT(offset);
 	SDK_ALIGN2_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+    ptr = (u64)G2_GetBG0ScrPtr();
+    #else
 	ptr = (u32)G2_GetBG0ScrPtr();
+    #endif
 
 	GX_RegionCheck_BG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy16(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -111,7 +139,11 @@ void GX_LoadBG0Scr (const void *pSrc, u32 offset, u32 szByte)
 
 void GXS_LoadBG0Scr (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN2_ASSERT(offset);
@@ -125,13 +157,21 @@ void GXS_LoadBG0Scr (const void *pSrc, u32 offset, u32 szByte)
 
 void GX_LoadBG1Scr (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN2_ASSERT(offset);
 	SDK_ALIGN2_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+    ptr = (u64)G2_GetBG1ScrPtr();
+    #else
 	ptr = (u32)G2_GetBG1ScrPtr();
+    #endif
 
 	GX_RegionCheck_BG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy16(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -139,13 +179,21 @@ void GX_LoadBG1Scr (const void *pSrc, u32 offset, u32 szByte)
 
 void GXS_LoadBG1Scr (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN2_ASSERT(offset);
 	SDK_ALIGN2_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+	ptr = (u64)G2S_GetBG1ScrPtr();
+    #else
 	ptr = (u32)G2S_GetBG1ScrPtr();
+    #endif
 
 	GX_RegionCheck_SubBG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy16(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -153,13 +201,21 @@ void GXS_LoadBG1Scr (const void *pSrc, u32 offset, u32 szByte)
 
 void GX_LoadBG2Scr (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN2_ASSERT(offset);
 	SDK_ALIGN2_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+    ptr = (u64)G2_GetBG2ScrPtr();
+    #else
 	ptr = (u32)G2_GetBG2ScrPtr();
+    #endif
 
 	GX_RegionCheck_BG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy16(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -167,13 +223,21 @@ void GX_LoadBG2Scr (const void *pSrc, u32 offset, u32 szByte)
 
 void GXS_LoadBG2Scr (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN2_ASSERT(offset);
 	SDK_ALIGN2_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+	ptr = (u64)G2S_GetBG2ScrPtr();
+    #else
 	ptr = (u32)G2S_GetBG2ScrPtr();
+    #endif
 
 	GX_RegionCheck_SubBG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy16(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -181,13 +245,21 @@ void GXS_LoadBG2Scr (const void *pSrc, u32 offset, u32 szByte)
 
 void GX_LoadBG3Scr (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN2_ASSERT(offset);
 	SDK_ALIGN2_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+	ptr = (u64)G2_GetBG3ScrPtr();
+    #else
 	ptr = (u32)G2_GetBG3ScrPtr();
+    #endif
 
 	GX_RegionCheck_BG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy16(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -195,13 +267,21 @@ void GX_LoadBG3Scr (const void *pSrc, u32 offset, u32 szByte)
 
 void GXS_LoadBG3Scr (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN2_ASSERT(offset);
 	SDK_ALIGN2_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+	ptr = (u64)G2S_GetBG3ScrPtr();
+    #else
 	ptr = (u32)G2S_GetBG3ScrPtr();
+    #endif
 
 	GX_RegionCheck_SubBG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy16(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -209,13 +289,21 @@ void GXS_LoadBG3Scr (const void *pSrc, u32 offset, u32 szByte)
 
 void GX_LoadBG0Char (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN4_ASSERT(offset);
 	SDK_ALIGN4_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+	ptr = (u64)G2_GetBG0CharPtr();
+    #else
 	ptr = (u32)G2_GetBG0CharPtr();
+    #endif
 
 	GX_RegionCheck_BG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy32(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -223,13 +311,21 @@ void GX_LoadBG0Char (const void *pSrc, u32 offset, u32 szByte)
 
 void GXS_LoadBG0Char (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN4_ASSERT(offset);
 	SDK_ALIGN4_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+	ptr = (u64)G2S_GetBG0CharPtr();
+    #else
 	ptr = (u32)G2S_GetBG0CharPtr();
+    #endif
 
 	GX_RegionCheck_SubBG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy32(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -237,13 +333,21 @@ void GXS_LoadBG0Char (const void *pSrc, u32 offset, u32 szByte)
 
 void GX_LoadBG1Char (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN4_ASSERT(offset);
 	SDK_ALIGN4_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+	ptr = (u64)G2_GetBG1CharPtr();
+    #else
 	ptr = (u32)G2_GetBG1CharPtr();
+    #endif
 
 	GX_RegionCheck_BG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy32(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -251,13 +355,21 @@ void GX_LoadBG1Char (const void *pSrc, u32 offset, u32 szByte)
 
 void GXS_LoadBG1Char (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN4_ASSERT(offset);
 	SDK_ALIGN4_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+	ptr = (u64)G2S_GetBG1CharPtr();
+    #else
 	ptr = (u32)G2S_GetBG1CharPtr();
+    #endif
 
 	GX_RegionCheck_SubBG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy32(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -265,13 +377,21 @@ void GXS_LoadBG1Char (const void *pSrc, u32 offset, u32 szByte)
 
 void GX_LoadBG2Char (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN4_ASSERT(offset);
 	SDK_ALIGN4_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+	ptr = (u64)G2_GetBG2CharPtr();
+    #else
 	ptr = (u32)G2_GetBG2CharPtr();
+    #endif
 
 	GX_RegionCheck_BG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy32(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -279,13 +399,21 @@ void GX_LoadBG2Char (const void *pSrc, u32 offset, u32 szByte)
 
 void GXS_LoadBG2Char (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN4_ASSERT(offset);
 	SDK_ALIGN4_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+	ptr = (u64)G2S_GetBG2CharPtr();
+    #else
 	ptr = (u32)G2S_GetBG2CharPtr();
+    #endif
 
 	GX_RegionCheck_SubBG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy32(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -293,13 +421,21 @@ void GXS_LoadBG2Char (const void *pSrc, u32 offset, u32 szByte)
 
 void GX_LoadBG3Char (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN4_ASSERT(offset);
 	SDK_ALIGN4_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+	ptr = (u64)G2_GetBG3CharPtr();
+    #else
 	ptr = (u32)G2_GetBG3CharPtr();
+    #endif
 
 	GX_RegionCheck_BG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy32(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
@@ -307,21 +443,34 @@ void GX_LoadBG3Char (const void *pSrc, u32 offset, u32 szByte)
 
 void GXS_LoadBG3Char (const void *pSrc, u32 offset, u32 szByte)
 {
+    #ifdef SDK_PORT
+    u64 ptr;
+    #else
 	u32 ptr;
+    #endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ALIGN4_ASSERT(offset);
 	SDK_ALIGN4_ASSERT(szByte);
 
+    #ifdef SDK_PORT
+	ptr = (u64)G2S_GetBG3CharPtr();
+    #else
 	ptr = (u32)G2S_GetBG3CharPtr();
+    #endif
 
 	GX_RegionCheck_SubBG(ptr + offset, ptr + offset + szByte);
 	GXi_DmaCopy32(GXi_DmaId, pSrc, (void *)(ptr + offset), szByte);
 }
 
 static GXVRamBGExtPltt sBGExtPltt = (GXVRamBGExtPltt)(0);
+#ifdef SDK_PORT
 static u32 sBGExtPlttLCDCBlk = 0;
 static u32 sBGExtPlttLCDCOffset = 0;
+#else
+static u32 sBGExtPlttLCDCBlk = 0;
+static u32 sBGExtPlttLCDCOffset = 0;
+#endif
 
 void GX_BeginLoadBGExtPltt (void)
 {
@@ -336,7 +485,11 @@ void GX_BeginLoadBGExtPltt (void)
 		break;
 	case GX_VRAM_BGEXTPLTT_23_G:
 		sBGExtPlttLCDCBlk = HW_LCDC_VRAM_G;
+        #ifdef SDK_PORT
+		sBGExtPlttLCDCOffset = 0;
+        #else
 		sBGExtPlttLCDCOffset = 0x4000;
+        #endif
 		break;
 	case GX_VRAM_BGEXTPLTT_0123_FG:
 	case GX_VRAM_BGEXTPLTT_01_F:

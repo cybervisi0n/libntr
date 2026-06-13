@@ -14,7 +14,15 @@ void CARD_InitPulledOutCallback(void);
     void CARD_SetPulledOutCallback(CARDPulledOutCallback callback);
 #endif
 
+#ifdef SDK_PORT
+    void CARD_SetPulledOutCallback(CARDPulledOutCallback callback);
+#endif
+
 #ifdef SDK_ARM9
+    void CARD_TerminateForPulledOut(void);
+#endif
+
+#ifdef SDK_PORT
     void CARD_TerminateForPulledOut(void);
 #endif
 
@@ -22,7 +30,15 @@ void CARD_InitPulledOutCallback(void);
     void CARD_PulledOutCallbackProc(void);
 #endif
 
+#ifdef SDK_PORT
+    void CARD_PulledOutCallbackProc(void);
+#endif
+
 #ifdef SDK_ARM9
+    void CARD_CheckPulledOut(void);
+#endif
+
+#ifdef SDK_PORT
     void CARD_CheckPulledOut(void);
 #endif
 

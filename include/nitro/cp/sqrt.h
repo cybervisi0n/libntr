@@ -14,15 +14,61 @@ static inline void CP_SetSqrtControl (u16 param)
 {
 	reg_CP_SQRTCNT = param;
 }
+#ifndef SDK_BUILD_ARM
+static inline void CP_CalcSquareRootInSoftware (u64 param, u8 is64Bits)
+{
+    u64 val;
+    u32 res = 0;
+    u64 rem = 0;
+    u32 prod = 0;
+    u32 nbits, topshift;
+
+    if (is64Bits)
+    {
+        val = param;
+        nbits = 32;
+        topshift = 62;
+    }
+    else
+    {
+        val = (u32)param;
+        nbits = 16;
+        topshift = 30;
+    }
+
+    for (u32 i = 0; i < nbits; i++)
+    {
+        rem = (rem << 2) + ((val >> topshift) & 0x3);
+        val <<= 2;
+        res <<= 1;
+
+        prod = (res << 1) + 1;
+        if (rem >= prod)
+        {
+            rem -= prod;
+            res++;
+        }
+    }
+
+    *((REGType32 *)REG_SQRT_RESULT_ADDR) = res;
+}
+#endif
 
 static inline void CP_SetSqrtImm64_NS_ (u64 param)
 {
 	*((REGType64 *)REG_SQRT_PARAM_ADDR) = param;
-}
 
+	#ifndef SDK_BUILD_ARM
+	CP_CalcSquareRootInSoftware(param, TRUE);
+	#endif
+}
 static inline void CP_SetSqrtImm32_NS_ (u32 param)
 {
 	*((REGType32 *)REG_SQRT_PARAM_ADDR) = param;
+
+	#ifndef SDK_BUILD_ARM
+	CP_CalcSquareRootInSoftware(param, FALSE);
+	#endif
 }
 
 static inline void CP_SetSqrtImm64 (u64 param)

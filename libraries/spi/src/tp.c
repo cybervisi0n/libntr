@@ -3,11 +3,19 @@
 #include <nitro/spi/common/config.h>
 #include "spi.h"
 
+#ifdef SDK_PORT
+extern TPData s_tpData;
+#endif
+
 #define TP_RAW_MAX  0x1000
 #define TP_CALIBRATE_DOT_INV_SCALE_SHIFT    (28 - TP_CALIBRATE_DOT_SCALE_SHIFT)
 #define TP_CALIBRATE_DOT2ORIGIN_SCALE_SHIFT (TP_CALIBRATE_DOT_SCALE_SHIFT - TP_CALIBRATE_ORIGIN_SCALE_SHIFT)
 
+#ifdef SDK_PORT
+static void TPi_TpCallback(PXIFifoTag tag, u64 data, BOOL err);
+#else
 static void TPi_TpCallback(PXIFifoTag tag, u32 data, BOOL err);
+#endif
 
 typedef struct {
     s32 x0;
@@ -114,7 +122,11 @@ static inline void TPi_ErrorAtPxi (TPRequestCommand command)
     }
 }
 
+#ifdef SDK_PORT
+static void TPi_TpCallback (PXIFifoTag tag, u64 data, BOOL err)
+#else
 static void TPi_TpCallback (PXIFifoTag tag, u32 data, BOOL err)
+#endif
 {
 #pragma unused(tag)
 
@@ -217,8 +229,10 @@ void TP_Init (void)
     tpState.command_flg = 0;
     tpState.err_flg = 0;
 
+    #ifndef SDK_PORT
     while (!PXI_IsCallbackReady(PXI_FIFO_TAG_TOUCHPANEL, PXI_PROC_ARM7)) {
     }
+    #endif
 
     PXI_SetFifoRecvCallback(PXI_FIFO_TAG_TOUCHPANEL, TPi_TpCallback);
 }
@@ -230,6 +244,14 @@ BOOL TP_GetUserInfo (TPCalibrateParam * calibrate)
     u16 x1, y1, x2, y2, dx1, dy1, dx2, dy2;
 
     SDK_NULL_ASSERT(calibrate);
+
+    #ifdef SDK_PORT
+	calibrate->x0 = 0x02ae;
+	calibrate->y0 = 0x058c;
+	calibrate->xDotSize = 0x0e25;
+	calibrate->yDotSize = 0x1208;
+    return TRUE;
+    #endif
 
 #if (defined(SDK_TS) && (SDK_TS_VERSION >= 200 || SDK_NVRAM_FORMAT >= 100))
     x1 = info->ncd.tp.raw_x1;
@@ -280,7 +302,11 @@ void TP_SetCalibrateParam (const TPCalibrateParam * param)
 
         tpState.calibrate.x0 = param->x0;
         tpState.calibrate.xDotSize = param->xDotSize;
+        #ifdef SDK_PORT
+        tpState.calibrate.xDotSizeInv = param->xDotSize;
+        #else
         tpState.calibrate.xDotSizeInv = (s32)CP_GetDivResult32();
+        #endif
     } else {
         tpState.calibrate.x0 = 0;
         tpState.calibrate.xDotSize = 0;
@@ -345,7 +371,11 @@ u32 TP_WaitRawResult (TPData * result)
         return 1;
     }
 
+    #ifdef SDK_PORT
+    *result = s_tpData;
+    #else
     *result = tpState.buf;
+    #endif
     return 0;
 }
 
@@ -471,7 +501,11 @@ void TP_GetLatestRawPointInAuto (TPData * result)
             index += tpState.bufSize;
         }
 
+        #ifdef SDK_PORT
+        tp = &s_tpData;
+        #else
         tp = &tpState.samplingBufs[index];
+        #endif
 
         if (!tp->touch) {
             *result = *tp;
@@ -626,6 +660,10 @@ void TP_GetCalibratedPoint (TPData * disp, const TPData * raw)
                 cal->x0) * cal->xDotSizeInv) >> (TP_CALIBRATE_DOT_INV_SCALE_SHIFT +
                                                  TP_CALIBRATE_ORIGIN_SCALE_SHIFT));
 
+    #ifdef SDK_PORT
+    disp->x = raw->x;
+    #endif                                             
+
     if ((s16)disp->x < 0) {
         disp->x = 0;
     } else if ((s16)disp->x > MAX_X)   {
@@ -636,6 +674,10 @@ void TP_GetCalibratedPoint (TPData * disp, const TPData * raw)
         (u16)((((u64)(raw->y << TP_CALIBRATE_ORIGIN_SCALE_SHIFT) -
                 cal->y0) * cal->yDotSizeInv) >> (TP_CALIBRATE_DOT_INV_SCALE_SHIFT +
                                                  TP_CALIBRATE_ORIGIN_SCALE_SHIFT));
+
+    #ifdef SDK_PORT
+    disp->y = raw->y;
+    #endif
 
     if ((s16)disp->y < 0) {
         disp->y = 0;
@@ -680,9 +722,11 @@ void TP_WaitBusy (TPRequestCommandFlag command_flgs)
     SDK_ASSERT(reg_OS_IME == 1);
     SDK_ASSERT(OS_GetIrqMask() & OS_IE_SPFIFO_RECV);
 
+    #ifndef SDK_PORT
     while (tpState.command_flg & command_flgs) {
 
     }
+    #endif
 
     return;
 }

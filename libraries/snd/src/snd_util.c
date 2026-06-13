@@ -241,7 +241,7 @@ const s16 SNDi_DecibelSquareTable[SND_DECIBEL_SQUARE_TABLE_SIZE] = {
     -10, -8, -7, -6, -4, -3, -1, 0
 };
 
-#ifdef SDK_ARM7
+#if defined (SDK_ARM7) || defined( SDK_PORT )
     static const s8 SinTable[SND_SIN_TABLE_SIZE + 1] = {
         0, 6, 12, 19, 25, 31, 37, 43,
         49, 54, 60, 65, 71, 76, 81, 85,
@@ -330,7 +330,7 @@ u16 SND_CalcChannelVolume (int dB)
     return (u16)(shift << 8 | volume);
 }
 
-#ifdef SDK_ARM7
+#if defined (SDK_ARM7) || defined( SDK_PORT )
     s8 SND_SinIdx (int index)
     {
         SDK_MINMAX_ASSERT(index, 0, SND_SIN_PERIOD - 1);

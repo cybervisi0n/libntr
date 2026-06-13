@@ -1,6 +1,11 @@
 #include <nitro/types.h>
 #include <nitro/mi/memory.h>
 
+#ifdef SDK_PORT
+#include <nitro/hw/X86/mmap_main.h>
+#include "simulator/assert.h"
+#endif
+
 #define HALFW_CONDAL  0xe0000000
 #define HALFW_CONDNE  0x10000000
 #define HALFW_CONDEQ  0x00000000
@@ -44,6 +49,102 @@
 #define STRH_AD4(cond, d, n, offset) \
     HALFW_DCD(cond, d, n, offset, HALFW_OFF_MI, HALFW_STORE, HALFW_DEF2)
 
+#ifdef SDK_PORT
+#include <string.h>
+#include <nitro/fx/fx.h>
+
+void    MI_CpuCopy8(const void *src, void *dest, u32 size)
+{
+    SIM_assert_msg(size < HW_MAIN_MEM_MAIN_SIZE, "Attempt to call MI_CpuCopy8 with a size of %d bytes, which is larger than the DS memory.", size);
+    memcpy( dest, src, size );
+}
+
+void MI_CpuFill8( void *dstp, u8 data, u32 size )
+{
+    SIM_assert_msg(size < HW_MAIN_MEM_MAIN_SIZE, "Attempt to call MI_CpuFill8 with a size of %d bytes, which is larger than the DS memory.", size);
+    u32 myData;
+    myData = data | (data << 8) | (data << 16) | (data << 24);
+    memset( dstp, myData, size );
+}
+
+void MIi_CpuClear16( u16 data, void* destp, u32 size )
+{
+    SIM_assert_msg(size < HW_MAIN_MEM_MAIN_SIZE, "Attempt to call MIi_CpuClear16 with a size of %d bytes, which is larger than the DS memory.", size);
+    //memset( destp, (u32)data | (u32)data << 16, size );
+    u16* destp16;
+    destp16 = (u16*)destp;
+    for( int i=0; i < size >> 1; i ++ )
+    {
+        *destp16 = data;
+        destp16++;
+    }
+}
+
+void MIi_CpuCopy16( const void *srcp, void *destp, u32 size )
+{
+    SIM_assert_msg(size < HW_MAIN_MEM_MAIN_SIZE, "Attempt to call MIi_CpuCopy16 with a size of %d bytes, which is larger than the DS memory.", size);
+    memcpy( destp, srcp, size );
+}
+
+void MI_Copy16B(const void* pSrc, void* pDest)
+{
+    memcpy( pDest, pSrc, 16);
+}
+
+void MIi_CpuClear32( u32 data, void *destp, u32 size )
+{
+    SIM_assert_msg(size < HW_MAIN_MEM_MAIN_SIZE, "Attempt to call MIi_CpuClear32 with a size of %d bytes, which is larger than the DS memory.", size);
+    memset( destp, data, size );
+}
+
+void MIi_CpuCopy32( const void *srcp, void *destp, u32 size )
+{
+    SIM_assert_msg(size < HW_MAIN_MEM_MAIN_SIZE, "Attempt to call MIi_CpuCopy32 with a size of %d bytes, which is larger than the DS memory.", size);
+    memcpy( destp, srcp, size );
+}
+
+void MI_Copy32B(const void* pSrc, void* pDest)
+{
+    memcpy( pDest, pSrc, 32);
+}
+
+void MI_Copy36B(const void* pSrc, void* pDest)
+{
+    memcpy( pDest, pSrc, 36);
+}
+
+void MIi_CpuSend32( const void *srcp, volatile void *destp, u32 size )
+{
+    SIM_assert_msg(size < HW_MAIN_MEM_MAIN_SIZE, "Attempt to call MIi_CpuSend32 with a size of %d bytes, which is larger than the DS memory.", size);
+    memcpy( destp, srcp, size );
+}
+
+void MIi_CpuCopyFast( const void *srcp, void *destp, u32 size )
+{
+    SIM_assert_msg(size < HW_MAIN_MEM_MAIN_SIZE, "Attempt to call MIi_CpuCopyFast with a size of %d bytes, which is larger than the DS memory.", size);
+    memcpy( destp, srcp, size );
+}
+
+void MI_Copy48B(const void* pSrc, void* pDest)
+{
+    memcpy( pDest, pSrc, 48 );
+}
+
+void MI_Copy64B(const void* pSrc, void* pDest)
+{
+    memcpy( pDest, pSrc, 64 );
+}
+
+void MI_Zero36B(void* pDest)
+{
+    memset(pDest, 0, 36);
+}
+
+void MI_Copy128B(const void* pSrc, void* pDest)
+{
+    memcpy( pDest, pSrc, 128 );
+}
+#else
 #include <nitro/code32.h>
 
 asm void MIi_CpuClear16 (register u16 data, register void * destp, register u32 size)
@@ -809,3 +910,4 @@ asm void MI_Zero64B (register void * pDest)
 }
 
 #include <nitro/codereset.h>
+#endif

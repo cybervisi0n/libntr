@@ -9,8 +9,15 @@ extern "C" {
     #include <nitro/wvr/common/wvr_common.h>
     #include <nitro/wvr/ARM9/wvr.h>
 #else
+    #ifdef SDK_ARM7
     #include <nitro/wvr/common/wvr_common.h>
     #include <nitro/wvr/ARM7/wvr_sp.h>
+    #endif
+#endif
+
+#ifdef SDK_PORT
+    #include <nitro/wvr/common/wvr_common.h>
+    #include <nitro/wvr/ARM9/wvr.h>
 #endif
 
 #ifdef  __cplusplus

@@ -4,6 +4,10 @@
 #include <nitro.h>
 #include <nitro/pxi.h>
 
+#if defined( SDK_PORT )
+#define ATTRIBUTE_ALIGN(x) __attribute__((aligned(x)))
+#endif
+
 #define COUNT_OF_(array)    (sizeof(array) / sizeof(*array))
 
 #define BIT_MASK(n) ((1 << (n)) - 1)
@@ -105,7 +109,7 @@ typedef struct CARDiCommon {
 	OSThreadQueue busy_q[1];
 #endif
 	volatile u32 flag;
-#if defined(SDK_ARM9)
+#if	(defined(SDK_ARM9) || defined(SDK_PORT))
 	u32 flush_threshold_ic;
 	u32 flush_threshold_dc;
 #endif
@@ -122,11 +126,17 @@ extern CARDiCommon cardi_common;
 
 static inline void CARDi_SendPxi (u32 data)
 {
+    #ifndef SDK_PORT
 	while (PXI_SendWordByFifo(PXI_FIFO_TAG_FS, data, TRUE) < 0)
 		;
+    #endif
 }
 
+#ifdef SDK_PORT
+void CARDi_OnFifoRecv(PXIFifoTag tag, u64 data, BOOL err);
+#else
 void CARDi_OnFifoRecv(PXIFifoTag tag, u32 data, BOOL err);
+#endif
 
 static inline CARDTargetMode CARDi_GetTargetMode (void)
 {
@@ -140,9 +150,11 @@ static inline void CARDi_WaitTask (CARDiCommon * p, MIDmaCallback callback, void
 {
 	OSIntrMode bak_psr = OS_DisableInterrupts();
 
+    #ifndef SDK_PORT
 	while ((p->flag & CARD_STAT_BUSY) != 0) {
 		OS_SleepThread(p->busy_q);
 	}
+    #endif
 
 	p->flag |= CARD_STAT_BUSY;
 	p->callback = callback;
@@ -179,7 +191,7 @@ static inline void CARDi_EndTask (CARDiCommon * p, BOOL is_own_task)
 void CARDi_TaskThread(void * arg);
 void CARDi_InitCommon(void);
 
-#if defined(SDK_ARM9)
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     BOOL CARDi_Request(CARDiCommon * p, int req_type, int retry_max);
 #endif
 

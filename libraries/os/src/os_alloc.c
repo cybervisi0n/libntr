@@ -55,9 +55,15 @@
 #define OS_ERR_VISITALLOCATED_INVID         "OS_VisitAllocated(): illegal arena id."
 #define OS_ERR_VISITALLOCATED_NOINFO        "OS_VisitAllocated(): heap not initialized."
 
+#ifdef SDK_PORT
+#define OFFSET(n, a)    (((u64) (n)) & ((a) - 1))
+#define TRUNC(n, a)     (((u64) (n)) & ~((a) - 1))
+#define ROUND(n, a)     (((u64) (n) + (a) - 1) & ~((a) - 1))
+#else
 #define OFFSET(n, a)    (((u32) (n)) & ((a) - 1))
 #define TRUNC(n, a)     (((u32) (n)) & ~((a) - 1))
 #define ROUND(n, a)     (((u32) (n) + (a) - 1) & ~((a) - 1))
+#endif
 
 #define ALIGNMENT       32
 #define MINOBJSIZE      (HEADERSIZE + ALIGNMENT)
@@ -568,7 +574,11 @@ void * OS_InitAlloc (OSArenaId id, void * arenaStart, void * arenaEnd, int maxHe
     OSiHeapInfo[id] = heapInfo;
 
     arraySize = sizeof(HeapDesc) * maxHeaps;
+    #ifdef SDK_PORT
+    heapInfo->heapArray = (void *)((u64)arenaStart + sizeof(OSHeapInfo));
+    #else
     heapInfo->heapArray = (void *)((u32)arenaStart + sizeof(OSHeapInfo));
+    #endif
     heapInfo->numHeaps = maxHeaps;
 
     for (i = 0; i < heapInfo->numHeaps; i++) {

@@ -2,7 +2,11 @@
 #define NITRO_G3_H_
 
 #include <nitro/gx/gxcommon.h>
+#ifdef SDK_PORT
+#include <nitro/hw/X86/ioreg_G3.h>
+#else
 #include <nitro/hw/ARM9/ioreg_G3.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -468,11 +472,19 @@ typedef u32 VecVtxDiff;
     static inline u32 G3_GetDLSize (const GXDLInfo * info)
     {
         SDK_ASSERT((u32)info->bottom < (u32)info->curr_param);
+        #ifdef SDK_PORT
+        if ((u64)info->curr_cmd & 3) {
+            return (u32)((u64)info->curr_param - (u64)info->bottom);
+        } else {
+            return (u32)((u64)info->curr_cmd - (u64)info->bottom);
+        }
+        #else
         if ((u32)info->curr_cmd & 3) {
             return (u32)((u32)info->curr_param - (u32)info->bottom);
         } else {
             return (u32)((u32)info->curr_cmd - (u32)info->bottom);
         }
+        #endif
     }
 
     static inline GXTexPlttBaseParam G3_MakeTexPlttBaseParam (u32 plttBaseAddr, GXTexFmt texfmt)

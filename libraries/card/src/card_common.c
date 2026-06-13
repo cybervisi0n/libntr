@@ -32,7 +32,9 @@ static void CARDi_LockResource (CARDiOwner owner, CARDTargetMode target)
 
 	if (p->lock_owner == owner) {
 		if (p->lock_target != target) {
+            #ifdef SDK_BUILD_ARM
 			OS_TPanic("card-lock : can not reuse same ID for locking without unlocking!");
+            #endif
 		}
 	} else {
 		while (p->lock_owner != OS_LOCK_ID_ERROR)
@@ -75,7 +77,7 @@ void CARDi_InitCommon (void)
 	p->lock_ref = 0;
 	p->lock_target = CARD_TARGET_NONE;
 
-#if defined(SDK_ARM9)
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
 	p->cmd = &cardi_arg;
 	MI_CpuFillFast(&cardi_arg, 0x00, sizeof(cardi_arg));
 	DC_FlushRange(&cardi_arg, sizeof(cardi_arg));
@@ -84,12 +86,12 @@ void CARDi_InitCommon (void)
 	p->recv_step = 0;
 #endif
 
-#if defined(SDK_ARM9)
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
 	p->flush_threshold_ic = 0xFFFFFFFF;
 	p->flush_threshold_dc = 0xFFFFFFFF;
 #endif
 
-#if !defined(SDK_SMALL_BUILD) && defined(SDK_ARM9)
+#if !defined(SDK_SMALL_BUILD) && (defined(SDK_ARM9) || defined(SDK_PORT))
 	if (!MB_IsMultiBootChild()) {
 		MI_CpuCopy8((const void *)HW_ROM_HEADER_BUF, (void *)HW_CARD_ROM_HEADER,
 		            HW_CARD_ROM_HEADER_SIZE);
@@ -140,9 +142,11 @@ BOOL CARDi_WaitAsync (void)
 
 	{
 		OSIntrMode bak_psr = OS_DisableInterrupts();
+        #ifndef SDK_PORT
 		while ((p->flag & CARD_STAT_BUSY) != 0) {
 			OS_SleepThread(p->busy_q);
 		}
+        #endif
 		(void)OS_RestoreInterrupts(bak_psr);
 	}
 
@@ -258,7 +262,7 @@ void CARD_UnlockBackup (u16 lock_id)
 
 void CARD_GetCacheFlushThreshold (u32 *icache, u32 *dcache)
 {
-#if defined(SDK_ARM9)
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
 	SDK_ASSERT(CARD_IsAvailable());
 	if (icache) {
 		*icache = cardi_common.flush_threshold_ic;
@@ -274,7 +278,7 @@ void CARD_GetCacheFlushThreshold (u32 *icache, u32 *dcache)
 
 void CARD_SetCacheFlushThreshold (u32 icache, u32 dcache)
 {
-#if defined(SDK_ARM9)
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
 	SDK_ASSERT(CARD_IsAvailable());
 	cardi_common.flush_threshold_ic = icache;
 	cardi_common.flush_threshold_dc = dcache;

@@ -116,6 +116,26 @@ typedef struct SNDTrack {
     void SND_MmlPrintEnable(BOOL enble);
 #endif
 
+#ifdef SDK_PORT
+    void SND_SeqInit(void);
+    void SND_SeqMain(BOOL doPeriodicProc);
+
+    void SND_StartSeq7(int playerNo, const void *seqBase, u32 seqOffset, struct SNDBankData *bank_p);
+    void SND_StopSeq7(int playerNo);
+    void SND_PrepareSeq7(int playerNo, const void *seqBase, u32 seqOffset, struct SNDBankData *bank_p);
+    void SND_StartPreparedSeq7(int playerNo);
+    void SND_PauseSeq7(int playerNo, BOOL flag);
+    void SND_SkipSeq7(int playerNo, u32 tick);
+
+    void SND_SetTrackMute7(int playerNo, u32 trackBitMask, SNDSeqMute mute);
+    void SND_SetTrackAllocatableChannel7(int playerNo, u32 trackBitMask, u32 chBitMask);
+
+    void SND_InvalidateSeq7(const void *start, const void *end);
+    void SND_InvalidateBank7(const void *start, const void *end);
+
+    void SND_MmlPrintEnable(BOOL enble);
+#endif /* SDK_ARM7 */
+
 #ifdef SDK_ARM7
     void SNDi_SetPlayerParam(int playerNo, u32 offset, u32 data, int size);
     void SNDi_SetTrackParam(int playerNo, u32 trackBitMask, u32 offset, u32 data, int size);

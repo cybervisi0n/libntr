@@ -1,11 +1,21 @@
 #include <nitro/os/common/ownerInfo.h>
 #include <nitro/os/common/systemWork.h>
 
+#ifdef SDK_PORT
+#include <simulator/sim.h>
+#include <simulator/config/sim_config.h>
+#endif
+
 void OS_GetMacAddress (u8 * macAddress)
 {
     u8 * src;
 
+    #ifdef SDK_PORT
+    SIM_config_type * myConfig = SIM_GetConfigPtr();
+    src = myConfig->macAddr;
+    #else
     src = (u8 *)((u32)(OS_GetSystemWork()->nvramUserInfo) + ((sizeof(NVRAMConfig) + 3) & ~0x00000003));
+    #endif
     MI_CpuCopy8(src, macAddress, 6);
 }
 

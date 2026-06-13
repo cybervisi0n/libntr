@@ -83,7 +83,7 @@ typedef struct SNDTrackInfo {
 
 extern SNDSharedWork * SNDi_SharedWork;
 
-#ifdef SDK_ARM7
+#if (defined(SDK_ARM7) || defined(SDK_PORT))
     extern SNDWork SNDi_Work;
 #endif
 
@@ -107,7 +107,7 @@ BOOL SND_ReadTrackInfo(const SNDDriverInfo * driverInfo, int playerNo, int track
 
 u32 SNDi_GetFinishedCommandTag(void);
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     void SNDi_InitSharedWork(SNDSharedWork * work);
 #endif
 

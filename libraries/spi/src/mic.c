@@ -19,7 +19,11 @@ typedef struct MICWork {
 static u16 micInitialized;
 static MICWork micWork;
 
+#ifdef SDK_PORT
+static void MicCommonCallback(PXIFifoTag tag, u64 data, BOOL err);
+#else
 static void MicCommonCallback(PXIFifoTag tag, u32 data, BOOL err);
+#endif
 static BOOL MicDoSampling(u16 type);
 static BOOL MicStartAutoSampling(void * buf, u32 size, u32 span, u8 flags);
 static BOOL MicStopAutoSampling(void);
@@ -39,8 +43,10 @@ void MIC_Init (void)
     micWork.callback = NULL;
 
     PXI_Init();
+    #ifndef SDK_PORT
     while (!PXI_IsCallbackReady(PXI_FIFO_TAG_MIC, PXI_PROC_ARM7)) {
     }
+    #endif
 
     OS_GetSystemWork()->mic_last_address = 0;
     PXI_SetFifoRecvCallback(PXI_FIFO_TAG_MIC, MicCommonCallback);
@@ -267,7 +273,11 @@ void * MIC_GetLastSamplingAddress (void)
     return (void *)(OS_GetSystemWork()->mic_last_address);
 }
 
+#ifdef SDK_PORT
+static void MicCommonCallback (PXIFifoTag tag, u64 data, BOOL err)
+#else
 static void MicCommonCallback (PXIFifoTag tag, u32 data, BOOL err)
+#endif
 {
 #pragma unused(tag)
 
@@ -426,6 +436,12 @@ static void MicGetResultCallback (MICResult result, void * arg)
     micWork.commonResult = result;
 }
 
+#ifdef SDK_PORT
+static void MicWaitBusy (void)
+{
+
+}
+#else
 #include <nitro/code32.h>
 
 static asm void MicWaitBusy (void)
@@ -439,3 +455,4 @@ loop:
 }
 
 #include <nitro/codereset.h>
+#endif

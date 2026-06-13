@@ -47,6 +47,10 @@ SNDSharedWork * SNDi_SharedWork;
 SNDWork SNDi_Work;
 #endif
 
+#ifdef SDK_PORT
+SNDWork SNDi_Work;
+#endif
+
 static const void * ConvAddr(const void * p, const void * baseFrom, const void * baseTo);
 
 #ifndef _MSC_VER
@@ -351,7 +355,7 @@ u32 SNDi_GetFinishedCommandTag (void)
     return SNDi_SharedWork->finishCommandTag;
 }
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     void SNDi_InitSharedWork (SNDSharedWork * work)
     {
         int playerNo, variableNo;

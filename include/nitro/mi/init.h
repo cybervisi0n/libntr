@@ -7,7 +7,8 @@ extern "C" {
 
 #include <nitro/misc.h>
 
-void MI_Init(void);
+void    MI_Init(void);
+
 
 #ifdef __cplusplus
 }

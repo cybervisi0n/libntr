@@ -45,7 +45,11 @@ SDK_INLINE void FX_InvAsyncImm (fx32 denom)
 	SDK_ASSERT(!CP_IsDivBusy());
 	FX_DIVISION_BY_ZERO(FX32_ONE, denom);
 
+	#ifdef SDK_PORT
+	CP_SetDivImm64_32((s64)FX32_ONE << 32, (s32)denom);
+	#else
 	CP_SetDivImm64_32((u64)FX32_ONE << 32, (u32)denom);
+	#endif
 }
 
 SDK_INLINE fx64c FX_GetInvResultFx64c (void)
@@ -63,7 +67,11 @@ SDK_INLINE void FX_DivAsyncImm (fx32 numer, fx32 denom)
 	SDK_ASSERT(!CP_IsDivBusy());
 	FX_DIVISION_BY_ZERO(numer, denom);
 
+	#ifdef SDK_PORT
+	CP_SetDivImm64_32((s64)numer << 32, (s32)denom);
+	#else
 	CP_SetDivImm64_32((u64)numer << 32, (u32)denom);
+	#endif
 }
 
 SDK_INLINE fx32 FX_Mod (fx32 numer, fx32 denom)

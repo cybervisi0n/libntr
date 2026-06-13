@@ -219,10 +219,12 @@ BOOL MB_ReadSegment (FSFile * file, void * buf, u32 len)
 					                      (u32)(p_header->offset + p_header->length), FALSE);
 				}
 				{
+                    #ifdef SDK_BUILD_ARM
 					extern u32 _start_AutoloadDoneCallback[1];
 					u8 * dst = (u8 *)p_cache->list[1].ptr;
 					dst += ((u32) & _start_AutoloadDoneCallback - (u32)p_rom->main_ram_address);
 					*(u32 *)dst = 0xE12FFF1E;
+                    #endif
 				}
 			}
 		}

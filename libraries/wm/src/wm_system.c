@@ -4,16 +4,32 @@
 
 #define WM_BUF_MSG_NUM 10
 
+#if defined( SDK_PORT )
+#define ATTRIBUTE_ALIGN(x) __attribute__((aligned(x)))
+#endif
+
 static u16 wmInitialized = 0;
 static WMArm9Buf * wm9buf;
+#ifdef SDK_PORT
+static u64 fifoBuf[WM_BUF_MSG_NUM][WM_FIFO_BUF_SIZE / sizeof(u64)] ATTRIBUTE_ALIGN(32);
+#else
 static u32 fifoBuf[WM_BUF_MSG_NUM][WM_FIFO_BUF_SIZE / sizeof(u32)] ATTRIBUTE_ALIGN(32);
+#endif
 static OSMessageQueue bufMsgQ;
 static OSMessage bufMsg[WM_BUF_MSG_NUM];
 
+#ifdef SDK_PORT
+static void WmReceiveFifo(PXIFifoTag tag, u64 fifo_buf_adr, BOOL err);
+#else
 static void WmReceiveFifo(PXIFifoTag tag, u32 fifo_buf_adr, BOOL err);
+#endif
 static void WmClearFifoRecvFlag(void);
 static WMErrCode WmInitCore(void * wmSysBuf, u16 dmaNo, u32 bufSize);
+#ifdef SDK_PORT
+static u64 *WmGetCommandBuffer4Arm7(void);
+#else
 static u32 * WmGetCommandBuffer4Arm7(void);
+#endif
 
 WMErrCode WM_Init (void * wmSysBuf, u16 dmaNo)
 {
@@ -87,20 +103,29 @@ static WMErrCode WmInitCore (void * wmSysBuf, u16 dmaNo, u32 bufSize)
     }
 
     PXI_Init();
+    #ifndef SDK_PORT
     if (!PXI_IsCallbackReady(PXI_FIFO_TAG_WM, PXI_PROC_ARM7)) {
         WM_WARNING("WM library on ARM7 side is not ready yet.\n");
         (void)OS_RestoreInterrupts(e);
         return WM_ERRCODE_WM_DISABLE;
     }
+    #endif
 
     DC_InvalidateRange(wmSysBuf, bufSize);
 
     MI_DmaClear32(dmaNo, wmSysBuf, bufSize);
     wm9buf = (WMArm9Buf *)wmSysBuf;
+    #ifdef SDK_PORT
+    wm9buf->WM7 = (WMArm7Buf *)((u64)wm9buf + WM_ARM9WM_BUF_SIZE);
+    wm9buf->status = (WMStatus *)((u64)(wm9buf->WM7) + WM_ARM7WM_BUF_SIZE);
+    wm9buf->fifo9to7 = (u32 *)((u64)(wm9buf->status) + WM_STATUS_BUF_SIZE);
+    wm9buf->fifo7to9 = (u32 *)((u64)(wm9buf->fifo9to7) + WM_FIFO_BUF_SIZE);
+    #else
     wm9buf->WM7 = (WMArm7Buf *)((u32)wm9buf + WM_ARM9WM_BUF_SIZE);
     wm9buf->status = (WMStatus *)((u32)(wm9buf->WM7) + WM_ARM7WM_BUF_SIZE);
     wm9buf->fifo9to7 = (u32 *)((u32)(wm9buf->status) + WM_STATUS_BUF_SIZE);
     wm9buf->fifo7to9 = (u32 *)((u32)(wm9buf->fifo9to7) + WM_FIFO_BUF_SIZE);
+    #endif
 
     WmClearFifoRecvFlag();
 
@@ -167,9 +192,18 @@ void WMi_SetCallbackTable (WMApiid id, WMCallbackFunc callback)
     wm9buf->CallbackTable[id] = callback;
 }
 
+#ifdef SDK_PORT
+u64 * WmGetCommandBuffer4Arm7 (void)
+#else
 u32 * WmGetCommandBuffer4Arm7 (void)
+#endif
 {
+    #ifdef SDK_PORT
+    u64 * tmpAddr;
+    #else
     u32 * tmpAddr;
+    #endif
+   
 
     if (FALSE == OS_ReceiveMessage(&bufMsgQ, (OSMessage *)&tmpAddr, OS_MESSAGE_NOBLOCK)) {
         return NULL;
@@ -189,7 +223,11 @@ WMErrCode WMi_SendCommand (WMApiid id, u16 paramNum, ...)
     va_list vlist;
     s32 i;
     int result;
+    #ifdef SDK_PORT
+    u64 * tmpAddr;
+    #else
     u32 * tmpAddr;
+    #endif
 
     SDK_NULL_ASSERT(wm9buf);
 
@@ -202,13 +240,21 @@ WMErrCode WMi_SendCommand (WMApiid id, u16 paramNum, ...)
 
     va_start(vlist, paramNum);
     for (i = 0; i < paramNum; i++) {
+        #ifdef SDK_PORT
+        tmpAddr[i + 1] = va_arg(vlist, u64);
+        #else
         tmpAddr[i + 1] = va_arg(vlist, u32);
+        #endif
     }
     va_end(vlist);
 
     DC_StoreRange(tmpAddr, WM_FIFO_BUF_SIZE);
 
+    #ifdef SDK_PORT
+    result = PXI_SendWordByFifo(PXI_FIFO_TAG_WM, (u64)tmpAddr, FALSE);
+    #else
     result = PXI_SendWordByFifo(PXI_FIFO_TAG_WM, (u32)tmpAddr, FALSE);
+    #endif
 
     (void)OS_SendMessage(&bufMsgQ, tmpAddr, OS_MESSAGE_BLOCK);
 
@@ -223,7 +269,11 @@ WMErrCode WMi_SendCommand (WMApiid id, u16 paramNum, ...)
 WMErrCode WMi_SendCommandDirect (void * data, u32 length)
 {
     int result;
+    #ifdef SDK_PORT
+    u64 * tmpAddr;
+    #else
     u32 * tmpAddr;
+    #endif
 
     SDK_NULL_ASSERT(wm9buf);
     SDK_ASSERT(length <= WM_FIFO_BUF_SIZE);
@@ -236,7 +286,11 @@ WMErrCode WMi_SendCommandDirect (void * data, u32 length)
     MI_CpuCopy8(data, tmpAddr, length);
     DC_StoreRange(tmpAddr, length);
 
+    #ifdef SDK_PORT
+    result = PXI_SendWordByFifo(PXI_FIFO_TAG_WM, (u64)tmpAddr, FALSE);
+    #else
     result = PXI_SendWordByFifo(PXI_FIFO_TAG_WM, (u32)tmpAddr, FALSE);
+    #endif
 
     (void)OS_SendMessage(&bufMsgQ, tmpAddr, OS_MESSAGE_BLOCK);
 
@@ -309,7 +363,11 @@ WMErrCode WMi_CheckStateEx (s32 paramNum, ...)
     return result;
 }
 
+#ifdef SDK_PORT
+static void WmReceiveFifo (PXIFifoTag tag, u64 fifo_buf_adr, BOOL err)
+#else
 static void WmReceiveFifo (PXIFifoTag tag, u32 fifo_buf_adr, BOOL err)
+#endif
 {
 #pragma unused(tag)
 

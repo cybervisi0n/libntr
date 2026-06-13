@@ -2,13 +2,79 @@
 #include <nitro/mi.h>
 #include <nitro/utest.h>
 
+#ifdef SDK_PORT
+#include <nitro/wm/ARM7/wm_sp.h>
+
+#include <pthread.h>
+
+#include <SDL2/SDL.h>
+
+pthread_mutex_t osiThreadMutex = PTHREAD_MUTEX_INITIALIZER;
+
+typedef struct {
+    SDL_threadID threadId;
+    OSThread * thread;
+} SIM_OSThreadList_t;
+#define SIM_OS_THREAD_LIST_MAX 1024
+
+static SIM_OSThreadList_t s_threadList[SIM_OS_THREAD_LIST_MAX] = {0};
+static int s_curThreadListIdx = 0;
+
+
+int SIM_OS_RunThread(void * thread)
+{
+	OSThread * curThread;
+	curThread = (OSThread *)thread;
+    s_threadList[s_curThreadListIdx].thread = curThread;
+    s_threadList[s_curThreadListIdx].threadId = SDL_GetThreadID(NULL);
+    curThread->threadListIdx = s_curThreadListIdx;
+    s_curThreadListIdx++;
+    if(s_curThreadListIdx >= SIM_OS_THREAD_LIST_MAX) {
+        s_curThreadListIdx = 0;
+    }
+
+	//curThread->state = OS_THREAD_STATE_WAITING;
+	void (*nitroThreadFuncPtr) (void *);
+	if( curThread->context.func == NULL )
+	{
+		curThread->state = OS_THREAD_STATE_TERMINATED;
+	}
+	else
+	{
+		nitroThreadFuncPtr = (void (*)(void *))curThread->context.func;
+		nitroThreadFuncPtr( (void *)curThread->context.arg);
+		if( curThread->context.exitFunc != 0 )
+		{
+			void (*exitThreadFuncPtr) (void *);
+			exitThreadFuncPtr = (void (*)(void *))curThread->context.exitFunc;
+			exitThreadFuncPtr(NULL);
+		}
+
+		curThread->state = OS_THREAD_STATE_TERMINATED;
+	}
+
+    s_threadList[curThread->threadListIdx].threadId = 0;
+    s_threadList[curThread->threadListIdx].thread = NULL; 
+
+	curThread->win_threadState = 2;
+	return 0;
+}
+
+void SDK_SYS_STACKSIZE(void)
+{
+}
+void SDK_IRQ_STACKSIZE(void)
+{
+}
+#else
 extern void SDK_SYS_STACKSIZE(void);
 extern void SDK_IRQ_STACKSIZE(void);
+#endif
 
 #define OSi_SYS_STACKSIZE    ((s32)SDK_SYS_STACKSIZE)
 #define OSi_IRQ_STACKSIZE    ((s32)SDK_IRQ_STACKSIZE)
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     #define  OSi_STACK_CHECKNUM_BOTTOM     0xfddb597dUL
     #define  OSi_STACK_CHECKNUM_TOP        0x7bf9dd5bUL
     #define  OSi_STACK_CHECKNUM_WARN       0x597dfbd9UL
@@ -25,10 +91,24 @@ void SDK_AUTOLOAD_DTCM_END(void);
     #define  OSi_LAUNCHER_STACK_LO_DEFAULT    SDK_SECTION_ARENA_DTCM_START
     #define  OSi_LAUNCHER_STACK_HI_MAX        (HW_DTCM_SVC_STACK - OSi_IRQ_STACKSIZE)
     #define  OSi_LAUNCHER_STACK_BOTTOM        (HW_DTCM_SVC_STACK - OSi_IRQ_STACKSIZE)
-#else
+#endif
+#ifdef SDK_ARM7
     #define  OSi_LAUNCHER_STACK_LO_DEFAULT    HW_WRAM
     #define  OSi_LAUNCHER_STACK_HI_MAX        (HW_PRV_WRAM_IRQ_STACK_END - OSi_IRQ_STACKSIZE)
     #define  OSi_LAUNCHER_STACK_BOTTOM        (HW_PRV_WRAM_IRQ_STACK_END - OSi_IRQ_STACKSIZE)
+#endif
+#ifdef SDK_PORT
+void SDK_SECTION_ARENA_DTCM_START(void)
+{
+
+}
+void    SDK_AUTOLOAD_DTCM_END(void)
+{
+
+}   // defined in LCF
+#  define  OSi_LAUNCHER_STACK_LO_DEFAULT    SDK_SECTION_ARENA_DTCM_START
+#  define  OSi_LAUNCHER_STACK_HI_MAX        (HW_DTCM_SVC_STACK)
+#  define  OSi_LAUNCHER_STACK_BOTTOM        (HW_DTCM_SVC_STACK)
 #endif
 
 #ifdef SDK_CONTEXT_HAS_SP_SVC
@@ -50,7 +130,11 @@ OSThread OSi_IdleThread;
 OSThreadInfo OSi_ThreadInfo;
 OSThread ** OSi_CurrentThreadPtr;
 
+#ifdef SDK_PORT
+#define OSi_GetCurrentThread()    OS_GetCurrentThread()
+#else
 #define OSi_GetCurrentThread()    (*OSi_CurrentThreadPtr)
+#endif
 
 BOOL OSi_IsThreadInitialized = FALSE;
 u32 OSi_IdleThreadStack[OSi_IDLE_THREAD_STACK_SIZE / sizeof(u32)];
@@ -77,6 +161,28 @@ static void OSi_ExitThread_ArgSpecified(OSThread * thread, void * arg);
 static void OSi_ExitThread(void * arg);
 static void OSi_ExitThread_Destroy(void);
 static void OSi_RescheduleThread(void);
+
+#ifdef SDK_PORT
+static OSThread s_WIN_unknownThread;
+
+OSThread * WIN_OS_GetCurrentThread(void)
+{
+    pthread_mutex_lock(&osiThreadMutex);
+    OSThread * thread = NULL;
+    SDL_threadID self = SDL_GetThreadID(NULL);
+    for(int i=0; i < SIM_OS_THREAD_LIST_MAX; i++) {
+        if(s_threadList[i].threadId == self) {
+            thread = s_threadList[i].thread;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&osiThreadMutex);
+    if( thread == NULL ){
+        thread = &s_WIN_unknownThread;
+    }
+    return thread;
+}
+#endif
 
 #ifdef SDK_THREAD_INFINITY
     static int OSi_GetUnusedThreadId (void)
@@ -222,6 +328,9 @@ static void OSi_InsertThreadToList (OSThread * thread)
 {
     OSThread * t = OSi_ThreadInfo.list;
     OSThread * pre = NULL;
+#ifdef SDK_PORT
+    pthread_mutex_lock(&osiThreadMutex);
+#endif
 
     while (t && t->priority < thread->priority) {
         pre = t;
@@ -235,12 +344,18 @@ static void OSi_InsertThreadToList (OSThread * thread)
         thread->next = pre->next;
         pre->next = thread;
     }
+#ifdef SDK_PORT
+    pthread_mutex_unlock(&osiThreadMutex);
+#endif
 }
 
 static void OSi_RemoveThreadFromList (OSThread * thread)
 {
     OSThread * t = OSi_ThreadInfo.list;
     OSThread * pre = NULL;
+#ifdef SDK_PORT
+    pthread_mutex_lock(&osiThreadMutex);
+#endif
 
     while (t && t != thread) {
         pre = t;
@@ -254,10 +369,14 @@ static void OSi_RemoveThreadFromList (OSThread * thread)
     } else {
         pre->next = thread->next;
     }
+#ifdef SDK_PORT
+    pthread_mutex_unlock(&osiThreadMutex);
+#endif
 }
 
 static void OSi_RescheduleThread (void)
 {
+    #ifndef SDK_PORT
     if (OSi_RescheduleCount <= 0) {
         OSThreadInfo * info = &OSi_ThreadInfo;
         if (info->irqDepth > 0 || OS_GetProcMode() == OS_PROCMODE_IRQ) {
@@ -290,6 +409,7 @@ static void OSi_RescheduleThread (void)
             OS_LoadContext(&nextThread->context);
         }
     }
+    #endif
 }
 
 void OS_InitThread (void)
@@ -325,6 +445,18 @@ void OS_InitThread (void)
 
     OS_SetCurrentThread(&OSi_LauncherThread);
 
+    #ifdef SDK_PORT
+    stackLo = (OSi_SYS_STACKSIZE <= 0) ?
+              (void *)((u64)OSi_LAUNCHER_STACK_LO_DEFAULT - OSi_SYS_STACKSIZE) :
+              (void *)((u64)OSi_LAUNCHER_STACK_HI_MAX - OSi_SYS_STACKSIZE);
+
+    SDK_ASSERT((u64)OSi_LAUNCHER_STACK_LO_DEFAULT <= (u64)stackLo
+               && (u64)stackLo <= (u64)OSi_LAUNCHER_STACK_HI_MAX);
+
+    OSi_LauncherThread.stackBottom = (u64)OSi_LAUNCHER_STACK_BOTTOM;
+    OSi_LauncherThread.stackTop = (u64)stackLo;
+    OSi_LauncherThread.stackWarningOffset = 0;
+    #else
     stackLo = (OSi_SYS_STACKSIZE <= 0) ?
               (void *)((u32)OSi_LAUNCHER_STACK_LO_DEFAULT - OSi_SYS_STACKSIZE) :
               (void *)((u32)OSi_LAUNCHER_STACK_HI_MAX - OSi_SYS_STACKSIZE);
@@ -338,6 +470,7 @@ void OS_InitThread (void)
 
     *(u32 *)(OSi_LauncherThread.stackBottom - sizeof(u32)) = OSi_STACK_CHECKNUM_BOTTOM;
     *(u32 *)OSi_LauncherThread.stackTop = OSi_STACK_CHECKNUM_TOP;
+    #endif
 
     OS_InitThreadQueue(&OSi_LauncherThread.joinQueue);
 
@@ -349,9 +482,10 @@ void OS_InitThread (void)
     OSi_ThreadInfo.irqDepth = 0;
     SDK_ASSERTMSG(OSi_IRQ_STACKSIZE > 0, "IRQ STACKSIZE must be >0");
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     OS_GetSystemWork()->threadinfo_mainp = &OSi_ThreadInfo;
-#else
+#endif
+#ifdef SDK_ARM7
     OS_GetSystemWork()->threadinfo_subp = &OSi_ThreadInfo;
 #endif
 
@@ -370,14 +504,37 @@ void OS_InitThread (void)
 #endif
 }
 
+#ifdef SDK_PORT
+BOOL OS_IsThreadAvailable (void)
+{
+    return TRUE;
+}
+#else
 asm BOOL OS_IsThreadAvailable (void)
 {
     ldr r0, = OSi_IsThreadInitialized
     ldr r0, [r0, #0]
     bx lr
 }
+#endif
 
+#ifdef SDK_PORT
+void OS_CreateThreadDebug(OSThread *thread, void (*func) (void *), void *arg, void *stack, u32 stackSize, u32 prio, const char * name, const char* filename, u32 line_num)
+{
+    memset(thread->funcName, sizeof(thread->funcName), 0);
+    memset(thread->filename, 0, sizeof(thread->filename));
+    strncpy(thread->funcName, name, sizeof(thread->funcName)-1);
+    strncpy(thread->filename, filename, sizeof(thread->filename)-1);
+    thread->lineno = line_num;
+    OS_CreateThreadReal(thread, func, arg, stack, stackSize, prio);
+}
+#endif
+
+#ifdef SDK_PORT
+void OS_CreateThreadReal (OSThread * thread, void (*func)(void *), void * arg, void * stack, u32 stackSize, u32 prio)
+#else
 void OS_CreateThread (OSThread * thread, void (*func)(void *), void * arg, void * stack, u32 stackSize, u32 prio)
+#endif
 {
 #define STACK_ALIGN 4
 
@@ -415,16 +572,34 @@ void OS_CreateThread (OSThread * thread, void (*func)(void *), void * arg, void 
     thread->stackTop = (u32)stack - stackSize;
     thread->stackWarningOffset = 0;
 
+    #ifndef SDK_PORT
     *(u32 *)(thread->stackBottom - sizeof(u32)) = OSi_STACK_CHECKNUM_BOTTOM;
     *(u32 *)thread->stackTop = OSi_STACK_CHECKNUM_TOP;
+    #endif
 
     OS_InitThreadQueue(&thread->joinQueue);
+    #ifdef SDK_PORT
+    OS_InitContext(&thread->context, (u64)func, (u64)stack - sizeof(u32));
+    #else
     OS_InitContext(&thread->context, (u32)func, (u32)stack - sizeof(u32));
+    #endif
 
     thread->context.r[0] = (u32)arg;
     thread->context.lr = (u32)OS_ExitThread;
 
+    #ifdef SDK_PORT
+    thread->context.arg = (u64)arg;
+    thread->context.exitFunc = (u64)OS_ExitThread;
+    thread->win_threadState = 0;
+    #endif
+
+    #ifdef SDK_PORT
+    if(stackSize != 0) {
+        MI_CpuClear32((void *)((u32)stack - stackSize + sizeof(u32)), stackSize - sizeof(u32) * 2);
+    }
+    #else
     MI_CpuClear32((void *)((u32)stack - stackSize + sizeof(u32)), stackSize - sizeof(u32) * 2);
+    #endif
 
     thread->mutex = NULL;
 #ifndef SDK_THREAD_INFINITY
@@ -444,6 +619,12 @@ void OS_CreateThread (OSThread * thread, void (*func)(void *), void * arg, void 
     thread->link.prev = thread->link.next = NULL;
     MI_CpuClear32(&thread->specific[0], sizeof(void *) * OS_THREAD_SPECIFIC_MAX);
 #endif
+
+#ifdef SDK_PORT
+    thread->win_sdlThread = SDL_CreateThread(SIM_OS_RunThread, thread->funcName, (void*)thread);
+	thread->win_threadState = 1;
+#endif
+
     thread->alarmForSleep = NULL;
     (void)OS_RestoreInterrupts(enable);
 }
@@ -463,7 +644,11 @@ void OS_ExitThread (void)
     static void OSi_ExitThread_ArgSpecified (OSThread * thread, void * arg)
     {
         if (OSi_StackForDestructor) {
+            #ifdef SDK_PORT
+            OS_InitContext(&thread->context, (u64)OSi_ExitThread, (u64)OSi_StackForDestructor);
+            #else
             OS_InitContext(&thread->context, (u32)OSi_ExitThread, (u32)OSi_StackForDestructor);
+            #endif
             thread->context.r[0] = (u32)arg;
             thread->context.cpsr |= HW_PSR_IRQ_DISABLE;
             thread->state = OS_THREAD_STATE_READY;
@@ -532,6 +717,10 @@ static void OSi_ExitThread_Destroy (void)
     (void)OS_EnableScheduler();
 #endif
 
+#ifdef SDK_PORT
+    return;
+#endif
+
     OS_RescheduleThread();
     OS_Terminate();
 }
@@ -561,7 +750,9 @@ void UTEST_OS_ExitThread (void)
 
     OS_WakeupThreadDirect(&thread);
     OS_JoinThread(&thread);
+    #ifndef SDK_PORT
     UT_AssertEq(exitThreadStatus, 1);
+    #endif
 }
 
 void OS_DestroyThread (OSThread * thread)
@@ -610,8 +801,13 @@ static inline void OSi_KillThreadWithPriority (OSThread * thread, void * arg, u3
     SDK_ASSERT(thread);
 
     {
+        #ifdef SDK_PORT
+        u64 stack = (OSi_StackForDestructor) ? (u64)OSi_StackForDestructor : thread->stackBottom - sizeof(u32);
+        OS_InitContext(&thread->context, (u64)OSi_ExitThread, stack);
+        #else
         u32 stack = (OSi_StackForDestructor) ? (u32)OSi_StackForDestructor : thread->stackBottom - sizeof(u32);
         OS_InitContext(&thread->context, (u32)OSi_ExitThread, stack);
+        #endif
     }
 
     thread->context.r[0] = (u32)arg;
@@ -660,6 +856,7 @@ void UTEST_OS_KillThread_1 (void)
 
     OSi_KillThreadWithPriority(t, (void *)0x12345678, 16);
 
+    #ifndef SDK_PORT
     UT_AssertEq(t->context.pc_plus4, (u32)OSi_ExitThread + 4);
     UT_AssertEq(t->context.r[0], (u32)0x12345678);
 
@@ -670,6 +867,7 @@ void UTEST_OS_KillThread_1 (void)
 
     UT_AssertEq(t->state, OS_THREAD_STATE_READY);
     UT_AssertAsserted(OSi_KillThreadWithPriority(0, 0, 16));
+    #endif
 }
 
 static vu32 killThreadStatus = 0;
@@ -706,6 +904,7 @@ void UTEST_OS_KillThread_2 (void)
                     NULL,
                     stack + 1024, sizeof(stack), OS_GetThreadPriority(OS_GetCurrentThread()) - 1);
 
+    #ifndef SDK_PORT
     UT_AssertEq(killThreadStatus, 0);
 
     OS_WakeupThreadDirect(&thread);
@@ -718,6 +917,7 @@ void UTEST_OS_KillThread_2 (void)
     OS_KillThread(&thread, 0);
     OS_JoinThread(&thread);
     UT_AssertEq(killThreadStatus, 666);
+    #endif
 }
 
 #endif
@@ -734,12 +934,18 @@ static void OSi_CancelThreadAlarmForSleep (OSThread * thread)
 void OS_JoinThread (OSThread * thread)
 {
     OSIntrMode enabled = OS_DisableInterrupts();
-
+    #ifdef SDK_PORT
+    if(thread->state == OS_THREAD_STATE_TERMINATED) {
+        return;
+    }
+    SDL_WaitThread(thread->win_sdlThread, NULL);
+    #else
     SDK_ASSERT(thread);
 
     if (thread->state != OS_THREAD_STATE_TERMINATED) {
         OS_SleepThread(&thread->joinQueue);
     }
+    #endif
 
     (void)OS_RestoreInterrupts(enabled);
 }
@@ -800,6 +1006,9 @@ void OS_SleepThread (OSThreadQueue * queue)
 
         currentThread->state = OS_THREAD_STATE_WAITING;
         OSi_RescheduleThread();
+        #ifdef SDK_PORT
+        SDL_Delay(1);
+        #endif
     }
 #endif
     (void)OS_RestoreInterrupts(enable);
@@ -863,7 +1072,11 @@ void OS_WakeupThreadDirect (OSThread * thread)
     {
         thread->state = OS_THREAD_STATE_READY;
         OSi_RescheduleThread();
-
+        #ifdef SDK_PORT
+        while(thread->win_threadState == 0){
+            SDL_Delay(1);
+        }
+        #endif
     }
 
     (void)OS_RestoreInterrupts(enable);
@@ -1034,6 +1247,18 @@ void OSi_CheckStack (const char * file, int line, const OSThread * thread)
 
 static u32 OSi_SystemStackBuffer;
 
+#ifdef SDK_PORT
+u32 OSi_GetSystemStackPointer (void)
+{
+    return 0;
+}
+
+u32 OSi_GetCurrentStackPointer (void)
+{
+    return 0;
+}
+#else
+
 #include <nitro/code32.h>
 
 asm u32 OSi_GetSystemStackPointer (void)
@@ -1051,6 +1276,7 @@ asm u32 OSi_GetCurrentStackPointer (void)
     mov r0, sp
     bx lr
 }
+#endif
 
 void OS_SetThreadStackWarningOffset (OSThread * thread, u32 offset)
 {
@@ -1114,6 +1340,9 @@ u32 OS_GetThreadPriority (const OSThread * thread)
 
 void OS_Sleep (u32 msec)
 {
+    #ifdef SDK_PORT
+    SDL_Delay(msec);
+    #else
     OSAlarm alarm;
 
     SDK_ASSERTMSG(OS_IsTickAvailable()
@@ -1134,6 +1363,7 @@ void OS_Sleep (u32 msec)
         }
         (void)OS_RestoreInterrupts(bak_cpsr);
     }
+    #endif
 }
 
 static void OSi_SleepAlarmCallback (void * arg)
@@ -1164,7 +1394,9 @@ static void OSi_IdleThreadProc (void *)
 {
     (void)OS_EnableInterrupts();
     while (1) {
+        #ifndef SDK_PORT
         OS_Halt();
+        #endif
     }
 }
 

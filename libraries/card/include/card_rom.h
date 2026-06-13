@@ -43,10 +43,13 @@ typedef struct CARDRomStat {
 SDK_COMPILER_ASSERT(sizeof(CARDRomStat) % 32 == 0);
 
 extern CARDRomStat rom_stat;
+#ifndef SDK_PORT
 extern u32 cardi_rom_header_addr;
+#endif
 
 static inline BOOL CARDi_IsInTcm (u32 buf, u32 len)
 {
+#ifdef SDK_BUILD_ARM
 #if defined(SDK_ARM9)
 	const u32 i = OS_GetITCMAddress();
 	const u32 d = OS_GetDTCMAddress();
@@ -58,11 +61,18 @@ static inline BOOL CARDi_IsInTcm (u32 buf, u32 len)
 #pragma unused(len)
 	return FALSE;
 #endif
+#else
+  return FALSE;
+#endif
 }
 
 static inline u32 CARDi_GetRomFlag (u32 flag)
 {
+  #ifdef SDK_PORT
+  const u32 rom_ctrl = *(vu32 *)(HW_ROM_HEADER_BUF + 0x60);
+  #else
 	const u32 rom_ctrl = *(vu32 *)(cardi_rom_header_addr + 0x60);
+  #endif
 	return (u32)((rom_ctrl & ~CARD_COMMAND_MASK) | flag |
 	             CARD_READ_MODE | CARD_START | CARD_RESET_HI);
 }
@@ -76,7 +86,7 @@ void CARDi_CheckPulledOutCore(u32 id);
 static inline void CARDi_ReadEnd (void)
 {
 	CARDiCommon * const p = &cardi_common;
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
 	CARDi_CheckPulledOutCore(CARDi_ReadRomIDCore());
 #endif
 	p->cmd->result = CARD_RESULT_SUCCESS;

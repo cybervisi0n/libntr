@@ -1,6 +1,152 @@
 #include <nitro/os.h>
 #include <nitro/code32.h>
 
+#ifdef SDK_PORT
+void OS_EnableICacheForProtectionRegion( u32 flags )
+{
+    return;
+}
+
+void OS_DisableICacheForProtectionRegion( u32 flags )
+{
+    return;
+}
+
+u32 OS_GetICacheEnableFlagsForProtectionRegion( void )
+{
+    return 0;
+}
+
+void OS_SetIPermissionsForProtectionRegion( u32 setMask, u32 flags )
+{
+    return;
+}
+
+u32 OS_GetIPermissionsForProtectionRegion( void )
+{
+    return 0;
+}
+
+void OS_EnableDCacheForProtectionRegion( u32 flags )
+{
+    return;
+}
+
+void OS_DisableDCacheForProtectionRegion( u32 flags )
+{
+    return;
+}
+
+u32 OS_GetDCacheEnableFlagsForProtectionRegion( u32 flags )
+{
+    return 0;
+}
+
+void OS_SetDPermissionsForProtectionRegion( u32 setMask, u32 flags )
+{
+    return;
+}
+
+u32 OS_GetDPermissionsForProtectionRegion( void )
+{
+    return 0;
+}
+
+void OS_EnableWriteBufferForProtectionRegion( u32 flags )
+{
+    return;
+}
+
+void OS_DisableWriteBufferForProtectionRegion( u32 flags )
+{
+    return;
+}
+
+u32 OS_GetWriteBufferEnableFlagsForProtectionRegion( u32 flags )
+{
+    return 0;
+}
+
+void OS_SetProtectionRegion0( u32 param )
+{
+    return;
+}
+
+void OS_SetProtectionRegion1( u32 param )
+{
+    return;
+}
+
+void OS_SetProtectionRegion2( u32 param )
+{
+    return;
+}
+
+void OS_SetProtectionRegion3( u32 param )
+{
+    return;
+}
+
+void OS_SetProtectionRegion4( u32 param )
+{
+    return;
+}
+
+void OS_SetProtectionRegion5( u32 param )
+{
+    return;
+}
+
+void OS_SetProtectionRegion6( u32 param )
+{
+    return;
+}
+
+void OS_SetProtectionRegion7( u32 param )
+{
+    return;
+}
+
+u32 OS_GetProtectionRegion0( void )
+{
+    return 0;
+}
+
+u32 OS_GetProtectionRegion1( void )
+{
+    return 0;
+}
+
+u32 OS_GetProtectionRegion2( void )
+{
+    return 0;
+}
+
+u32 OS_GetProtectionRegion3( void )
+{
+    return 0;
+}
+
+u32 OS_GetProtectionRegion4( void )
+{
+    return  0;
+}
+
+u32 OS_GetProtectionRegion5( void )
+{
+    return 0;
+}
+
+u32 OS_GetProtectionRegion6( void )
+{
+    return 0;
+}
+
+u32 OS_GetProtectionRegion7( void )
+{
+    return 0;
+}
+#else
 asm void OS_EnableICacheForProtectionRegion (register u32 flags)
 {
     mrc p15, 0, r1, c2, c0, 1
@@ -192,5 +338,6 @@ asm u32 OS_GetProtectionRegion7 (void)
     mrc p15, 0, r0, c6, c7, 0
     bx lr
 }
+#endif
 
 #include <nitro/codereset.h>

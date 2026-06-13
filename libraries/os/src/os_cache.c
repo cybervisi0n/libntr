@@ -1,4 +1,119 @@
 #include <nitro/os.h>
+#ifdef SDK_PORT
+void DC_FlushRange( const void* startAddr, u32 nBytes )
+{
+}
+
+BOOL DC_Enable()
+{
+    return 0;
+}
+
+BOOL DC_Disable()
+{
+    return 0;
+}
+
+BOOL DC_Restore( BOOL enable )
+{
+    return 0;
+}
+
+void DC_InvalidateAll( void )
+{
+    return;
+}
+
+void DC_StoreAll( void )
+{
+    return;
+}
+
+void DC_FlushAll( void )
+{
+    return;
+}
+
+void DC_InvalidateRange( void* startAddr, u32 nBytes )
+{
+    return;
+}
+
+void DC_StoreRange( const void* startAddr, u32 nBytes )
+{
+    return;
+}
+
+void DC_TouchRange( const void* startAddr, u32 nBytes )
+{
+    return;
+}
+
+void DC_LockdownRange( const void* startAddr, u32 nBytes )
+{
+    return;
+}
+
+void DC_UnlockdownAll( void )
+{
+    return;
+}
+
+void DC_Unlockdown( u32 num )
+{
+    return;
+}
+
+void DC_WaitWriteBufferEmpty()
+{
+    return;
+}
+
+BOOL IC_Enable()
+{
+    return 0;
+}
+
+BOOL IC_Disable()
+{
+    return 0;
+}
+
+BOOL IC_Restore( BOOL enable )
+{
+    return 0;
+}
+
+void IC_InvalidateAll( void )
+{
+    return;
+}
+
+void IC_InvalidateRange( void* startAddr, u32 nBytes )
+{
+    return;
+}
+
+void IC_PrefetchRange( const void* startAddr, u32 nBytes )
+{
+    return;
+}
+
+void IC_LockdownRange( const void* startAddr, u32 nBytes )
+{
+    return;
+}
+
+void IC_UnlockdownAll( void )
+{
+    return;
+}
+
+void IC_Unlockdown( u32 num )
+{
+    return;
+}
+#else
 #include <nitro/code32.h>
 
 #define SDK_AVOID_FLUSH
@@ -307,3 +422,4 @@ asm void IC_Unlockdown (register u32 num)
 }
 
 #include <nitro/codereset.h>
+#endif

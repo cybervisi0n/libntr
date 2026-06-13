@@ -9,6 +9,10 @@ extern "C" {
 #include <nitro/types.h>
 #include <nitro/os/common/thread.h>
 
+#ifdef SDK_PORT
+#include <SDL2/SDL.h>
+#endif
+
 #ifndef SDK_THREAD_INFINITY
     typedef struct OSMutex OSMutex;
 #endif
@@ -24,6 +28,9 @@ struct OSMutex {
 	OSMutex * next;
 #else
 	OSMutexLink link;
+#endif
+#ifdef SDK_PORT
+  SDL_mutex * sdlMutex;
 #endif
 };
 

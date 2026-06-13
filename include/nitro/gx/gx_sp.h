@@ -1,7 +1,11 @@
 #ifndef NITRO_GX_SP_H_
 #define NITRO_GX_SP_H_
 
+#ifdef SDK_PORT
+#include <nitro/hw/X86/ioreg.h>
+#else
 #include <nitro/hw/ARM7/ioreg.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

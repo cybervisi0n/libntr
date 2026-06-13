@@ -2,7 +2,11 @@
 #define NITRO_GX_CAPTURE_H_
 
 #include <nitro/gx/gxcommon.h>
+#ifdef SDK_PORT
+#include <nitro/hw/X86/ioreg_GX.h>
+#else
 #include <nitro/hw/ARM9/ioreg_GX.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

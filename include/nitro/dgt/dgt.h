@@ -1,3 +1,4 @@
+
 #ifndef NITRO_DGT_DGT_H_
 #define NITRO_DGT_DGT_H_
 
@@ -33,11 +34,19 @@ typedef struct DGTHash1Context {
     } DGTHash2Context;
 #else
     typedef struct DGTHash2Context {
+#ifdef SDK_BUILD_ARM
         unsigned long h0, h1, h2, h3, h4;
         unsigned long Nl, Nh;
         int num;
         unsigned long data[64 / 4];
         int dummy[2];
+#else
+    	unsigned int h0, h1, h2, h3, h4;
+    	unsigned int Nl, Nh;
+    	int num;
+    	unsigned int data[64/4];
+    	int dummy[2];
+#endif
     } DGTHash2Context;
 #endif
 

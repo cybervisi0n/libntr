@@ -9,7 +9,9 @@ static inline u32 MATHi_Checksum16Update (const void *input, u32 length)
 	sum = 0;
 
 	if (((u32)input) & 1) {
+        #ifndef SDK_PORT
 		sum += (*((u8 *)input)++ << 8);
+        #endif
 		length--;
 		fSwap = TRUE;
 	}
@@ -17,7 +19,9 @@ static inline u32 MATHi_Checksum16Update (const void *input, u32 length)
 	while ((length >> 17) > 0) {
 		length -= (1 << 17);
 		for (n = (1 << 16); n > 0; n--) {
+            #ifndef SDK_PORT
 			sum += *((u16 *)input)++;
+            #endif
 		}
 
 		sum = (sum >> 16) + (sum & 0xffff);
@@ -25,11 +29,15 @@ static inline u32 MATHi_Checksum16Update (const void *input, u32 length)
 	}
 
 	for (n = (length >> 1); n > 0; n--) {
+        #ifndef SDK_PORT
 		sum += *((u16 *)input)++;
+        #endif
 	}
 
 	if (length & 1) {
+        #ifndef SDK_PORT
 		sum += *((u8 *)input);
+        #endif
 	}
 
 	sum = (sum >> 16) + (sum & 0xffff);
@@ -70,14 +78,18 @@ static inline u32 MATHi_Checksum8Update (const void *input, u32 length)
 	sum = 0;
 
 	if (((u32)input) & 1) {
+        #ifndef SDK_PORT
 		sum += *((u8 *)input)++;
+        #endif
 		length--;
 	}
 
 	while ((length >> 17) > 0) {
 		length -= (1 << 17);
 		for (n = (1 << 16); n > 0; n--) {
+            #ifndef SDK_PORT
 			sum += *((u16 *)input)++;
+            #endif
 		}
 
 		sum = (sum >> 16) + (sum & 0xffff);
@@ -85,7 +97,9 @@ static inline u32 MATHi_Checksum8Update (const void *input, u32 length)
 	}
 
 	for (n = (length >> 1); n > 0; n--) {
+        #ifndef SDK_PORT
 		sum += *((u16 *)input)++;
+        #endif
 	}
 
 	if (length & 1) {

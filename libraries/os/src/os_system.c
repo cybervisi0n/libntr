@@ -1,6 +1,47 @@
 #include <nitro/os.h>
 #include <nitro/code32.h>
 
+#ifdef SDK_PORT
+OSIntrMode OS_EnableInterrupts( void )
+{
+    return 0;
+}
+
+OSIntrMode OS_DisableInterrupts( void )
+{
+    return 0;
+}
+
+OSProcMode OS_GetProcMode( void )
+{
+    return 0;
+}
+
+OSIntrMode OS_DisableInterrupts_IrqAndFiq( void )
+{
+    return 0;
+}
+
+OSIntrMode OS_RestoreInterrupts( OSIntrMode state )
+{
+    return 0;
+}
+
+OSIntrMode OS_EnableInterrupts_IrqAndFiq( void )
+{
+    return 0;
+}
+
+OSIntrMode OS_RestoreInterrupts_IrqAndFiq( OSIntrMode state )
+{
+    return 0;
+}
+
+OSIntrMode_Irq OS_GetCpsrIrq( void )
+{
+    return 0;
+}
+#else
 asm OSIntrMode OS_EnableInterrupts (void)
 {
     mrs r0, cpsr
@@ -72,6 +113,7 @@ asm OSProcMode OS_GetProcMode (void)
 }
 
 #include <nitro/codereset.h>
+#endif
 
 #ifdef SDK_ARM9
     #include <nitro/code32.h>
@@ -99,7 +141,9 @@ void OS_WaitInterrupt (BOOL clear, OSIrqMask irqFlags)
     }
 
     while (!(OS_GetIrqCheckFlag() & irqFlags)) {
+        #ifdef SDK_BUILD_ARM
         OS_Halt();
+        #endif
         (void)OS_EnableInterrupts();
         (void)OS_DisableInterrupts();
     }

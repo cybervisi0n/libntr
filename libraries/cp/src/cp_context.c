@@ -3,6 +3,9 @@
 #if defined(SDK_TCM_APPLY) && defined(SDK_ARM9)
     #include <nitro/itcm_begin.h>
 #endif
+#ifdef SDK_PORT
+  //TODO
+#else
 
 #include <nitro/code32.h>
 
@@ -44,6 +47,7 @@ asm void CPi_RestoreContext (register const CPContext *context)
 }
 
 #include <nitro/codereset.h>
+#endif
 
 #if defined(SDK_TCM_APPLY) && defined(SDK_ARM9)
     #include <nitro/itcm_end.h>

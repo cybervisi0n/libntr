@@ -2,6 +2,12 @@
 
 #include <nitro/code32.h>
 
+#if defined( SDK_PORT )
+void MATH_QSort( register void* head,  register u32 num,  register u32 width,  register MATHCompareFunc comp, void* stackBuf )
+{
+    return;
+}
+#else
 asm void MATH_QSort (register void *head, register u32 num, register u32 width, register MATHCompareFunc comp, void *stackBuf)
 {
 #define stack       r4
@@ -214,3 +220,4 @@ asm void MATH_QSort (register void *head, register u32 num, register u32 width, 
 }
 
 #include <nitro/codereset.h>
+#endif

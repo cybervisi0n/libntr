@@ -54,11 +54,13 @@ extern "C" {
 
     #ifdef SDK_ARM9
         extern void OS_Halt(void);
-    #else
+    #elif defined(SDK_ARM7)
         static inline void OS_Halt (void)
         {
             SVC_Halt();
         }
+    #elif defined(SDK_PORT)
+        extern void OS_Halt(void);
     #endif
 
     extern void OS_Exit(int status);

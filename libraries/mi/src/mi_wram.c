@@ -27,7 +27,11 @@ MIWram MI_GetWramBank (void)
 {
 #ifdef SDK_ARM9
     return (MIWram)(reg_GX_VRAMCNT_WRAM & MI_WRAM_ARM9_ALL);
-#else
+#endif
+#ifdef SDK_ARM7
     return (MIWram)(reg_GX_WVRAMSTAT & MI_WRAM_ARM9_ALL);
+#endif
+#ifdef SDK_X86
+    return (MIWram)(reg_GX_VRAMCNT_WRAM & MI_WRAM_ARM9_ALL);
 #endif
 }

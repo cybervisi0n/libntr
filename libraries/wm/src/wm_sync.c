@@ -205,9 +205,12 @@ u16 WM_GetAllowedChannel (void)
     if (result != WM_ERRCODE_SUCCESS) {
         return WM_GET_ALLOWED_CHANNEL_BEFORE_INIT;
     }
-
+    #ifdef SDK_PORT
+    return 0b0001111111111111;
+    #else
     return *((u16 *)((u32)(OS_GetSystemWork()->nvramUserInfo) +
                      ((sizeof(NVRAMConfig) + 3) & ~0x00000003) + 6));
+    #endif
 #else
     WMErrCode result;
     WMArm9Buf * p = WMi_GetSystemWork();

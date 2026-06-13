@@ -6,7 +6,11 @@
 #ifndef SDK_ASM
 #include <nitro/types.h>
 
+#ifdef SDK_PORT
+#include <nitro/hw/X86/mmap_shared.h>
+#else
 #include <nitro/hw/common/mmap_shared.h>
+#endif
 
 #include <nitro/os/common/thread.h>
 #include <nitro/os/common/spinLock.h>
@@ -48,6 +52,15 @@ typedef struct {
 	u16 autoloadSync;
 	u32 lockIDFlag_mainp[2];
 	u32 lockIDFlag_subp[2];
+    #if(defined(SDK_PORT) && defined(__cplusplus))
+    OSLockWord lock_VRAM_C;
+    OSLockWord lock_VRAM_D;
+    OSLockWord lock_WRAM_BLOCK0;
+    OSLockWord lock_WRAM_BLOCK1;
+    OSLockWord lock_CARD;
+    OSLockWord lock_CARTRIDGE;
+    OSLockWord lock_INIT;
+    #else
 	struct OSLockWord lock_VRAM_C;
 	struct OSLockWord lock_VRAM_D;
 	struct OSLockWord lock_WRAM_BLOCK0;
@@ -55,6 +68,7 @@ typedef struct {
 	struct OSLockWord lock_CARD;
 	struct OSLockWord lock_CARTRIDGE;
 	struct OSLockWord lock_INIT;
+    #endif
 	u16 mmem_checker_mainp;
 	u16 mmem_checker_subp;
 	u8 padding4[2];

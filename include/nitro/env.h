@@ -9,6 +9,10 @@ extern "C" {
     #include <nitro/env/env_system.h>
 #endif
 
+#ifdef SDK_X86
+#include <nitro/env/env_system.h>
+#endif
+
 #ifdef __cplusplus
 }
 #endif

@@ -4,10 +4,55 @@
 #include <nitro/fx/fx_const.h>
 #include <nitro/fx/fx_cp.h>
 
+#ifdef SDK_PORT
+#include <simulator/assert.h>
+
+static
+#endif
 inline fx32 mul64 (fx64 x, fx32 y)
 {
 	return (fx32)((x * y) >> FX32_SHIFT);
 }
+
+#ifdef SDK_PORT
+void MTX_Identity33_(MtxFx33* pDst)
+{
+    pDst->_00 = FX32_ONE;
+    pDst->_01 = 0;
+    pDst->_02 = 0;
+    pDst->_10 = 0;
+    pDst->_11 = FX32_ONE;
+    pDst->_12 = 0;
+    pDst->_20 = 0;
+    pDst->_21 = 0;
+    pDst->_22 = FX32_ONE;
+    return;
+}
+
+void MTX_Copy33To43_(const MtxFx33* pSrc, MtxFx43* pDst)
+{
+    SIM_assert_always_msg("Not implemented");
+    return;
+}
+
+void MTX_Copy33To44_(const MtxFx33* pSrc, MtxFx44* pDst)
+{
+    SIM_assert_always_msg("Not implemented");
+    return;
+}
+
+void MTX_Transpose33_(const MtxFx33* pSrc, MtxFx33* pDst)
+{
+    SIM_assert_always_msg("Not implemented");
+    return;
+}
+
+void MTX_Scale33_(MtxFx33* pDst, fx32 x, fx32 y, fx32 z)
+{
+    SIM_assert_always_msg("Not implemented");
+    return;
+}
+#else
 
 asm void MTX_Identity33_ (register MtxFx33 *pDst)
 {
@@ -83,6 +128,7 @@ asm void MTX_Scale33_ (register MtxFx33 *pDst, register fx32 x, register fx32 y,
 }
 
 #include <nitro/code32.h>
+#endif
 
 void MTX_ScaleApply33 (const MtxFx33 *pSrc, MtxFx33 *pDst, fx32 x, fx32 y, fx32 z)
 {
@@ -109,6 +155,60 @@ void MTX_ScaleApply33 (const MtxFx33 *pSrc, MtxFx33 *pDst, fx32 x, fx32 y, fx32 
 
 #include <nitro/code16.h>
 
+#ifdef SDK_PORT
+void MTX_RotX33_(MtxFx33 * pDst, fx32 sinVal, fx32 cosVal)
+{
+    u32 r3 = 1;
+    r3 = r3 << 12;
+    pDst->a[0] = r3;
+    r3 = 0;
+    pDst->a[1]  = r3;
+    pDst->a[2] = r3;
+    pDst->a[3] = r3;
+    pDst->a[4] = cosVal;
+    pDst->a[5] = sinVal;
+    pDst->a[6] = r3;
+    pDst->a[7] = -sinVal;
+    pDst->a[8] = cosVal;
+    return;
+}
+
+void MTX_RotY33_(MtxFx33 * pDst, fx32 sinVal, fx32 cosVal)
+{
+    pDst->a[0] = cosVal;
+    pDst->a[8] = cosVal;
+    u32 r3 = 0;
+    pDst->a[1] = r3;
+    pDst->a[3] = r3;
+    pDst->a[5] = r3;
+    pDst->a[7] = r3;
+    //TODO: These might need to be swapped
+    pDst->a[6] = sinVal;
+    pDst->a[2] = -sinVal;
+
+    r3 = 1;
+    r3 = r3 << 12;
+    pDst->a[4] = r3;
+    return;
+}
+
+void MTX_RotZ33_(MtxFx33 * pDst, fx32 sinVal, fx32 cosVal)
+{
+    pDst->a[0] = cosVal;
+    u32 r3 = 0;
+    pDst->a[1] = sinVal;
+    pDst->a[2] = r3;
+    pDst->a[3] = -sinVal;
+    pDst->a[4] = cosVal;
+    pDst->a[5] = r3;
+    pDst->a[6] = r3;
+    pDst->a[7] = r3;
+    r3 = 1;
+    r3 = r3 << 12;
+    pDst->a[8] = r3;
+    return;
+}
+#else
 asm void MTX_RotX33_ (register MtxFx33 *pDst, register fx32 sinVal, register fx32 cosVal)
 {
 	mov r3, #1
@@ -168,6 +268,7 @@ asm void MTX_RotZ33_ (register MtxFx33 *pDst, register fx32 sinVal, register fx3
 }
 
 #include <nitro/code32.h>
+#endif
 
 void MTX_RotAxis33 (MtxFx33 *pDst, const VecFx32 *vec, fx32 sinVal, fx32 cosVal)
 {

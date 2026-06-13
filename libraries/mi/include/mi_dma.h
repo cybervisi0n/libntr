@@ -13,8 +13,13 @@ extern "C" {
     #else
         #define MIi_DMA_CLEAR_DATA_BUF    HW_DMA_CLEAR_DATA_BUF
     #endif
-#else
+#endif
+#ifdef SDK_ARM7
     #define MIi_DMA_CLEAR_DATA_BUF     HW_PRV_WRAM_DMA_CLEAR_DATA_BUF
+#endif
+
+#ifdef SDK_PORT
+    #define MIi_DMA_CLEAR_DATA_BUF    REG_DMA0_CLR_DATA_ADDR
 #endif
 
 typedef union {
@@ -22,9 +27,13 @@ typedef union {
     u16 b16;
 } MIiDmaClearSrc;
 
-#ifdef SDK_ARM9
+#if defined( SDK_ARM9 ) || defined( SDK_PORT )
     void MIi_DmaSetParams(u32 dmaNo, u32 src, u32 dest, u32 ctrl);
+#ifdef SDK_PORT
+    void MIi_DmaSetParams_wait(u32 dmaNo, u64 src, u64 dest, u32 ctrl);
+#else
     void MIi_DmaSetParams_wait(u32 dmaNo, u32 src, u32 dest, u32 ctrl);
+#endif
     void MIi_DmaSetParams_noInt(u32 dmaNo, u32 src, u32 dest, u32 ctrl);
     void MIi_DmaSetParams_wait_noInt(u32 dmaNo, u32 src, u32 dest, u32 ctrl);
 #else
@@ -78,7 +87,11 @@ static inline void MIi_DmaSetParams_src32 (u32 dmaNo, u32 data, u32 dest, u32 ct
 {
     OSIntrMode enabled = OS_DisableInterrupts();
 
+    #ifdef SDK_PORT
+    MIiDmaClearSrc * srcp = (MIiDmaClearSrc *) (MIi_DMA_CLEAR_DATA_BUF + dmaNo * 4);
+    #else
     MIiDmaClearSrc * srcp = (MIiDmaClearSrc *) ((u32)MIi_DMA_CLEAR_DATA_BUF + dmaNo * 4);
+    #endif
     srcp->b32 = data;
     MIi_DmaSetParams_noInt(dmaNo, (u32)srcp, dest, ctrl);
 
@@ -89,7 +102,11 @@ static inline void MIi_DmaSetParams_src16 (u32 dmaNo, u16 data, u32 dest, u32 ct
 {
     OSIntrMode enabled = OS_DisableInterrupts();
 
+    #ifdef SDK_PORT
+    MIiDmaClearSrc * srcp = (MIiDmaClearSrc *) (MIi_DMA_CLEAR_DATA_BUF + dmaNo * 4);
+    #else
     MIiDmaClearSrc * srcp = (MIiDmaClearSrc *) ((u32)MIi_DMA_CLEAR_DATA_BUF + dmaNo * 4);
+    #endif
     srcp->b16 = data;
     MIi_DmaSetParams_noInt(dmaNo, (u32)srcp, dest, ctrl);
 
@@ -100,7 +117,11 @@ static inline void MIi_DmaSetParams_wait_src32 (u32 dmaNo, u32 data, u32 dest, u
 {
     OSIntrMode enabled = OS_DisableInterrupts();
 
+    #ifdef SDK_PORT
+    MIiDmaClearSrc * srcp = (MIiDmaClearSrc *) (MIi_DMA_CLEAR_DATA_BUF + dmaNo * 4);
+    #else
     MIiDmaClearSrc * srcp = (MIiDmaClearSrc *) ((u32)MIi_DMA_CLEAR_DATA_BUF + dmaNo * 4);
+    #endif
     srcp->b32 = data;
     MIi_DmaSetParams_wait_noInt(dmaNo, (u32)srcp, dest, ctrl);
 
@@ -111,7 +132,11 @@ static inline void MIi_DmaSetParams_wait_src16 (u32 dmaNo, u16 data, u32 dest, u
 {
     OSIntrMode enabled = OS_DisableInterrupts();
 
+    #ifdef SDK_PORT
+    MIiDmaClearSrc * srcp = (MIiDmaClearSrc *) (MIi_DMA_CLEAR_DATA_BUF + dmaNo * 4);
+    #else
     MIiDmaClearSrc * srcp = (MIiDmaClearSrc *) ((u32)MIi_DMA_CLEAR_DATA_BUF + dmaNo * 4);
+    #endif
     srcp->b16 = data;
     MIi_DmaSetParams_wait_noInt(dmaNo, (u32)srcp, dest, ctrl);
 
@@ -172,7 +197,7 @@ static inline void MIi_CallCallback (MIDmaCallback callback, void * arg)
     #define MIi_WARNING_ADDRINTCM(addr, size)  ((void)0)
 #endif
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     void MIi_CheckAnotherAutoDMA(u32 dmaNo, u32 dmaType);
 #endif
 

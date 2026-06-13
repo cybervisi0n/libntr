@@ -6,7 +6,11 @@ extern vu64 OSi_TickCounter;
 void OS_GetLowEntropyData (u32 buffer[OS_LOW_ENTROPY_DATA_SIZE / sizeof(u32)])
 {
     const OSSystemWork * work = OS_GetSystemWork();
+    #ifdef SDK_PORT
+    const u8 * macAddress = (u8 *)((work->nvramUserInfo) + ((sizeof(NVRAMConfig) + 3) & ~0x00000003));
+    #else
     const u8 * macAddress = (u8 *)((u32)(work->nvramUserInfo) + ((sizeof(NVRAMConfig) + 3) & ~0x00000003));
+    #endif
 
     buffer[0] = (u32)((GX_GetVCount() << 16) | OS_GetTickLo());
     buffer[1] = (u32)(*(u16 *)(macAddress + 4) << 16) ^ (u32)(OSi_TickCounter);

@@ -6,6 +6,38 @@
 #include <nitro/fx/fx_cp.h>
 #include <nitro/mi/memory.h>
 
+#ifdef SDK_PORT
+#include "simulator/assert.h"
+
+void MTX_Identity43_(MtxFx43* pDst)
+{
+    pDst->_00 = FX32_ONE;
+    pDst->_01 = 0;
+    pDst->_02 = 0;
+    pDst->_10 = 0;
+    pDst->_11 = FX32_ONE;
+    pDst->_12 = 0;
+    pDst->_20 = 0;
+    pDst->_21 = 0;
+    pDst->_22 = FX32_ONE;
+    pDst->_30 = 0;
+    pDst->_31 = 0;
+    pDst->_32 = 0;
+    return;
+}
+
+void MTX_Copy43To44_(const MtxFx43* pSrc, MtxFx44* pDst)
+{
+    //PCPORT_TODO
+    SIM_assert_always_msg("Not implemented");
+}
+
+void MTX_Transpose43_(const MtxFx43* pSrc, MtxFx43* pDst)
+{
+    //PCPORT_TODO
+    SIM_assert_always_msg("Not implemented");
+}
+#else
 asm void MTX_Identity43_ (register MtxFx43 *pDst)
 {
 	mov r2, #4096
@@ -51,6 +83,7 @@ asm void MTX_Transpose43_ (register const MtxFx43 *pSrc, register MtxFx43 *pDst)
 	ldmfd sp !, {r4 - r9}
 	bx lr
 }
+#endif
 
 void MTX_TransApply43 (const MtxFx43 *pSrc, MtxFx43 *pDst, fx32 x, fx32 y, fx32 z)
 {
@@ -72,6 +105,13 @@ void MTX_TransApply43 (const MtxFx43 *pSrc, MtxFx43 *pDst, fx32 x, fx32 y, fx32 
 	}
 }
 
+#ifdef SDK_PORT
+void MTX_Scale43_(register MtxFx43* pDst, register fx32 x, register fx32 y, register fx32 z)
+{
+    SIM_assert_always_msg("Not implemented");
+}
+#else
+
 #include <nitro/code16.h>
 
 asm void MTX_Scale43_ (register MtxFx43 *pDst, register fx32 x, register fx32 y, register fx32 z)
@@ -88,6 +128,7 @@ asm void MTX_Scale43_ (register MtxFx43 *pDst, register fx32 x, register fx32 y,
 	stmia r0 !, {r1, r2, r3}
 	bx lr
 }
+#endif
 
 #include <nitro/code32.h>
 
@@ -100,6 +141,43 @@ void MTX_ScaleApply43 (const MtxFx43 *pSrc, MtxFx43 *pDst, fx32 x, fx32 y, fx32 
 	pDst->_32 = pSrc->_32;
 }
 
+#ifdef SDK_PORT
+void MTX_RotX43_(MtxFx43 * pDst, fx32 sinVal, fx32 cosVal) {
+    pDst->a[0] = FX32_ONE;
+    pDst->a[1] = 0;
+    pDst->a[2] = 0;
+    pDst->a[3] = 0;
+    pDst->a[4] = cosVal;
+    pDst->a[5] = sinVal;
+    pDst->a[6] = 0;
+    pDst->a[7] = -sinVal;
+    pDst->a[8] = cosVal;
+}
+
+void MTX_RotY43_(MtxFx43 * pDst, fx32 sinVal, fx32 cosVal) {
+    pDst->a[0] = cosVal;
+    pDst->a[1] = 0;
+    pDst->a[2] = -sinVal;
+    pDst->a[3] = 0;
+    pDst->a[4] = FX32_ONE;
+    pDst->a[5] = 0;
+    pDst->a[6] = sinVal;
+    pDst->a[7] = 0;
+    pDst->a[8] = cosVal;
+}
+
+void MTX_RotZ43_(MtxFx43 * pDst, fx32 sinVal, fx32 cosVal) {
+    pDst->a[0] = cosVal;
+    pDst->a[1] = sinVal;
+    pDst->a[2] = 0;
+    pDst->a[3] = -sinVal;
+    pDst->a[4] = cosVal;
+    pDst->a[5] = 0;
+    pDst->a[6] = 0;
+    pDst->a[7] = 0;
+    pDst->a[8] = FX32_ONE;
+}
+#else
 #include <nitro/code16.h>
 
 asm void MTX_RotX43_ (register MtxFx43 *pDst, register fx32 sinVal, register fx32 cosVal)
@@ -160,6 +238,7 @@ asm void MTX_RotZ43_ (register MtxFx43 *pDst, register fx32 sinVal, register fx3
 	stmia r0 !, {r1, r2, r3}
 	bx lr
 }
+#endif
 
 #include <nitro/code32.h>
 

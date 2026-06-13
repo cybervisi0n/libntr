@@ -5,6 +5,10 @@
 extern "C" {
 #endif
 
+#ifdef SDK_PORT
+#include <SDL2/SDL.h>
+#endif
+
 typedef struct OSMessageQueue OSMessageQueue;
 typedef void * OSMessage;
 
@@ -17,6 +21,9 @@ struct OSMessageQueue {
 	s32 msgCount;
 	s32 firstIndex;
 	s32 usedCount;
+#ifdef SDK_PORT
+  SDL_sem * semaphore;
+#endif
 };
 
 #pragma warn_padding reset

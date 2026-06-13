@@ -114,7 +114,11 @@ void FX_DivAsync (fx32 numer, fx32 denom)
 	SDK_ASSERT(!CP_IsDivBusy());
 	FX_DIVISION_BY_ZERO(numer, denom);
 
+    #ifdef SDK_PORT
+    CP_SetDiv64_32((s64)numer << 32, (s32)denom);
+    #else
 	CP_SetDiv64_32((u64)numer << 32, (u32)denom);
+    #endif
 }
 
 s32 FX_DivS32 (s32 a, s32 b)

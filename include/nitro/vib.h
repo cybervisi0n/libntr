@@ -1,7 +1,7 @@
 #ifndef NITROSDK_VIB_H_
 #define NITROSDK_VIB_H_
 
-#ifdef SDK_ARM9
+#if(defined(SDK_ARM9) || defined(SDK_PORT))
 #include <nitro/vib/vib_system.h>
 #endif
 

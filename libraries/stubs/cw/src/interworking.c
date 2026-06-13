@@ -9,6 +9,10 @@ void __call_via_r5(void);
 void __call_via_r6(void);
 void __call_via_r7(void);
 
+#ifdef SDK_PORT
+// TODO: X86 code
+#else
+
 SDK_WEAK_SYMBOL asm void __call_via_r0 (void){
     bx r0
 }
@@ -47,3 +51,4 @@ SDK_WEAK_SYMBOL asm void __call_via_r7 (void)
 {
     bx r7
 }
+#endif

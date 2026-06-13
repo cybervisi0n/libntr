@@ -1,4 +1,4 @@
-#ifdef SDK_ARM9
+#if defined( SDK_ARM9 ) || defined( SDK_PORT )
 #include <nitro.h>
 
 #include "../include/mi_dma.h"
@@ -28,7 +28,11 @@ void MI_SendGXCommand (u32 dmaNo, const void * src, u32 commandLength)
 {
 	vu32 * dmaCntp;
 	u32 leftLength = commandLength;
+    #ifdef SDK_PORT
+	u64 currentSrc = (u64)src;
+    #else
 	u32 currentSrc = (u32)src;
+    #endif
 
 	MIi_ASSERT_DMANO(dmaNo);
 	MIi_ASSERT_SRC_ALIGN4(src);
@@ -38,17 +42,36 @@ void MI_SendGXCommand (u32 dmaNo, const void * src, u32 commandLength)
 		return;
 	}
 
+    #ifdef SDK_PORT
+	MIi_CheckDma0SourceAddress(dmaNo, (u64)src, commandLength, MI_DMA_SRC_INC);
+    #else
 	MIi_CheckDma0SourceAddress(dmaNo, (u32)src, commandLength, MI_DMA_SRC_INC);
 	MIi_Wait_BeforeDMA(dmaCntp, dmaNo);
+    #endif
 
 	while (leftLength > 0) {
 		u32 length = (leftLength > MIi_GX_LENGTH_ONCE) ? MIi_GX_LENGTH_ONCE : leftLength;
+        #ifdef SDK_PORT
+        draw_msg_t * msg;
+        msg = malloc( sizeof( draw_msg_t ) );
+        msg->type = DRAW_CMD_G3_CMD_LIST;
+        u8 * cmdBuf = malloc( sizeof(u8) * commandLength );
+        memcpy(cmdBuf, src, commandLength);
+        msg->data.ptr = cmdBuf;
+        msg->size = commandLength;
+        SIM_HandleG3Command( msg );
+        free( msg );
+        leftLength = 0;
+        #else
 		MIi_DmaSetParams(dmaNo, currentSrc, (u32)REG_GXFIFO_ADDR, MI_CNT_SEND32(length));
 		leftLength -= length;
 		currentSrc += length;
+        #endif
 	}
 
+    #ifndef SDK_PORT
 	MIi_Wait_AfterDMA(dmaCntp);
+    #endif
 }
 
 #include <nitro/itcm_end.h>
@@ -64,11 +87,13 @@ void MI_SendGXCommandAsync (u32 dmaNo, const void * src, u32 commandLength, MIDm
 		return;
 	}
 
+    #ifndef SDK_PORT
 	while (MIi_GXDmaParams.isBusy  ) {
 	}
 
 	while (!(G3X_GetCommandFifoStatus() & GX_FIFOSTAT_UNDERHALF)) {
 	}
+    #endif
 
 	MIi_GXDmaParams.isBusy = TRUE;
 	MIi_GXDmaParams.dmaNo = dmaNo;
@@ -90,6 +115,19 @@ void MI_SendGXCommandAsync (u32 dmaNo, const void * src, u32 commandLength, MIDm
 		OS_SetIrqFunction(OS_IE_GXFIFO, MIi_FIFOCallback);
 
 		(void)OS_EnableIrqMask(OS_IE_GXFIFO);
+
+        #ifdef SDK_PORT
+        draw_msg_t * msg;
+        msg = malloc( sizeof( draw_msg_t ) );
+        msg->type = DRAW_CMD_G3_CMD_LIST;
+        u8 * cmdBuf = malloc( sizeof(u8) * commandLength );
+        memcpy(cmdBuf, src, commandLength);
+        msg->data.ptr = cmdBuf;
+        msg->size = commandLength;
+        SIM_HandleG3Command( msg );
+        free( msg );
+        #endif
+
 		MIi_FIFOCallback();
 		(void)OS_RestoreInterrupts(enabled);
 	}

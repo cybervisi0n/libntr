@@ -290,10 +290,17 @@ WMErrCode WM_SetMPDataToPortEx (WMCallbackFunc callback, void * arg, const u16 *
 
     DC_StoreRange((void *)sendData, sendDataSize);
 
+    #ifdef SDK_PORT
+    result = WMi_SendCommand(WM_APIID_SET_MP_DATA, 7,
+                             (u64)sendData,
+                             (u64)sendDataSize,
+                             (u64)destBitmap, (u64)port, (u64)prio, (u64)callback, (u64)arg);
+    #else
     result = WMi_SendCommand(WM_APIID_SET_MP_DATA, 7,
                              (u32)sendData,
                              (u32)sendDataSize,
                              (u32)destBitmap, (u32)port, (u32)prio, (u32)callback, (u32)arg);
+    #endif
     WM_CHECK_RESULT(result);
 
     return WM_ERRCODE_OPERATING;

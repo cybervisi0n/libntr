@@ -13,6 +13,9 @@ BOOL OSi_IsRunOnDebugger(void);
 
 BOOL OS_IsRunOnEmulator (void)
 {
+#ifdef SDK_PORT
+    return FALSE;
+#endif
 #ifdef SDK_ARM9
 #ifndef SDK_FINALROM
     static int onEmu = -1;
@@ -104,8 +107,12 @@ u32 OSi_GetDeviceType (void)
 
 BOOL OSi_IsRunOnDebugger (void)
 {
+    #ifdef SDK_PORT
+    return FALSE;
+    #else
     u16 * checkAddress = (u16 *)((*(u16 *)HW_CHECK_DEBUGGER_SW ==
                                   0) ? HW_CHECK_DEBUGGER_BUF1 : HW_CHECK_DEBUGGER_BUF2);
 
     return (*checkAddress == 1) ? TRUE : FALSE;
+    #endif
 }

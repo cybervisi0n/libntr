@@ -2,7 +2,7 @@
 #include  <nitro/misc.h>
 
 #ifndef SDK_FINALROM
-    #ifdef SDK_ARM9
+    #if defined(SDK_ARM9) || defined(SDK_PORT)
         #include <nitro/version_begin.h>
         SDK_DEFINE_MIDDLEWARE(checkString, "NINTENDO", "DEBUG");
         #include <nitro/version_end.h>

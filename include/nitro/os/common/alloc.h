@@ -191,19 +191,19 @@ static inline void OS_FreeAllToSubPrivWram (void)
 	OS_FreeAllToHeap(OS_ARENA_WRAM_SUBPRIV, OS_CURRENT_HEAP_HANDLE);
 }
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     #define OS_Alloc(size)   OS_AllocFromMain((size))
 #else
     #define OS_Alloc(size)   OS_AllocFromSubPriv((size))
 #endif
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     #define OS_Free(ptr)     OS_FreeToMain((ptr))
 #else
     #define OS_Free(ptr)     OS_FreeToSubPriv((ptr))
 #endif
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     #define OS_FreeAll()     OS_FreeAllToMain()
 #else
     #define OS_FreeAll()     OS_FreeAllToSubPriv()

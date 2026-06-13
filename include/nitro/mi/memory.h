@@ -8,6 +8,10 @@ extern "C" {
 #include <nitro/misc.h>
 #include <nitro/types.h>
 
+#ifdef SDK_PORT
+#include <string.h>
+#endif
+
 void MIi_CpuClear16(u16 data, void * destp, u32 size);
 void MIi_CpuCopy16(const void * srcp, void * destp, u32 size);
 void MIi_CpuSend16(const void * srcp, volatile void * destp, u32 size);
@@ -86,7 +90,11 @@ static inline void MI_CpuFillFast (void * dest, u32 data, u32 size)
 	SDK_ASSERTMSG((size & 3) == 0, "size & 3 must be 0");
 	SDK_ASSERTMSG(((u32)dest & 3) == 0, "source address must be in 4-byte alignment");
 
+  #ifdef SDK_PORT
+  memset( dest, data, size );
+  #else
 	MIi_CpuClearFast(data, dest, size);
+  #endif
 }
 
 static inline void MI_CpuCopyFast (const void * src, void * dest, u32 size)

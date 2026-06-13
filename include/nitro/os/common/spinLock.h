@@ -29,7 +29,12 @@ extern "C" {
 
 #define OS_LOCK_ID_ERROR        (-3)
 
-typedef volatile struct OSLockWord {
+#if(defined(SDK_PORT) && defined(__cplusplus))
+typedef volatile struct OSLockWord_struct
+#else
+typedef volatile struct OSLockWord 
+#endif
+{
 	u32 lockFlag;
 	u16 ownerID;
 	u16 extension;

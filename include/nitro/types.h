@@ -18,7 +18,12 @@ extern "C" {
 
 typedef unsigned char u8;
 typedef unsigned short int u16;
+
+#ifdef SDK_BUILD_LINUX
+typedef unsigned int u32;
+#else
 typedef unsigned long u32;
+#endif
 
 #ifdef SDK_HAS_NO_LONG_LONG_INT_
     typedef unsigned __int64 u64;
@@ -28,7 +33,11 @@ typedef unsigned long u32;
 
 typedef signed char s8;
 typedef signed short int s16;
+#ifdef SDK_BUILD_LINUX
+typedef signed int s32;
+#else
 typedef signed long s32;
+#endif
 
 #ifdef SDK_HAS_NO_LONG_LONG_INT_
     typedef signed __int64 s64;
@@ -90,6 +99,8 @@ typedef vu64 REGType64v;
 #if defined(SDK_CW) || defined(__MWERKS__)
     #define SDK_WEAK_SYMBOL __declspec(weak)
 #elif defined(SDK_PRODG)
+    #define SDK_WEAK_SYMBOL
+#elif defined(SDK_PORT)
     #define SDK_WEAK_SYMBOL
 #endif
 

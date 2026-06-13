@@ -9,6 +9,12 @@
 
 #include <nitro/code32.h>
 
+#ifdef SDK_PORT
+static void OSi_WaitVCount0( void )
+{
+    return;
+}
+#else
 static asm void OSi_WaitVCount0 (void)
 {
     mov r12, #HW_REG_BASE
@@ -21,6 +27,7 @@ static asm void OSi_WaitVCount0 (void)
     str r1, [r12, #REG_IME_OFFSET]
     bx lr
 }
+#endif
 
 #include <nitro/codereset.h>
 
@@ -28,7 +35,7 @@ static asm void OSi_WaitVCount0 (void)
 
 void OS_Init (void)
 {
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     SDK_ASSERT((u32) & (OS_GetSystemWork()->command_area) == HW_CMD_AREA);
 #ifdef SDK_ENABLE_ARM7_PRINT
     OS_InitPrintServer();
@@ -94,5 +101,12 @@ void OS_Init (void)
 
 #endif
 }
+
+#ifdef SDK_PORT
+void OS_Init7(void)
+{
+    OS_InitArena7();
+}
+#endif
 
 #pragma profile reset

@@ -51,12 +51,16 @@ typedef enum SNDCommandID {
 typedef struct SNDCommand {
 	struct SNDCommand * next;
 	SNDCommandID id;
+    #ifdef SDK_PORT
+    u64 arg[4];
+    #else
 	u32 arg[4];
+    #endif
 } SNDCommand;
 
 void SND_CommandInit(void);
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     struct SNDCommand * SND_AllocCommand(u32 flags);
     void SND_PushCommand(struct SNDCommand * command);
 
@@ -73,7 +77,8 @@ void SND_CommandInit(void);
     int SND_CountFreeCommand(void);
     int SND_CountReservedCommand(void);
     int SND_CountWaitingCommand(void);
-#else
+#endif
+#ifdef SDK_ARM7
     void SND_CommandProc(void);
 #endif
 

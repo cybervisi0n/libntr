@@ -182,6 +182,10 @@ void *G2S_GetBG3ScrPtr (void)
 void * G2_GetBG0CharPtr (void)
 {
 	int baseBlock = 0x4000 * ((reg_G2_BG0CNT & REG_G2_BG0CNT_CHARBASE_MASK) >> REG_G2_BG0CNT_CHARBASE_SHIFT);
+
+	#ifndef SDK_BUILD_ARM
+    baseBlock = baseBlock & 131071;
+    #endif
 	return (void *)(HW_BG_VRAM + getBGCharOffset_() + baseBlock);
 }
 
@@ -194,6 +198,9 @@ void * G2S_GetBG0CharPtr (void)
 void * G2_GetBG1CharPtr (void)
 {
 	int baseBlock = 0x4000 * ((reg_G2_BG1CNT & REG_G2_BG1CNT_CHARBASE_MASK) >> REG_G2_BG1CNT_CHARBASE_SHIFT);
+    #ifndef SDK_BUILD_ARM
+    baseBlock = baseBlock & 131071;
+    #endif
 	return (void *)(HW_BG_VRAM + getBGCharOffset_() + baseBlock);
 }
 
@@ -211,6 +218,9 @@ void * G2_GetBG2CharPtr (void)
 	if (bgMode < 5 || !(bg & REG_G2_BG2CNT_COLORMODE_MASK)) {
 		int offset = getBGCharOffset_();
 		u32 blockID = (bg & REG_G2_BG2CNT_CHARBASE_MASK) >> REG_G2_BG2CNT_CHARBASE_SHIFT;
+        #ifndef SDK_BUILD_ARM
+        blockID = blockID % 8;
+        #endif
 		return (void *)(HW_BG_VRAM + offset + 0x4000 * blockID);
 	} else {
 		return NULL;
@@ -251,6 +261,9 @@ void * G2S_GetBG3CharPtr (void)
 
 	if (bgMode < 3 || (bgMode < 6 && !(bg & REG_G2S_DB_BG2CNT_COLORMODE_MASK))) {
 		u32 blockID = (bg & REG_G2S_DB_BG3CNT_CHARBASE_MASK) >> REG_G2S_DB_BG3CNT_CHARBASE_SHIFT;
+        #ifndef SDK_BUILD_ARM
+        blockID = blockID % 8;
+        #endif
 		return (void *)(HW_DB_BG_VRAM + 0x4000 * blockID);
 	} else {
 		return NULL;

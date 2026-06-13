@@ -93,6 +93,10 @@ typedef struct {
     typedef BOOL (*CTRDGPulledOutCallback) (void);
 #endif
 
+#ifdef SDK_PORT
+typedef BOOL (*CTRDGPulledOutCallback) (void);
+#endif
+
 void CTRDG_Init(void);
 
 BOOL CTRDG_IsPulledOut(void);
@@ -112,7 +116,15 @@ BOOL CTRDG_IsOptionCartridgePulledOut(void);
     void CTRDG_SetPulledOutCallback(CTRDGPulledOutCallback callback);
 #endif
 
+#ifdef SDK_PORT
+    void CTRDG_SetPulledOutCallback(CTRDGPulledOutCallback callback);
+#endif
+
 #ifdef SDK_ARM9
+    void CTRDG_TerminateForPulledOut(void);
+#endif
+
+#ifdef SDK_PORT
     void CTRDG_TerminateForPulledOut(void);
 #endif
 

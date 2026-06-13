@@ -9,10 +9,14 @@ void OS_InitMutex (OSMutex * mutex)
 {
     SDK_ASSERT(mutex);
 
+    #ifdef SDK_PORT
+    mutex->sdlMutex = SDL_CreateMutex();
+    #else
     OS_InitThreadQueue(&mutex->queue);
 
     mutex->thread = NULL;
     mutex->count = 0;
+    #endif
 }
 
 void OS_LockMutex (OSMutex * mutex)
@@ -23,6 +27,9 @@ void OS_LockMutex (OSMutex * mutex)
 
     SDK_ASSERT(mutex);
 
+    #ifdef SDK_PORT
+    SDL_LockMutex(mutex->sdlMutex);
+    #else
     saved = OS_DisableInterrupts();
     currentThread = OS_GetCurrentThread();
 
@@ -45,6 +52,7 @@ void OS_LockMutex (OSMutex * mutex)
     }
 
     (void)OS_RestoreInterrupts(saved);
+    #endif
 }
 
 void OS_UnlockMutex (OSMutex * mutex)
@@ -54,6 +62,9 @@ void OS_UnlockMutex (OSMutex * mutex)
 
     SDK_ASSERT(mutex);
 
+    #ifdef SDK_PORT
+    SDL_UnlockMutex(mutex->sdlMutex);
+    #else
     saved = OS_DisableInterrupts();
     currentThread = OS_GetCurrentThread();
 
@@ -64,6 +75,7 @@ void OS_UnlockMutex (OSMutex * mutex)
     }
 
     (void)OS_RestoreInterrupts(saved);
+    #endif
 }
 
 void OSi_UnlockAllMutex (OSThread * thread)
@@ -102,6 +114,9 @@ BOOL OS_TryLockMutex (OSMutex * mutex)
 
     SDK_ASSERT(mutex);
 
+    #ifdef SDK_PORT
+    locked = (SDL_TryLockMutex(mutex->sdlMutex) == 0);
+    #else
     saved = OS_DisableInterrupts();
     currentThread = OS_GetCurrentThread();
 
@@ -118,6 +133,7 @@ BOOL OS_TryLockMutex (OSMutex * mutex)
     }
 
     (void)OS_RestoreInterrupts(saved);
+    #endif
     return locked;
 }
 

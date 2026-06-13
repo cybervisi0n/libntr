@@ -7,6 +7,11 @@
 #include <nitro/fs/archive.h>
 #include <nitro/card.h>
 
+#ifdef SDK_PORT
+#include <stdio.h>
+#include <stdlib.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -146,6 +151,9 @@ typedef struct FSFile {
 		FSCloseFileInfo closefile;
 	} arg;
 
+	#ifdef SDK_PORT
+	FILE* pcFilePtr;
+	#endif
 } FSFile;
 
 void FS_Init(u32 default_dma_no);

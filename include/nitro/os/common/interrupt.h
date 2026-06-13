@@ -60,6 +60,10 @@ void OSi_EnterTimerCallback(u32 timerNo, void (*callback)(void *), void * arg);
 #define OS_IE_USER_FLAG0            (1UL << OS_IE_USER_FLAG0_SHIFT)
 #define OS_IE_USER_FLAG1            (1UL << OS_IE_USER_FLAG1_SHIFT)
 
+#ifdef SDK_PORT
+#define OS_IE_GXFIFO                 (1UL << REG_OS_IE_GF_SHIFT)
+#endif
+
 #define OSi_IRQCALLBACK_NO_DMA0     0
 #define OSi_IRQCALLBACK_NO_DMA1     1
 #define OSi_IRQCALLBACK_NO_DMA2     2
@@ -103,9 +107,13 @@ void OS_IrqHandler_ThreadSwitch(void);
 
 static inline BOOL OS_EnableIrq (void)
 {
+  #ifdef SDK_PORT
+  return TRUE;
+  #else
 	u16 prep = reg_OS_IME;
 	reg_OS_IME = OS_IME_ENABLE;
 	return (BOOL)prep;
+  #endif
 }
 
 static inline BOOL OS_DisableIrq (void)

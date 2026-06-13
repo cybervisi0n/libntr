@@ -315,7 +315,9 @@ void MBi_CommParentCallback (u16 type, void * arg)
 		MBCommPStateCallback tmpCb = pPwork->parent_callback;
 
 		MI_CpuClearFast(pPwork, sizeof(MB_CommPWork));
+        #ifdef SDK_BUILD_ARM
 		pPwork = NULL;
+        #endif
 		if (tmpCb) {
 			(*tmpCb)(0, MB_COMM_PSTATE_END, NULL);
 		}

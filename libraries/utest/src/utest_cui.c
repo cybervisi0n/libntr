@@ -37,6 +37,9 @@ void UTi_SetMessage (const char * filename, int linenum, const char * fmt, ...)
     assertMessageLen += (n > bufferLen) ? bufferLen : n;
 
     va_end(vlist);
+#ifdef SDK_PORT
+    OS_Printf("%s", bufferTop);
+#endif
 }
 
 void UTi_SetMessageWithFloat (const char * filename, int linenum, const char * fmt, ...)

@@ -1,6 +1,97 @@
 #include <nitro/types.h>
 #include <nitro/mi/uncompress.h>
 
+#ifdef SDK_PORT
+void MI_UncompressLZ8( register const void *srcp, register void *destp )
+{
+  u32 destCount;
+  u8 flags;
+  u32 header;
+  s32 i;
+  u8 isExFormat;
+  u8 isWide;
+  u32 length;
+  u32 offset;
+
+  destCount = *(u32*)srcp >> 8;
+  header = *(u32*)srcp;
+  srcp += 4;
+  isExFormat = (header & 0x0F) ? 1 : 0;
+
+  while( destCount > 0 )
+  {
+    flags = *(u8*)srcp;
+    srcp = srcp + 1;
+    for( i=8; --i >= 0; )
+    {
+      if( !( flags & 0x80 ) )
+      {
+        u8 r6;
+        r6 = *(u8*)srcp;
+        srcp++;
+        *(u8*)destp = r6;
+        destp++;
+        destCount = destCount - 1;
+      }
+      else
+      {
+        length = (*(u8*)srcp) >> 4;
+
+        if(!isExFormat)
+        {
+          length = length + 3;
+        }
+        else
+        {
+          if( length > 1 )
+          {
+            length = length + 1;
+          }
+          else
+          {
+            isWide = (length == 1) ? 1 : 0;
+            length = ((*(u8*)srcp) & 0x0F) << 4;
+            srcp++;
+
+            if( isWide )
+            {
+              length = length << 8;
+              length = length + ((*(u8*)srcp) << 4);
+              srcp++;
+              length = length + 0xFF + 1;
+            }
+
+            length = length + 0xF + 2;
+            length = length + ((*(u8*)srcp) >> 4);
+          }
+        }
+        offset = ((*(u8*)srcp) & 0x0f) << 8;
+        srcp++;
+        offset = (offset | *(u8*)srcp) + 1;
+        srcp++;
+
+        destCount = destCount - length;
+
+        do
+        {
+          *(u8*)destp = *(u8*)(destp - offset);
+          destp++;
+        }
+        while( --length > 0 );
+
+
+      }
+      if( destCount <= 0)
+      {
+        break;
+      }
+      flags = flags << 1;
+    }
+  }
+  
+  return;
+}
+#else
 #include <nitro/code32.h>
 
 asm void MI_UnpackBits (register const void * srcp, register void * destp, register MIUnpackBitsParam * paramp)
@@ -581,5 +672,6 @@ asm void MI_UnfilterDiff16 (register const void * srcp, register void * destp)
     ldmfd sp !, {r4, r5}
     bx lr
 }
+#endif
 
 #include <nitro/codereset.h>

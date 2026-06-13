@@ -15,7 +15,11 @@ extern "C" {
 #ifdef SDK_ARM9
     void SND_Init(void);
 #else
+    #ifdef SDK_PORT
+    void SND_Init(void);
+    #else
     void SND_Init(u32 threadPrio);
+    #endif
     void SND_CreateThread(u32 threadPrio);
     BOOL SND_SetThreadPriority(u32 prio);
     void SND_InitIntervalTimer(void);

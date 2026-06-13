@@ -38,6 +38,9 @@ void MI_InitUncompContextHuffman (MIUncompContextHuffman * context, u8 * dest, c
     context->srcTmpCnt = 0;
 }
 
+#ifdef SDK_PORT
+
+#else
 #include <nitro/code32.h>
 
 asm s32 MI_ReadUncompRL8 (register MIUncompContextRL * context, register const u8 * data, register u32 len)
@@ -542,3 +545,4 @@ asm s32 MI_ReadUncompHuffman (register MIUncompContextHuffman * context, registe
 }
 
 #include <nitro/codereset.h>
+#endif

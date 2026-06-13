@@ -1,7 +1,12 @@
 #include <nitro.h>
 
+#ifdef SDK_PORT
+#define OSi_TRUNC(n, a)     (((u64) (n)) & ~((a) - 1))
+#define OSi_ROUND(n, a)     (((u64) (n) + (a) - 1) & ~((a) - 1))
+#else
 #define OSi_TRUNC(n, a)              (((u32) (n)) & ~((a) - 1))
 #define OSi_ROUND(n, a)              (((u32) (n) + (a) - 1) & ~((a) - 1))
+#endif
 
 #define OS_ERR_GETARENAHI_INIT       "OS_GetArenaHi: init in advance"
 #define OS_ERR_GETARENAHI_INVALID    "OS_GetArenaHi: invalid arena (hi<lo)"
@@ -14,7 +19,11 @@
 
 extern void SDK_MAIN_ARENA_LO(void);
 
+#ifdef SDK_PORT
+#define OSi_MAIN_ARENA_LO_DEFAULT               (SDK_MAIN_ARENA_LO)
+#else
 #define OSi_MAIN_ARENA_LO_DEFAULT               ((u32)SDK_MAIN_ARENA_LO)
+#endif
 #define OSi_MAIN_ARENA_HI_DEFAULT               HW_MAIN_MEM_MAIN_END
 
 #ifdef SDK_ARM7
@@ -24,11 +33,31 @@ extern void SDK_MAIN_ARENA_LO(void);
     #define OSi_MAIN_SUBPRIV_ARENA_HI_DEFAULT       HW_MAIN_MEM_SUB_END
 #endif
 
+#ifdef SDK_PORT
+void SDK_SUBPRIV_ARENA_LO(void)
+{
+
+}
+#define OSi_MAIN_ARENA_LO_DEFAULT               (SDK_MAIN_ARENA_LO)
+#define OSi_MAIN_ARENA_HI_DEFAULT               HW_MAIN_MEM_MAIN_END
+#define OSi_MAIN_SUBPRIV_ARENA_LO_DEFAULT       (HW_MAIN_MEM_SUB) 
+#define OSi_MAIN_SUBPRIV_ARENA_HI_DEFAULT       HW_MAIN_MEM_SUB_END
+#endif
+
 #ifdef SDK_ARM9
     extern void SDK_SECTION_ARENA_EX_START(void);
 
     #define OSi_MAINEX_ARENA_LO_DEFAULT             ((u32)SDK_SECTION_ARENA_EX_START)
     #define OSi_MAINEX_ARENA_HI_DEFAULT             HW_MAIN_MEM_DEBUGGER
+#endif
+
+#ifdef SDK_PORT
+void SDK_SECTION_ARENA_EX_START(void)
+{
+
+}
+#define OSi_MAINEX_ARENA_LO_DEFAULT             ((u32)SDK_SECTION_ARENA_EX_START)
+#define OSi_MAINEX_ARENA_HI_DEFAULT             HW_MAIN_MEM_DEBUGGER
 #endif
 
 #ifdef SDK_ARM9
@@ -37,6 +66,17 @@ extern void SDK_MAIN_ARENA_LO(void);
 
     extern void SDK_SECTION_ARENA_ITCM_START(void);
     #define OSi_ITCM_ARENA_LO_DEFAULT               ((u32)SDK_SECTION_ARENA_ITCM_START)
+#endif
+
+#ifdef SDK_PORT
+extern void SDK_SECTION_ARENA_DTCM_START(void);
+#define OSi_DTCM_ARENA_LO_DEFAULT               ((u32)SDK_SECTION_ARENA_DTCM_START)
+
+void SDK_SECTION_ARENA_ITCM_START(void)
+{
+
+}
+#define OSi_ITCM_ARENA_LO_DEFAULT               ((u32)SDK_SECTION_ARENA_ITCM_START)
 #endif
 
 #define OSi_WRAM_MAIN_ARENA_LO_DEFAULT          HW_WRAM
@@ -54,6 +94,12 @@ extern void SDK_MAIN_ARENA_LO(void);
     #define OSi_WRAM_SUBPRIV_ARENA_HI_DEFAULT       HW_PRV_WRAM_END
 #endif
 
+#ifdef SDK_PORT
+extern void SDK_WRAM_ARENA_LO(void);
+#define OSi_WRAM_SUB_ARENA_LO_DEFAULT           ((u32)SDK_WRAM_ARENA_LO)
+#define OSi_WRAM_SUB_ARENA_HI_DEFAULT           HW_WRAM_END
+#endif
+
 extern void SDK_SYS_STACKSIZE(void);
 #define OSi_SYS_STACKSIZE               ((int)SDK_SYS_STACKSIZE)
 
@@ -62,7 +108,7 @@ extern void SDK_IRQ_STACKSIZE(void);
 
 static BOOL OSi_Initialized = FALSE;
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     #ifdef SDK_4M
         BOOL OSi_MainExArenaEnabled = FALSE;
     #else
@@ -70,7 +116,7 @@ static BOOL OSi_Initialized = FALSE;
     #endif
 #endif
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     void OS_InitArena (void)
     {
         if (OSi_Initialized) {
@@ -88,8 +134,21 @@ static BOOL OSi_Initialized = FALSE;
         OS_InitArenaHiAndLo(OS_ARENA_DTCM);
         OS_InitArenaHiAndLo(OS_ARENA_SHARED);
         OS_InitArenaHiAndLo(OS_ARENA_WRAM_MAIN);
+#ifdef SDK_PORT
+        OS_InitArenaHiAndLo(OS_ARENA_MAIN_SUBPRIV);
+#endif
     }
 #endif
+
+#ifdef SDK_PORT
+void OS_InitArena7(void)
+{
+    OS_InitArenaHiAndLo(OS_ARENA_MAIN_SUBPRIV);
+    OS_InitArenaHiAndLo(OS_ARENA_WRAM_SUB);
+    OS_InitArenaHiAndLo(OS_ARENA_WRAM_SUBPRIV);
+}
+#endif
+
 
 #ifdef SDK_ARM7
     void OS_InitArena (void)
@@ -106,7 +165,7 @@ static BOOL OSi_Initialized = FALSE;
     }
 #endif
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
 void OS_InitArenaEx (void)
 {
     OS_InitArenaHiAndLo(OS_ARENA_MAINEX);
@@ -174,7 +233,7 @@ void * OS_GetInitArenaHi (OSArenaId id)
     SDK_ARENAID_ASSERT(id);
 
     switch (id) {
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     case OS_ARENA_MAIN:
         return (void *)OSi_MAIN_ARENA_HI_DEFAULT;
     case OS_ARENA_MAINEX:
@@ -210,6 +269,12 @@ void * OS_GetInitArenaHi (OSArenaId id)
         return (void *)HW_SHARED_ARENA_HI_DEFAULT;
     case OS_ARENA_WRAM_MAIN:
         return (void *)(void *)OSi_WRAM_MAIN_ARENA_HI_DEFAULT;
+    #ifdef SDK_PORT
+    case OS_ARENA_MAIN_SUBPRIV:
+        return (void *)OSi_MAIN_SUBPRIV_ARENA_HI_DEFAULT;
+    case OS_ARENA_WRAM_SUBPRIV:
+        return (void *)HW_PRV_WRAM_END;
+    #endif
 #else
     case OS_ARENA_MAIN_SUBPRIV:
         return (void *)OSi_MAIN_SUBPRIV_ARENA_HI_DEFAULT;
@@ -251,6 +316,35 @@ void * OS_GetInitArenaLo (OSArenaId id)
     SDK_ARENAID_ASSERT(id);
 
     switch (id) {
+#ifdef SDK_PORT
+    case OS_ARENA_MAIN:
+        return (void *)(HW_MAIN_MEM + 0xe3e0);
+    case OS_ARENA_MAINEX:
+        if (!OSi_MainExArenaEnabled ||
+            ((OS_GetConsoleType() & OS_CONSOLE_SIZE_MASK) == OS_CONSOLE_SIZE_4MB))
+        {
+            return (void *)0;
+        }
+        else
+        {
+            return (void *)OSi_MAINEX_ARENA_LO_DEFAULT;
+        }
+    case OS_ARENA_ITCM:
+        return (void *)OSi_ITCM_ARENA_LO_DEFAULT;
+    case OS_ARENA_DTCM:
+        return (void *)OSi_DTCM_ARENA_LO_DEFAULT;
+    case OS_ARENA_SHARED:
+        return (void *)HW_SHARED_ARENA_LO_DEFAULT;
+    case OS_ARENA_WRAM_MAIN:
+        return (void *)OSi_WRAM_MAIN_ARENA_LO_DEFAULT;
+    case OS_ARENA_MAIN_SUBPRIV:
+        return (void *)OSi_MAIN_SUBPRIV_ARENA_LO_DEFAULT;
+    case OS_ARENA_WRAM_SUBPRIV:
+        {
+            u64     privWramLo = HW_PRV_WRAM;
+            return (void *)privWramLo;
+        }
+#else
 #ifdef SDK_ARM9
     case OS_ARENA_MAIN:
         return (void *)OSi_MAIN_ARENA_LO_DEFAULT;
@@ -289,6 +383,7 @@ void * OS_GetInitArenaLo (OSArenaId id)
         return (void *)privWramLo;
     }
 #endif
+#endif
     default:
         SDK_WARNING(0, "Bad arena id");
     }
@@ -322,9 +417,15 @@ void * OS_AllocFromArenaLo (OSArenaId id, u32 size, u32 align)
         return NULL;
     }
 
+    #ifdef SDK_PORT
+    arenaLo = ptr = (void *)(ptr);
+    arenaLo += size;
+    arenaLo = (u8 *)(arenaLo);
+    #else
     arenaLo = ptr = (void *)OSi_ROUND(ptr, align);
     arenaLo += size;
     arenaLo = (u8 *)OSi_ROUND(arenaLo, align);
+    #endif
 
     if (arenaLo > OS_GetArenaHi(id)) {
         return NULL;

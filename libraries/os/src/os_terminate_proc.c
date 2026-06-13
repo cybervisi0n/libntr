@@ -8,6 +8,12 @@ SDK_WEAK_SYMBOL void OS_Terminate (void)
     }
 }
 
+#ifdef SDK_PORT
+void OS_Halt( void )
+{
+  
+}
+#else
 #include <nitro/code32.h>
 
 SDK_WEAK_SYMBOL asm void OS_Halt (void)
@@ -18,6 +24,7 @@ SDK_WEAK_SYMBOL asm void OS_Halt (void)
 }
 
 #include <nitro/codereset.h>
+#endif
 
 SDK_WEAK_SYMBOL void OS_Exit (int status)
 {

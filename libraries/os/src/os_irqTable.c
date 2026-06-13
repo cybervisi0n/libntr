@@ -18,6 +18,9 @@ void OSi_IrqDma3(void);
     #include <nitro/dtcm_begin.h>
 #endif
 
+#ifdef SDK_PORT
+void OSi_IrqVblank(void);
+#else
 OSIrqFunction OS_IRQTable[OS_IRQ_TABLE_MAX] = {
 #ifdef SDK_ARM9
     OS_IrqDummy,
@@ -53,6 +56,7 @@ OSIrqFunction OS_IRQTable[OS_IRQ_TABLE_MAX] = {
     OS_IrqDummy
 #endif
 };
+#endif
 
 #ifdef SDK_ARM9
     #include <nitro/dtcm_end.h>

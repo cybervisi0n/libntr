@@ -8,7 +8,11 @@ extern "C" {
 #include <nitro/types.h>
 #include <nitro/spec.h>
 #include <nitro/spi/common/config.h>
+#if defined( SDK_PORT )
+#include <nitro/hw/X86/mmap_shared.h>
+#else
 #include <nitro/hw/common/mmap_shared.h>
+#endif
 #include <nitro/mi/memory.h>
 
 #include <nitro/gx/gxcommon.h>

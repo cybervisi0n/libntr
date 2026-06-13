@@ -16,6 +16,7 @@
 
 void FX_Init (void)
 {
+    #ifndef SDK_BUILD_ARM
 	SDK_ASSERT(2 == sizeof(fx16));
 	SDK_ASSERT(4 == sizeof(fx32));
 	SDK_ASSERT(8 == sizeof(fx64));
@@ -27,6 +28,7 @@ void FX_Init (void)
 	SDK_ASSERT(48 == sizeof(MtxFx43));
 	SDK_ASSERT(36 == sizeof(MtxFx33));
 	SDK_ASSERT(16 == sizeof(MtxFx22));
+    #endif
 
 #ifdef SDK_FX_DYNAMIC_TABLE
 	fx64c idx, ss;

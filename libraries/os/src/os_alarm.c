@@ -16,6 +16,28 @@ static void OSi_InsertAlarm(OSAlarm * alarm, OSTick fire);
 static void OSi_AlarmHandler(void * arg);
 static void OSi_ArrangeTimer(void);
 
+#ifdef SDK_PORT
+#ifdef SDK_BUILD_WIN64
+static unsigned int OS_SDLTimerCallback(unsigned int interval, void * param)
+#else
+static u32 OS_SDLTimerCallback(u32 interval, void * param)
+#endif
+{
+    OSAlarm * myAlarm = (OSAlarm*)param;
+
+    if(myAlarm) {
+        if(myAlarm->period == 0) {
+            SDL_RemoveTimer(myAlarm->sdlTimer);
+            myAlarm->sdlTimer = 0;
+        }
+        if(myAlarm->handler) {
+            myAlarm->handler(myAlarm->arg);
+        }
+    }
+    return 0;
+}
+#endif
+
 static void OSi_SetTimer (OSAlarm * alarm)
 {
     s64 delta;
@@ -79,7 +101,11 @@ void OS_EndAlarm (void)
 
 BOOL OS_IsAlarmAvailable (void)
 {
+    #ifdef SDK_PORT
+    return TRUE;
+    #else
     return OSi_UseAlarm;
+    #endif
 }
 
 void OS_CreateAlarm (OSAlarm * alarm)
@@ -165,6 +191,11 @@ void OS_SetAlarm (OSAlarm * alarm, OSTick tick, OSAlarmHandler handler, void * a
     OSi_InsertAlarm(alarm, OS_GetTick() + tick);
 
     (void)OS_RestoreInterrupts(enabled);
+
+#ifdef SDK_PORT
+    u32 milliseconds = OS_TicksToMilliSeconds(tick);
+    alarm->sdlTimer = SDL_AddTimer(milliseconds, OS_SDLTimerCallback, (void*)alarm);
+#endif
 }
 
 void OS_SetPeriodicAlarm (OSAlarm * alarm, OSTick start, OSTick period, OSAlarmHandler handler, void * arg)
@@ -193,6 +224,10 @@ void OS_SetPeriodicAlarm (OSAlarm * alarm, OSTick start, OSTick period, OSAlarmH
     OSi_InsertAlarm(alarm, 0);
 
     (void)OS_RestoreInterrupts(enabled);
+
+#ifdef SDK_PORT
+    alarm->sdlTimer = SDL_AddTimer(OS_TicksToMilliSeconds(period), OS_SDLTimerCallback, (void*)alarm);
+#endif
 }
 
 void OS_CancelAlarm (OSAlarm * alarm)
@@ -231,8 +266,17 @@ void OS_CancelAlarm (OSAlarm * alarm)
     alarm->period = 0;
 
     (void)OS_RestoreInterrupts(enabled);
+#ifdef SDK_PORT
+    SDL_RemoveTimer(alarm->sdlTimer);
+#endif
 }
 
+#ifdef SDK_PORT
+void OSi_AlarmHandler( void* arg )
+{
+    
+}
+#else
 #include <nitro/code32.h>
 
 asm void OSi_AlarmHandler (void * arg)
@@ -244,6 +288,7 @@ asm void OSi_AlarmHandler (void * arg)
 }
 
 #include <nitro/codereset.h>
+#endif
 
 static void OSi_ArrangeTimer (void)
 {

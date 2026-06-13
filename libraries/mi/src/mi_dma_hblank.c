@@ -78,4 +78,26 @@ void MI_HBlankDmaCopy16If (u32 dmaNo, const void * src, void * dest, u32 size)
 	MI_WaitDma(dmaNo);
 	MIi_DmaSetParams(dmaNo, (u32)src, (u32)dest, MI_CNT_HBCOPY16_IF(size));
 }
+#elif defined(SDK_PORT)
+#include <nitro.h>
+#include "../include/mi_dma.h"
+void MI_HBlankDmaCopy32(u32 dmaNo, const void *src, void *dest, u32 size)
+{
+    memcpy(dest, src, size);
+}
+
+void MI_HBlankDmaCopy16(u32 dmaNo, const void *src, void *dest, u32 size)
+{
+    memcpy(dest, src, size);
+}
+
+void MI_HBlankDmaCopy32If(u32 dmaNo, const void *src, void *dest, u32 size)
+{
+    memcpy(dest, src, size);
+}
+
+void MI_HBlankDmaCopy16If(u32 dmaNo, const void *src, void *dest, u32 size)
+{
+    memcpy(dest, src, size);
+}
 #endif

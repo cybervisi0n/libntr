@@ -9,6 +9,10 @@ extern "C" {
     #include <nitro/cht/ARM9/pictocatch.h>
 #endif
 
+#ifdef SDK_PORT
+    #include <nitro/cht/ARM9/pictocatch.h>
+#endif
+
 #ifdef  __cplusplus
 }
 #endif

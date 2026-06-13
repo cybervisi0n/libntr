@@ -58,7 +58,11 @@ int OS_VSNPrintfEx(char * dst, size_t len, const char * fmt, va_list vlist);
 
     #define OS_PutChar(...)                       ((void)0)
     #define OS_VPrintf(fmt, ...)                  ((void)0)
+    #ifdef SDK_BUILD_ARM
     #define OS_Printf(...)                        ((void)0)
+    #else
+    #define OS_Printf printf
+    #endif
     #define OSi_Warning(file, line, ...)          ((void)0)
     #define OSi_Panic(file, line, ...)            OS_Terminate()
     #define OS_Warning(...)                       ((void)0)

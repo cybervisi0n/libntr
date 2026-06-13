@@ -258,7 +258,9 @@ void MBi_CommChildCallback (u16 type, void * arg)
 
 	if (type == MB_CALLBACK_END_COMPLETE) {
 		MI_CpuClear16(pCwork, sizeof(MB_CommCWork));
+        #ifdef SDK_BUILD_ARM
 		pCwork = NULL;
+        #endif
 	}
 }
 

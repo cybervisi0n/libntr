@@ -7,7 +7,9 @@ CARDRomStat rom_stat ATTRIBUTE_ALIGN(32);
 
 extern u32 cardi_rom_base;
 u32 cardi_rom_base;
+#ifndef SDK_PORT
 u32 cardi_rom_header_addr = HW_ROM_HEADER_BUF;
+#endif
 
 SDK_COMPILER_ASSERT(sizeof(rom_stat) % 32 == 0);
 
@@ -74,7 +76,9 @@ static BOOL CARDi_ReadFromCache (CARDRomStat *p)
         CARDiCommon *const c = &cardi_common;
         CARDRomStat *const p = &rom_stat;
 
+        #ifdef SDK_BUILD_ARM
         MIi_CardDmaCopy32(c->dma, (const void *)REG_CARD_DATA, (void *)c->dst, CARD_ROM_PAGE_SIZE);
+        #endif
 
         CARDi_SetRomOpReadPage1(c->src);
         *(vu32 *)REG_CARDCNT = p->ctrl;
@@ -110,7 +114,7 @@ static BOOL CARDi_ReadFromCache (CARDRomStat *p)
         p->ctrl = CARDi_GetRomFlag(CARD_COMMAND_PAGE);
         if (is_async) {
             OSIntrMode bak_psr = OS_DisableInterrupts();
-    #if defined(SDK_ARM9)
+    #if (defined(SDK_ARM9) || defined(SDK_PORT))
             if (len < c->flush_threshold_ic) {
                 IC_InvalidateRange((void *)dst, len);
             } else {
@@ -148,7 +152,7 @@ static BOOL CARDi_ReadFromCache (CARDRomStat *p)
 
     void CARDi_ReadCard (CARDRomStat *p)
     {
-    #if defined(SDK_ARM9) \
+    #if defined(SDK_ARM9) || defined(SDK_PORT)\
         || (defined(SDK_ARM7) && defined(SDK_ARM7_READROM_SUPPORT))
 
         CARDiCommon *const c = &cardi_common;

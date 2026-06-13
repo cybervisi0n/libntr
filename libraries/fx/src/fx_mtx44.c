@@ -5,11 +5,64 @@
 #include <nitro/fx/fx_cp.h>
 #include <nitro/mi/memory.h>
 
+#ifdef SDK_PORT
+#include "simulator/sim.h"
+
+static
+#endif
 inline fx32 mul64 (fx64 x, fx32 y)
 {
 	return (fx32)((x * y) >> FX32_SHIFT);
 }
 
+#ifdef SDK_PORT
+void MTX_Identity44_(MtxFx44* pDst)
+{
+    pDst->_00 = FX32_ONE;
+    pDst->_01 = 0;
+    pDst->_02 = 0;
+    pDst->_03 = 0;
+    pDst->_10 = 0;
+    pDst->_11 = FX32_ONE;
+    pDst->_12 = 0;
+    pDst->_13 = 0;
+    pDst->_20 = 0;
+    pDst->_21 = 0;
+    pDst->_22 = FX32_ONE;
+    pDst->_23 = 0;
+    pDst->_30 = 0;
+    pDst->_31 = 0;
+    pDst->_32 = 0;
+    pDst->_33 = FX32_ONE;
+}
+
+void MTX_Copy44To33_(const MtxFx44* pSrc, MtxFx33* pDst) {
+    pDst->_00 = pSrc->_00;
+    pDst->_01 = pSrc->_01;
+    pDst->_02 = pSrc->_02;
+    pDst->_10 = pSrc->_10;
+    pDst->_11 = pSrc->_11;
+    pDst->_12 = pSrc->_12;
+    pDst->_20 = pSrc->_20;
+    pDst->_21 = pSrc->_21;
+    pDst->_22 = pSrc->_22;
+}
+
+void MTX_Copy44To43_(const MtxFx44* pSrc, MtxFx43* pDst) {
+    pDst->_00 = pSrc->_00;
+    pDst->_01 = pSrc->_01;
+    pDst->_02 = pSrc->_02;
+    pDst->_10 = pSrc->_10;
+    pDst->_11 = pSrc->_11;
+    pDst->_12 = pSrc->_12;
+    pDst->_20 = pSrc->_20;
+    pDst->_21 = pSrc->_21;
+    pDst->_22 = pSrc->_22;
+    pDst->_30 = pSrc->_30;
+    pDst->_31 = pSrc->_31;
+    pDst->_32 = pSrc->_32;
+}
+#else
 asm void MTX_Identity44_ (register MtxFx44 *pDst)
 {
 	mov r2, #4096
@@ -55,6 +108,7 @@ asm void MTX_Copy44To43_ (register const MtxFx44 *pSrc, register MtxFx43 *pDst)
 	stmia r1 !, {r2 - r3, r12}
 	bx lr
 }
+#endif
 
 void MTX_TransApply44 (const MtxFx44 *pSrc, MtxFx44 *pDst, fx32 x, fx32 y, fx32 z)
 {
@@ -77,6 +131,17 @@ void MTX_TransApply44 (const MtxFx44 *pSrc, MtxFx44 *pDst, fx32 x, fx32 y, fx32 
 	}
 }
 
+#ifdef SDK_PORT
+void MTX_Transpose44_(const MtxFx44* pSrc, MtxFx44* pDst) {
+    //PCPORT_TODO
+    SIM_assert_always_msg("Not implemented");
+}
+
+void MTX_Scale44_(MtxFx44 * pDst, fx32 x, fx32 y, fx32 z) {
+    //PCPORT_TODO
+    SIM_assert_always_msg("Not implemented");
+}
+#else
 asm void MTX_Transpose44_ (register const MtxFx44 *pSrc, register MtxFx44 *pDst)
 {
 	stmfd sp !, {r4 - r11}
@@ -116,6 +181,7 @@ asm void MTX_Scale44_ (register MtxFx44 *pDst, register fx32 x, register fx32 y,
 }
 
 #include <nitro/code32.h>
+#endif
 
 void MTX_ScaleApply44 (const MtxFx44 *pSrc, MtxFx44 *pDst, fx32 x, fx32 y, fx32 z)
 {
@@ -159,6 +225,22 @@ void MTX_ScaleApply44 (const MtxFx44 *pSrc, MtxFx44 *pDst, fx32 x, fx32 y, fx32 
 	}
 }
 
+#ifdef SDK_PORT
+void MTX_RotX44_(MtxFx44 * pDst, fx32 sinVal, fx32 cosVal) {
+    //PCPORT_TODO
+    SIM_assert_always_msg("Not implemented");
+}
+
+void MTX_RotY44_(MtxFx44 * pDst, fx32 sinVal, fx32 cosVal) {
+    //PCPORT_TODO
+    SIM_assert_always_msg("Not implemented");
+}
+
+void MTX_RotZ44_(MtxFx44 * pDst, fx32 sinVal, fx32 cosVal) {
+    //PCPORT_TODO
+    SIM_assert_always_msg("Not implemented");
+}
+#else
 #include <nitro/code16.h>
 
 asm void MTX_RotX44_ (register MtxFx44 *pDst, register fx32 sinVal, register fx32 cosVal)
@@ -233,6 +315,7 @@ asm void MTX_RotZ44_ (register MtxFx44 *pDst, register fx32 sinVal, register fx3
 }
 
 #include <nitro/code32.h>
+#endif
 
 void MTX_RotAxis44 (MtxFx44 *pDst, const VecFx32 *vec, fx32 sinVal, fx32 cosVal)
 {

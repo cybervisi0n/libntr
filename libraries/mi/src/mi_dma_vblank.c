@@ -21,10 +21,14 @@ void MI_VBlankDmaCopy32 (u32 dmaNo, const void * src, void * dest, u32 size)
 	if (size == 0) {
 		return;
 	}
+    #ifdef SDK_PORT
+    memcpy(dest, src, size);
+    #else
 
 	MIi_Wait_BeforeDMA(dmaCntp, dmaNo);
 	MIi_DmaSetParams(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY32(size));
 	MIi_Wait_AfterDMA(dmaCntp);
+    #endif
 }
 
 void MI_VBlankDmaCopy16 (u32 dmaNo, const void * src, void * dest, u32 size)
@@ -46,10 +50,14 @@ void MI_VBlankDmaCopy16 (u32 dmaNo, const void * src, void * dest, u32 size)
 	if (size == 0) {
 		return;
 	}
+    #ifdef SDK_PORT
+    memcpy(dest, src, size);
+    #else
 
 	MIi_Wait_BeforeDMA(dmaCntp, dmaNo);
 	MIi_DmaSetParams_wait(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY16(size));
 	MIi_Wait_AfterDMA(dmaCntp);
+    #endif
 }
 
 void MI_VBlankDmaCopy32Async (u32 dmaNo, const void * src, void * dest, u32 size, MIDmaCallback callback, void * arg)
@@ -69,6 +77,14 @@ void MI_VBlankDmaCopy32Async (u32 dmaNo, const void * src, void * dest, u32 size
 	if (size == 0) {
 		MIi_CallCallback(callback, arg);
 	} else {
+        #ifdef SDK_PORT
+        memcpy( dest, src, size );
+        if( callback )
+        {
+            OSi_EnterDmaCallback(dmaNo, callback, arg);
+            MIi_CallCallback(callback, arg);
+        }
+        #else
 		MI_WaitDma(dmaNo);
 		if (callback) {
 			OSi_EnterDmaCallback(dmaNo, callback, arg);
@@ -76,6 +92,7 @@ void MI_VBlankDmaCopy32Async (u32 dmaNo, const void * src, void * dest, u32 size
 		} else {
 			MIi_DmaSetParams(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY32(size));
 		}
+        #endif
 	}
 }
 
@@ -96,6 +113,14 @@ void MI_VBlankDmaCopy16Async (u32 dmaNo, const void * src, void * dest, u32 size
 	if (size == 0) {
 		MIi_CallCallback(callback, arg);
 	} else {
+        #ifdef SDK_PORT
+        memcpy( dest, src, size );
+        if( callback )
+        {
+            OSi_EnterDmaCallback(dmaNo, callback, arg);
+            MIi_CallCallback(callback, arg);
+        }
+        #else
 		MI_WaitDma(dmaNo);
 		if (callback) {
 			OSi_EnterDmaCallback(dmaNo, callback, arg);
@@ -103,5 +128,6 @@ void MI_VBlankDmaCopy16Async (u32 dmaNo, const void * src, void * dest, u32 size
 		} else {
 			MIi_DmaSetParams(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY16(size));
 		}
+        #endif
 	}
 }

@@ -32,7 +32,7 @@ extern "C" {
 #include <nitro/os/common/callTrace.h>
 #include <nitro/os/common/functionCost.h>
 
-#ifdef SDK_ARM9
+#if defined( SDK_ARM9 ) || defined( SDK_PORT )
     #include <nitro/os/ARM9/protectionRegion.h>
     #include <nitro/os/ARM9/tcm.h>
     #include <nitro/os/ARM9/cache.h>

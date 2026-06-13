@@ -1,7 +1,22 @@
 #include  <nitro.h>
 
+#ifdef SDK_PORT
+#include "simulator/sim.h"
+#include <simulator/queue.h>
+extern SIM_queue_t * pxiQueuePtr;
+extern SIM_queue_t * pxi7to9QueuePtr;
+#endif
+
 static u16 FifoCtrlInit = 0;
 static PXIFifoCallback FifoRecvCallbackTable[PXI_MAX_FIFO_TAG];
+#ifdef SDK_PORT
+PXIFifoCallback FifoRecvCallbackTable7[PXI_MAX_FIFO_TAG];
+
+PXIFifoCallback PXI_WIN_GetCallback(u32 tag)
+{
+    return FifoRecvCallbackTable[tag];
+}
+#endif
 
 static inline PXIFifoStatus PXIi_GetFromFifo(u32 * data_buf);
 static inline PXIFifoStatus PXIi_SetToFifo(u32 data);
@@ -63,6 +78,11 @@ void PXI_InitFifo (void)
                 for (timeout = 1000; (reg_PXI_INTF & 15) == c; timeout--) {
                     if (timeout == 0) {
                         i = 0;
+
+                        #ifdef SDK_PORT
+                        (void)OS_RestoreInterrupts(enabled);
+                        return;
+                        #endif
                         break;
                     }
                 }
@@ -94,6 +114,32 @@ void PXI_SetFifoRecvCallback (int fifotag, PXIFifoCallback callback)
     (void)OS_RestoreInterrupts(enabled);
 }
 
+#ifdef SDK_PORT
+void PXI_SetFifoRecvCallback7(int fifotag, PXIFifoCallback callback)
+{
+    OSIntrMode enabled;
+    OSSystemWork *p = OS_GetSystemWork();
+
+    SDK_WARNING(callback == NULL ||
+                FifoRecvCallbackTable7[fifotag] == NULL ||
+                FifoRecvCallbackTable7[fifotag] == callback,
+                "Fifo Callback overridden [fifotag=%d]\n", fifotag);
+
+    enabled = OS_DisableInterrupts();
+
+    FifoRecvCallbackTable7[fifotag] = callback;
+    if (callback)
+    {
+        p->pxiHandleChecker[PXI_PROC_ARM7] |= (1UL << fifotag);
+    }
+    else
+    {
+        p->pxiHandleChecker[PXI_PROC_ARM7] &= ~(1UL << fifotag);
+    }
+    (void)OS_RestoreInterrupts(enabled);
+}
+#endif
+
 BOOL PXI_IsCallbackReady (int fifotag, PXIProc proc)
 {
     OSSystemWork * p = OS_GetSystemWork();
@@ -114,7 +160,11 @@ void PXI_SetFifoSendCallback (PXIFifoEmtpyCallback callback)
     (void)OS_RestoreInterrupts(enabled);
 }
 
+#ifdef SDK_PORT
+int PXI_SendWordByFifo (int fifotag, u64 data, BOOL err)
+#else
 int PXI_SendWordByFifo (int fifotag, u32 data, BOOL err)
+#endif
 {
     PXIFifoMessage fifomsg;
 
@@ -125,8 +175,42 @@ int PXI_SendWordByFifo (int fifotag, u32 data, BOOL err)
     fifomsg.e.err = (u32)err;
     fifomsg.e.data = data;
 
+    #ifdef SDK_PORT
+    WIN_PXIFifoMessage * fifoMsgPtr;
+    fifoMsgPtr = malloc( sizeof( WIN_PXIFifoMessage ) );
+    fifoMsgPtr->e.tag = (PXIFifoTag)fifotag;
+    fifoMsgPtr->e.err = (u32)err;
+    fifoMsgPtr->e.data = data;
+    SIM_queue_write( pxiQueuePtr, (void *)fifoMsgPtr );
+    SIM_PostPxiThread();
+    return PXI_FIFO_SUCCESS;
+    #else
     return PXIi_SetToFifo(fifomsg.raw);
+    #endif
 }
+
+#ifdef SDK_PORT
+int PXI_SendWordByFifo7(int fifotag, u64 data, BOOL err)
+{
+    PXIFifoMessage fifomsg;
+
+    SDK_ASSERTMSG(0 <= fifotag && fifotag < PXI_MAX_FIFO_TAG, "[FifoTag] out of range");
+    SDK_ASSERTMSG(data < (1UL << PXI_FIFOMESSAGE_BITSZ_DATA), "[data] out of range");
+
+    fifomsg.e.tag = (PXIFifoTag)fifotag;
+    fifomsg.e.err = (u32)err;
+    fifomsg.e.data = data;
+
+    WIN_PXIFifoMessage * fifoMsgPtr;
+    fifoMsgPtr = malloc( sizeof( WIN_PXIFifoMessage ) );
+    fifoMsgPtr->e.tag = (PXIFifoTag)fifotag;
+    fifoMsgPtr->e.err = (u32)err;
+    fifoMsgPtr->e.data = data;
+    SIM_queue_write( pxi7to9QueuePtr, (void *)fifoMsgPtr );
+    SIM_PostPxi7to9Thread();
+    return PXI_FIFO_SUCCESS;
+}
+#endif
 
 static inline PXIFifoStatus PXIi_SetToFifo (u32 data)
 {

@@ -11,7 +11,11 @@
 
 #include "gxasm.h"
 
+#if defined( SDK_PORT ) && ( SDK_X86 )
+static void GXi_NopClearFifo128_( register void* pDest );
+#else
 static asm void GXi_NopClearFifo128_(register void *pDest);
+#endif
 
 void G3X_Init (void)
 {
@@ -349,6 +353,13 @@ void G3X_SetHOffset (int hOffset)
 
 #include <nitro/code32.h>
 
+#if defined( SDK_PORT ) && defined( SDK_X86 )
+static void GXi_NopClearFifo128_( register void* pDest )
+{
+    return;
+}
+#else
+
 static asm void GXi_NopClearFifo128_ (register void *pDest)
 {
 	mov r1, #0
@@ -389,5 +400,6 @@ static asm void GXi_NopClearFifo128_ (register void *pDest)
 	stmia r0, {r1 - r3, r12}
 	bx lr
 }
+#endif
 
 #include <nitro/codereset.h>

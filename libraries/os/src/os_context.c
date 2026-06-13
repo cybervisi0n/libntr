@@ -5,6 +5,22 @@
     #include <nitro/cp/context.h>
 #endif
 
+#ifdef SDK_PORT
+void OS_InitContext( OSContext * context, u64 newpc, u64 newsp)
+{
+    context->func = newpc;
+}
+
+BOOL OS_SaveContext( register OSContext* context )
+{
+    return TRUE;
+}
+
+void OS_LoadContext( register OSContext* context )
+{
+    return;
+}
+#else
 #include <nitro/code32.h>
 
 asm void OS_InitContext (register OSContext * context, register u32 newpc, register u32 newsp)
@@ -126,6 +142,7 @@ asm void OS_LoadContext (register OSContext * context)
 #endif
 
 #include <nitro/codereset.h>
+#endif
 
 void OS_DumpContext (OSContext * context)
 {

@@ -26,8 +26,12 @@ extern "C" {
     #endif
 #endif
 
+#ifdef SDK_BUILD_LINUX
+#define SDK_COMPILER_ASSERT(expr)
+#else
 #define SDK_COMPILER_ASSERT(expr) \
 	extern void sdk_compiler_assert ## __LINE__ (char is[(expr) ? +1 : -1])
+#endif
 
 #ifdef SDK_DEBUG
         #ifndef SDK_ASSERTMSG

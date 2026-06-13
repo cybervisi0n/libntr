@@ -143,15 +143,16 @@ OSIrqMask OS_ResetRequestIrqMask (OSIrqMask intr)
 
 extern void SDK_IRQ_STACKSIZE(void);
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     #define  OSi_IRQ_STACK_TOP                (HW_DTCM_SVC_STACK - ((s32)SDK_IRQ_STACKSIZE))
     #define  OSi_IRQ_STACK_BOTTOM             HW_DTCM_SVC_STACK
-#else
+#endif
+#ifdef SDK_ARM7
     #define  OSi_IRQ_STACK_TOP                (HW_PRV_WRAM_IRQ_STACK_END - ((s32)SDK_IRQ_STACKSIZE))
     #define  OSi_IRQ_STACK_BOTTOM             HW_PRV_WRAM_IRQ_STACK_END
 #endif
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     #define  OSi_IRQ_STACK_CHECKNUM_BOTTOM     0xfddb597dUL
     #define  OSi_IRQ_STACK_CHECKNUM_TOP        0x7bf9dd5bUL
     #define  OSi_IRQ_STACK_CHECKNUM_WARN       0x597dfbd9UL
@@ -165,8 +166,10 @@ static u32 OSi_IrqStackWarningOffset = 0;
 
 void OS_SetIrqStackChecker (void)
 {
+    #ifndef SDK_PORT
     *(u32 *)(OSi_IRQ_STACK_BOTTOM - sizeof(u32)) = OSi_IRQ_STACK_CHECKNUM_BOTTOM;
     *(u32 *)(OSi_IRQ_STACK_TOP) = OSi_IRQ_STACK_CHECKNUM_TOP;
+    #endif
 }
 
 void OS_SetIrqStackWarningOffset (u32 offset)

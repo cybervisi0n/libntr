@@ -1,15 +1,103 @@
 #include <nitro/gx/gx_load.h>
 #include <nitro/gx/gx_vramcnt.h>
+#ifdef SDK_PORT
+#include <nitro/hw/X86/mmap_global.h>
+#else
 #include <nitro/hw/ARM9/mmap_global.h>
+#endif
 #include <nitro/mi/dma.h>
 
 #include "../include/gxstate.h"
 #include "../include/gxdma.h"
 
+#ifdef SDK_PORT
+static u64 sTexLCDCBlk1 = 0;
+static u64 sSzTexBlk1 = 0;
+static u64 sTexLCDCBlk2 = 0;
+#else
 static u32 sTexLCDCBlk1 = 0;
 static u32 sSzTexBlk1 = 0;
 static u32 sTexLCDCBlk2 = 0;
+#endif
 static GXVRamTex sTex = (GXVRamTex)(0);
+
+#ifdef SDK_PORT
+static struct
+{
+    u64     blk1;
+    u64     blk2;
+    u16     szBlk1;
+}
+sTexStartAddrTable[16] =
+{0};
+
+void WIN_Init_sTexStartAddrTable() {
+    sTexStartAddrTable[0].blk1 = 0;
+    sTexStartAddrTable[0].blk2 = 0;
+    sTexStartAddrTable[0].szBlk1 = 0;
+
+    sTexStartAddrTable[1].blk1 = (u64)(HW_LCDC_VRAM_A);
+    sTexStartAddrTable[1].blk2 = 0;
+    sTexStartAddrTable[1].szBlk1 = 0;
+
+    sTexStartAddrTable[2].blk1 = (u64)(HW_LCDC_VRAM_B);
+    sTexStartAddrTable[2].blk2 = 0;
+    sTexStartAddrTable[2].szBlk1 = 0;
+
+    sTexStartAddrTable[3].blk1 = (u64)(HW_LCDC_VRAM_A);
+    sTexStartAddrTable[3].blk2 = 0;
+    sTexStartAddrTable[3].szBlk1 = 0;    
+
+    sTexStartAddrTable[4].blk1 = (u64)(HW_LCDC_VRAM_C);
+    sTexStartAddrTable[4].blk2 = 0;
+    sTexStartAddrTable[4].szBlk1 = 0;
+
+    sTexStartAddrTable[5].blk1 = (u64)(HW_LCDC_VRAM_A);
+    sTexStartAddrTable[5].blk2 = (u64)(HW_LCDC_VRAM_C);
+    sTexStartAddrTable[5].szBlk1 = (u16)(HW_VRAM_A_SIZE >> 12);
+
+    sTexStartAddrTable[6].blk1 = (u64)(HW_LCDC_VRAM_B);
+    sTexStartAddrTable[6].blk2 = 0;
+    sTexStartAddrTable[6].szBlk1 = 0;
+
+    sTexStartAddrTable[7].blk1 = (u64)(HW_LCDC_VRAM_A);
+    sTexStartAddrTable[7].blk2 = 0;
+    sTexStartAddrTable[7].szBlk1 = 0;
+
+    sTexStartAddrTable[8].blk1 = (u64)(HW_LCDC_VRAM_D);
+    sTexStartAddrTable[8].blk2 = 0;
+    sTexStartAddrTable[8].szBlk1 = 0;
+
+    sTexStartAddrTable[9].blk1 = (u64)(HW_LCDC_VRAM_A);
+    sTexStartAddrTable[9].blk2 = (u64)(HW_LCDC_VRAM_D);
+    sTexStartAddrTable[9].szBlk1 = (u16)(HW_VRAM_A_SIZE >> 12);
+
+    sTexStartAddrTable[10].blk1 = (u64)(HW_LCDC_VRAM_B);
+    sTexStartAddrTable[10].blk2 = (u64)(HW_LCDC_VRAM_D);
+    sTexStartAddrTable[10].szBlk1 = (u16)(HW_VRAM_B_SIZE >> 12);
+
+    sTexStartAddrTable[11].blk1 = (u64)(HW_LCDC_VRAM_A);
+    sTexStartAddrTable[11].blk2 = (u64)(HW_LCDC_VRAM_D);
+    sTexStartAddrTable[11].szBlk1 = (u16)((HW_VRAM_A_SIZE + HW_VRAM_B_SIZE) >> 12);
+
+    sTexStartAddrTable[12].blk1 = (u64)(HW_LCDC_VRAM_C);
+    sTexStartAddrTable[12].blk2 = 0;
+    sTexStartAddrTable[12].szBlk1 = 0;
+
+    sTexStartAddrTable[13].blk1 = (u64)(HW_LCDC_VRAM_A);
+    sTexStartAddrTable[13].blk2 = (u64)(HW_LCDC_VRAM_C);
+    sTexStartAddrTable[13].szBlk1 = (u16)(HW_VRAM_A_SIZE >> 12);
+
+    sTexStartAddrTable[14].blk1 = (u64)(HW_LCDC_VRAM_B);
+    sTexStartAddrTable[14].blk2 = 0;
+    sTexStartAddrTable[14].szBlk1 = 0;
+
+    sTexStartAddrTable[15].blk1 = (u64)(HW_LCDC_VRAM_A);
+    sTexStartAddrTable[15].blk2 = 0;
+    sTexStartAddrTable[15].szBlk1 = 0;
+    return;
+}
+#else
 
 static const struct {
 	u16 blk1;
@@ -68,6 +156,7 @@ sTexStartAddrTable[16] = {
 		(u16)(HW_LCDC_VRAM_A >> 12), 0, 0
 	},
 };
+#endif
 
 void GX_LoadTexEx (GXVRamTex tex, const void *pSrc, u32 destSlotAddr, u32 szByte)
 {
@@ -119,8 +208,13 @@ void GX_BeginLoadTex (void)
 
 	GX_VRAM_TEX_ASSERT(sTex);
 
+	#ifdef SDK_PORT
+    sTexLCDCBlk1 = (u64)(sTexStartAddrTable[sTex].blk1);
+    sTexLCDCBlk2 = (u64)(sTexStartAddrTable[sTex].blk2);
+	#else
 	sTexLCDCBlk1 = (u32)(sTexStartAddrTable[sTex].blk1 << 12);
 	sTexLCDCBlk2 = (u32)(sTexStartAddrTable[sTex].blk2 << 12);
+	#endif
 	sSzTexBlk1 = (u32)(sTexStartAddrTable[sTex].szBlk1 << 12);
 }
 
@@ -168,8 +262,26 @@ void GX_EndLoadTex (void)
 }
 
 static GXVRamTexPltt sTexPltt = (GXVRamTexPltt)(0);
+#ifdef SDK_PORT
+static u64 sTexPlttLCDCBlk = 0;
+#else
 static u32 sTexPlttLCDCBlk = 0;
+#endif
 
+#ifdef SDK_PORT
+static u64 sTexPlttStartAddrTable[8] = {0};
+
+void WIN_Init_sTexPlttStartAddrTable() {
+    sTexPlttStartAddrTable[0] = 0,
+    sTexPlttStartAddrTable[1] = (u64)(HW_LCDC_VRAM_E);
+    sTexPlttStartAddrTable[2] = (u64)(HW_LCDC_VRAM_F);
+    sTexPlttStartAddrTable[3] = (u64)(HW_LCDC_VRAM_E);
+    sTexPlttStartAddrTable[4] = (u64)(HW_LCDC_VRAM_G);
+    sTexPlttStartAddrTable[5] = 0;
+    sTexPlttStartAddrTable[6] = (u64)(HW_LCDC_VRAM_F);
+    sTexPlttStartAddrTable[7] = (u64)(HW_LCDC_VRAM_E);
+}
+#else
 static const u16 sTexPlttStartAddrTable[8] = {
 	0,
 	(u16)(HW_LCDC_VRAM_E >> 12),
@@ -180,15 +292,24 @@ static const u16 sTexPlttStartAddrTable[8] = {
 	(u16)(HW_LCDC_VRAM_F >> 12),
 	(u16)(HW_LCDC_VRAM_E >> 12)
 };
+#endif
 
 void GX_LoadTexPlttEx (GXVRamTexPltt texPltt, const void *pSrc, u32 destSlotAddr, u32 szByte)
 {
+	#ifdef SDK_PORT
+	u64 base;
+	#else
 	u32 base;
+	#endif
 	SDK_ASSERTMSG((GX_GetBankForLCDC() & texPltt) == texPltt,
 	              "Banks specified by texPltt must be on LCDC space.");
 
 	GX_VRAM_TEXPLTT_ASSERT(texPltt);
+	#ifdef SDK_PORT
+	base = (u64)(sTexPlttStartAddrTable[texPltt >> 4] << 12);
+	#else
 	base = (u32)(sTexPlttStartAddrTable[texPltt >> 4] << 12);
+	#endif
 
 	SDK_NULL_ASSERT(pSrc);
 	SDK_ASSERT(0 != base);
@@ -207,7 +328,11 @@ void GX_BeginLoadTexPltt (void)
 	sTexPltt = GX_ResetBankForTexPltt();
 
 	GX_VRAM_TEXPLTT_ASSERT(sTexPltt);
+	#ifdef SDK_PORT
+	sTexPlttLCDCBlk = (u64)(sTexPlttStartAddrTable[sTexPltt >> 4]);
+	#else
 	sTexPlttLCDCBlk = (u32)(sTexPlttStartAddrTable[sTexPltt >> 4] << 12);
+	#endif
 }
 
 void GX_LoadTexPltt (const void *pSrc, u32 destSlotAddr, u32 szByte)

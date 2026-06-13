@@ -2,7 +2,12 @@
 #define NITRO_G3X_H_
 
 #include <nitro/gx/gxcommon.h>
+#include <nitro/gx/gxcommon.h>
+#ifdef SDK_PORT
+#include <nitro/hw/X86/ioreg_G3X.h>
+#else
 #include <nitro/hw/ARM9/ioreg_G3X.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

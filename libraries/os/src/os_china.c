@@ -8,6 +8,10 @@
 static char checkString[] = OS_BURY_STRING_FORCHINA;
 #include <nitro/version_end.h>
 
+#ifdef SDK_PORT
+#define ATTRIBUTE_ALIGN(x) __attribute__((aligned(x)))
+#endif
+
 #define OSi_FORCHINA_FADE_SPAN          32
 #define OSi_FORCHINA_DISP_SPAN          64
 

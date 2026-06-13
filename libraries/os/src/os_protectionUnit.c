@@ -1,6 +1,10 @@
 #include <nitro/os.h>
 #include <nitro/code32.h>
 
+#ifdef SDK_PORT
+void OS_EnableProtectionUnit (void) {}
+void OS_DisableProtectionUnit (void) {}
+#else
 asm void OS_EnableProtectionUnit (void)
 {
     mrc p15, 0, r0, c1, c0, 0
@@ -16,5 +20,6 @@ asm void OS_DisableProtectionUnit (void)
     mcr p15, 0, r0, c1, c0, 0
     bx lr
 }
+#endif
 
 #include <nitro/codereset.h>

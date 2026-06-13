@@ -32,7 +32,11 @@ WMErrCode WMi_EnableEx (WMCallbackFunc callback, u32 miscFlags)
     {
         WMArm9Buf * p = WMi_GetSystemWork();
 
+        #ifdef SDK_PORT
+        result = WMi_SendCommand(WM_APIID_ENABLE, 4, (u64)(p->WM7), (u64)(p->status), (u64)(p->fifo7to9), miscFlags);
+        #else
         result = WMi_SendCommand(WM_APIID_ENABLE, 4, (u32)(p->WM7), (u32)(p->status), (u32)(p->fifo7to9), miscFlags);
+        #endif
         WM_CHECK_RESULT(result);
     }
 
@@ -112,7 +116,11 @@ WMErrCode WMi_InitializeEx (void * wmSysBuf, WMCallbackFunc callback, u16 dmaNo,
     {
         WMArm9Buf * p = WMi_GetSystemWork();
 
+        #ifdef SDK_PORT
+        result = WMi_SendCommand(WM_APIID_INITIALIZE, 4, (u64)(p->WM7), (u64)(p->status), (u64)(p->fifo7to9), miscFlags);
+        #else
         result = WMi_SendCommand(WM_APIID_INITIALIZE, 4, (u32)(p->WM7), (u32)(p->status), (u32)(p->fifo7to9), miscFlags);
+        #endif
         WM_CHECK_RESULT(result);
     }
 
@@ -194,7 +202,11 @@ WMErrCode WM_SetParentParameter (WMCallbackFunc callback, const WMParentParam * 
         DC_StoreRange(pparaBuf->userGameInfo, pparaBuf->userGameInfoLength);
     }
 
+    #ifdef SDK_PORT
+    result = WMi_SendCommand(WM_APIID_SET_P_PARAM, 1, (u64)pparaBuf);
+    #else
     result = WMi_SendCommand(WM_APIID_SET_P_PARAM, 1, (u32)pparaBuf);
+    #endif
     WM_CHECK_RESULT(result);
 
     return WM_ERRCODE_OPERATING;

@@ -9,6 +9,9 @@ extern "C" {
 #include <nitro/types.h>
 
 void OS_Init(void);
+#ifdef SDK_PORT
+void OS_Init7(void);
+#endif
 
 #ifdef __cplusplus
 }

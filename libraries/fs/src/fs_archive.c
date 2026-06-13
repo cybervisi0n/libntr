@@ -404,7 +404,11 @@ u32 FS_LoadArchiveTables (FSArchive *p_arc, void *p_mem, u32 max_size)
 		u32 total_size = ALIGN_BYTE(p_arc->fat_size + p_arc->fnt_size + 32, 32);
 
 		if (total_size <= max_size) {
+            #ifdef SDK_PORT
+            u8 *p_cache = (u8*)p_mem;
+            #else
 			u8 *p_cache = (u8 *)ALIGN_BYTE((u32)p_mem, 32);
+            #endif
 			FSFile tmp;
 			FS_InitFile(&tmp);
 

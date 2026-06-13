@@ -1,6 +1,22 @@
 #include <nitro/code32.h>
 #include "../include/gxasm.h"
 
+#if defined( SDK_PORT ) && defined( SDK_X86 )
+void GX_SendFifo48B(const void* pSrc, void* pDest)
+{
+    return;
+}
+
+void GX_SendFifo64B(const void* pSrc, void* pDest)
+{
+    return;
+}
+
+void GX_SendFifo128B(const void* pSrc, void* pDest)
+{
+    return;
+}
+#else
 asm void GX_SendFifo48B (register const void *pSrc, register void *pDest)
 {
 	ldmia r0 !, {r2, r3, r12}
@@ -81,3 +97,4 @@ asm void GX_SendFifo128B (register const void *pSrc, register void *pDest)
 	bx lr
 #endif
 }
+#endif

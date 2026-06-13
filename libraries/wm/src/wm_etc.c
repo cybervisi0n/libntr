@@ -4,6 +4,10 @@
 
 #define WM_SIZE_TEMP_USR_GAME_INFO_BUF 128
 
+#if defined( SDK_PORT )
+#define ATTRIBUTE_ALIGN(x) __attribute__((aligned(x)))
+#endif
+
 static u32 tmpUserGameInfoBuf[WM_SIZE_TEMP_USR_GAME_INFO_BUF / sizeof(u32)] ATTRIBUTE_ALIGN(32);
 
 #ifdef WM_ENABLE_TESTMODE
@@ -181,9 +185,15 @@ WMErrCode WM_SetGameInfo (WMCallbackFunc callback, const u16 * userGameInfo, u16
 
     WMi_SetCallbackTable(WM_APIID_SET_GAMEINFO, callback);
 
+    #ifdef SDK_PORT
+    result = WMi_SendCommand(WM_APIID_SET_GAMEINFO, 5,
+                             (u64)tmpUserGameInfoBuf,
+                             (u32)userGameInfoSize, (u32)ggid, (u32)tgid, (u32)attr);
+    #else
     result = WMi_SendCommand(WM_APIID_SET_GAMEINFO, 5,
                              (u32)tmpUserGameInfoBuf,
                              (u32)userGameInfoSize, (u32)ggid, (u32)tgid, (u32)attr);
+    #endif
     if (result != WM_ERRCODE_SUCCESS) {
         return result;
     }

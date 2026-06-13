@@ -715,7 +715,11 @@ int MB_Init (void * work, const MBUserInfo * user, u32 ggid, u32 tgid, u32 dma)
 
         {
             int i;
+            #ifdef SDK_BUILD_LINUX
+            static const u16 * game = (u16*)L"multiboot";
+            #else
             static const u16 * game = L"multiboot";
+            #endif
             u16 * c;
             c = (u16 *)p_parm->uname;
 

@@ -7,9 +7,16 @@
 #ifdef SDK_ARM9
     #include <nitro/hw/ARM9/mmap_global.h>
     #include <nitro/hw/ARM9/ioreg_OS.h>
-#else
+#endif
+#ifdef SDK_ARM7
     #include <nitro/hw/ARM7/mmap_global.h>
     #include <nitro/hw/ARM7/ioreg_OS.h>
+#endif
+#ifdef SDK_PORT
+    #include <nitro/hw/X86/mmap_global.h>
+    #include <nitro/hw/X86/ioreg_OS.h>
+    #include <pthread.h>
+    #include <simulator/sim.h>
 #endif
 
 #ifdef SDK_ARM9
@@ -27,6 +34,10 @@
     #include <nitro/itcm_begin.h>
 #endif
 
+#ifdef SDK_PORT
+void OS_IrqHandler (void) {}
+void OS_IrqHandler_ThreadSwitch (void) {}
+#else
 asm void OS_IrqHandler (void)
 {
 #ifdef SDK_NO_THREAD
@@ -292,6 +303,7 @@ _dont_switched_:
     ldmfd sp !, { pc }
 #endif
 }
+#endif
 
 #ifdef SDK_ARM9
     #include <nitro/itcm_end.h>
@@ -307,6 +319,16 @@ void OS_WaitIrq (BOOL clear, OSIrqMask irqFlags)
     if (clear) {
         (void)OS_ClearIrqCheckFlag(irqFlags);
     }
+
+    #ifdef SDK_PORT
+    if( irqFlags == 1 )
+    {
+        SIM_PreRenderVBlank();
+        SIM_Render(NULL);
+        SIM_PostRenderVBlank();
+        return;
+    }
+    #endif
 
     (void)OS_RestoreInterrupts(enabled);
 

@@ -2,6 +2,9 @@
 #include <nitro/fx/fx_const.h>
 #include <nitro/fx/fx_cp.h>
 
+#ifdef SDK_PORT
+static
+#endif
 inline fx32 mul64 (fx64 x, fx32 y)
 {
 	return (fx32)((x * y) >> FX32_SHIFT);
@@ -9,6 +12,39 @@ inline fx32 mul64 (fx64 x, fx32 y)
 
 #include <nitro/code32.h>
 
+#ifdef SDK_PORT
+void MTX_Identity22_(MtxFx22* pDst)
+{
+    pDst->_00 = FX32_ONE;
+    pDst->_01 = 0;
+    pDst->_10 = 0;
+    pDst->_11 = FX32_ONE;
+    return;
+}
+
+void MTX_Transpose22_(const MtxFx22* pSrc, MtxFx22* pDst)
+{
+    MtxFx22 temp;
+    memcpy(&temp, pSrc, sizeof(MtxFx22));
+    pDst->_00 = temp._00;
+    pDst->_01 = temp._10;
+    pDst->_10 = temp._01;
+    pDst->_11 = temp._11;
+}
+
+void MTX_Scale22_(MtxFx22* pDst, fx32 x, fx32 y)
+{
+    //TODO
+}
+
+void MTX_Rot22_(MtxFx22 * pDst, fx32 sinVal, fx32 cosVal)
+{
+    pDst->_00 = cosVal;
+    pDst->_01 = sinVal;
+    pDst->_10 = -sinVal;
+    pDst->_11 = cosVal;
+}
+#else
 asm void MTX_Identity22_ (register MtxFx22 *pDst)
 {
 	mov r1, #0
@@ -50,6 +86,7 @@ asm void MTX_Rot22_ (register MtxFx22 *pDst, register fx32 sinVal, register fx32
 	str r2, [r0, #12]
 	bx lr
 }
+#endif
 
 #include <nitro/codereset.h>
 

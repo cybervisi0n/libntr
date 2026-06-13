@@ -3,7 +3,11 @@
 
 #include <nitro/code32.h>
 
+#ifdef SDK_PORT
+void G2x_SetBGyAffine_ (u64 addr, const MtxFx22 *mtx, int centerX, int centerY, int x1, int y1)
+#else
 void G2x_SetBGyAffine_ (u32 addr, const MtxFx22 *mtx, int centerX, int centerY, int x1, int y1)
+#endif
 {
 	s32 dx, dy;
 	fx32 x2, y2;
@@ -36,7 +40,11 @@ typedef enum {
 	G2_BLENDTYPE_FADEOUT = 0x00c0
 } G2_BLENDTYPE;
 
+#ifdef SDK_PORT
+void G2x_SetBlendAlpha_ (u64 addr, int plane1, int plane2, int ev1, int ev2)
+#else
 void G2x_SetBlendAlpha_ (u32 addr, int plane1, int plane2, int ev1, int ev2)
+#endif
 {
 	SDK_MINMAX_ASSERT(plane1, 0, 0x20 - 1);
 	SDK_MINMAX_ASSERT(plane2, 0, 0x40 - 1);
@@ -46,7 +54,11 @@ void G2x_SetBlendAlpha_ (u32 addr, int plane1, int plane2, int ev1, int ev2)
 	*((vu32 *)addr + 0) = (u32)((G2_BLENDTYPE_ALPHA | plane1 | plane2 << 8) | ((ev1 | ev2 << 8) << 16));
 }
 
+#ifdef SDK_PORT
+void G2x_SetBlendBrightness_ (u64 addr, int plane, int brightness)
+#else
 void G2x_SetBlendBrightness_ (u32 addr, int plane, int brightness)
+#endif
 {
 	SDK_MINMAX_ASSERT(brightness, -31, 31);
 	SDK_MINMAX_ASSERT(plane, 0, 0x40 - 1);
@@ -60,7 +72,11 @@ void G2x_SetBlendBrightness_ (u32 addr, int plane, int brightness)
 	}
 }
 
+#ifdef SDK_PORT
+void G2x_SetBlendBrightnessExt_ (u64 addr, int plane1, int plane2, int ev1, int ev2, int brightness)
+#else
 void G2x_SetBlendBrightnessExt_ (u32 addr, int plane1, int plane2, int ev1, int ev2, int brightness)
+#endif
 {
 	SDK_MINMAX_ASSERT(brightness, -31, 31);
 	SDK_MINMAX_ASSERT(plane1, 0, 0x40 - 1);
@@ -79,7 +95,11 @@ void G2x_SetBlendBrightnessExt_ (u32 addr, int plane1, int plane2, int ev1, int 
 	}
 }
 
+#ifdef SDK_PORT
+void G2x_ChangeBlendBrightness_ (u64 addr, int brightness)
+#else
 void G2x_ChangeBlendBrightness_ (u32 addr, int brightness)
+#endif
 {
 	u16 tmp;
 	SDK_MINMAX_ASSERT(brightness, -31, 31);

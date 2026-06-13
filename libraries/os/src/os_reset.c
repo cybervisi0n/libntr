@@ -23,7 +23,11 @@ extern void SDK_IRQ_STACKSIZE(void);
     static void OSi_ReadCardRom32(u32 src, void * dst, int len);
 #endif
 
+#ifdef SDK_PORT
+static void OSi_CommonCallback(PXIFifoTag tag, u64 data, BOOL err);
+#else
 static void OSi_CommonCallback(PXIFifoTag tag, u32 data, BOOL err);
+#endif
 static void OSi_DoResetSystem(void);
 static void OSi_DoBoot(void);
 static void OSi_SendToPxi(u16 data);
@@ -52,7 +56,11 @@ BOOL OS_IsResetOccurred (void)
     return OSi_IsResetOccurred;
 }
 
+#ifdef SDK_PORT
+static void OSi_CommonCallback (PXIFifoTag tag, u64 data, BOOL err)
+#else
 static void OSi_CommonCallback (PXIFifoTag tag, u32 data, BOOL err)
+#endif
 {
 #pragma unused(tag, err)
     u16 command;
@@ -97,7 +105,7 @@ static void OSi_SendToPxi (u16 data)
 
 #define RESET_HW_DTCM_IRQ_STACK_END SDK_AUTOLOAD_DTCM_START + 0x00003fc0 - HW_SVC_STACK_SIZE
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     void OS_ResetSystem (u32 parameter)
     {
         if (MB_IsMultiBootChild()) {
@@ -125,6 +133,7 @@ static void OSi_SendToPxi (u16 data)
 
         OSi_SendToPxi(OS_PXI_COMMAND_RESET);
 
+        #ifndef SDK_PORT
         asm {
             ldr r0, = RESET_HW_DTCM_IRQ_STACK_END;
             ldr r1, = SDK_IRQ_STACKSIZE;
@@ -132,6 +141,7 @@ static void OSi_SendToPxi (u16 data)
             mov sp, r0;
             bl OSi_DoResetSystem;
         }
+        #endif
 
     }
 #else
@@ -178,6 +188,13 @@ static void OSi_SendToPxi (u16 data)
     }
 
     #include <nitro/wram_end.h>
+#endif
+
+#ifdef SDK_PORT
+void OSi_DoBoot( void )
+{
+    
+}
 #endif
 
 #ifdef SDK_ARM9
@@ -234,7 +251,8 @@ asm void OSi_DoBoot (void)
 
 #include <nitro/itcm_end.h>
 
-#else
+#endif
+#ifdef SDK_ARM7
     #include <nitro/wram_begin.h>
 
 asm void OSi_DoBoot (void)

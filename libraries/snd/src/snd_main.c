@@ -15,7 +15,7 @@
     #define SND_ALARM_COUNT_P1  0x10000
 #endif
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     static OSMutex sSndMutex;
 #else
     static OSThread sndThread;
@@ -25,12 +25,27 @@
     static OSMessage sndMesgBuffer[SND_THREAD_MESSAGE_BUFSIZE];
 #endif
 
+#ifdef SDK_PORT
+#define SND_THREAD_STACK_SIZE      1024
+#define SND_THREAD_MESSAGE_BUFSIZE 8
+
+#define SND_ALARM_COUNT_P1  0x10000
+
+static OSThread sndThread;
+static u64 sndStack[SND_THREAD_STACK_SIZE / sizeof(u64)];
+static OSAlarm sndAlarm;
+static OSMessageQueue sndMesgQueue;
+static OSMessage sndMesgBuffer[SND_THREAD_MESSAGE_BUFSIZE];
+
+static void SndThread(void *arg);
+#endif
+
 #ifdef SDK_ARM7
     static void SndThread(void * arg);
     static void SndAlarmCallback(void * arg);
 #endif
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined( SDK_PORT )
     void SND_Init (void)
     {
         {
@@ -44,7 +59,10 @@
         SND_CommandInit();
         SND_AlarmInit();
     }
-#else
+#endif
+
+#if defined( SDK_ARM7 ) || defined( SDK_PORT )
+#ifndef SDK_PORT
     void SND_Init (u32 threadPrio)
     {
         {
@@ -57,6 +75,7 @@
         SND_CommandInit();
         SND_CreateThread(threadPrio);
     }
+#endif
 
     void SND_CreateThread (u32 threadPrio)
     {
@@ -74,6 +93,7 @@
         return OS_SetThreadPriority(&sndThread, prio);
     }
 
+    #ifndef SDK_PORT
     void SND_InitIntervalTimer (void)
     {
         OS_InitMessageQueue(&sndMesgQueue, sndMesgBuffer, SND_THREAD_MESSAGE_BUFSIZE);
@@ -91,6 +111,7 @@
     {
         OS_CancelAlarm(&sndAlarm);
     }
+    #endif
 
     OSMessage SND_WaitForIntervalTimer (void)
     {
@@ -105,6 +126,15 @@
         return OS_SendMessage(&sndMesgQueue, (OSMessage)SND_MESSAGE_WAKEUP_THREAD, OS_MESSAGE_NOBLOCK);
     }
 #endif
+
+#ifdef SDK_PORT
+
+void SND_InitIntervalTimer(void)
+{
+    OS_InitMessageQueue(&sndMesgQueue, sndMesgBuffer, SND_THREAD_MESSAGE_BUFSIZE);
+    OS_CreateAlarm(&sndAlarm);
+}
+#endif 
 
 void SNDi_LockMutex (void)
 {
@@ -170,4 +200,20 @@ void SNDi_UnlockMutex (void)
         SND_Disable();
         SND_StopIntervalTimer();
     }
+#endif
+
+#ifdef SDK_PORT
+
+static void SndThread(void *  )
+{
+
+}
+
+static void SndAlarmCallback(void *  )
+{
+    if (!OS_SendMessage(&sndMesgQueue, (OSMessage)SND_MESSAGE_PERIODIC, OS_MESSAGE_NOBLOCK))
+    {
+        OS_PutString("Failed sound alarm OS_SendMessage\n");
+    }
+}
 #endif

@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#ifdef SDK_ARM9
+#if (defined (SDK_ARM9) || defined(SDK_PORT))
     #include <nitro/os/common/system.h>
     #include <nitro/os/common/context.h>
 

@@ -7,7 +7,9 @@
 extern "C" {
 #endif
 
+#ifndef SDK_PORT
 void GX_SendFifo36B(register const void * pSrc, register void * pDest);
+#endif
 void GX_SendFifo48B(register const void * pSrc, register void * pDest);
 void GX_SendFifo64B(register const void * pSrc, register void * pDest);
 void GX_SendFifo128B(register const void * pSrc, register void * pDest);

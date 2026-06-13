@@ -1,6 +1,10 @@
 #ifndef NITRO_H_
 #define NITRO_H_
 
+#ifdef SDK_X86
+#define ATTRIBUTE_ALIGN(x) __attribute__((aligned(x)))
+#endif
+
 #ifdef SDK_ASM
     #include <nitro/spec.h>
     #include <nitro/types.h>
@@ -63,8 +67,21 @@
         #include <nitro/wfs.h>
         #include <nitro/env.h>
         #include <nitro/vib.h>
-    #else
-        #include <nitro/exi.h>
+    #endif
+    #ifdef SDK_X86
+        #include <nitro/fx/fx.h>
+        #include <nitro/fx/fx_const.h>
+        #include <nitro/fx/fx_trig.h>
+        #include <nitro/fx/fx_cp.h>
+        #include <nitro/fx/fx_vec.h>
+        #include <nitro/fx/fx_mtx.h>
+        #include <nitro/cp.h>
+        #include <nitro/ext.h>
+        #include <nitro/mb.h>
+        #include <nitro/wbt.h>
+        #include <nitro/wfs.h>
+        #include <nitro/env.h>
+        #include <nitro/vib.h>
     #endif
 #endif
 

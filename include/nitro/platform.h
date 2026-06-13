@@ -25,8 +25,14 @@
     #define PLATFORM_STRUCT_PADDING_FOOTER
     #define PLATFORM_ATTRIBUTE_INLINE       SDK_INLINE
 
+#elif (defined(SDK_PORT))
+    #define PLATFORM_BITFIELDS_ENDIAN       PLATFORM_ENDIAN_LITTLE
+    #define PLATFORM_COMPILER_ASSERT(expr) \
+
+    #define PLATFORM_STRUCT_PADDING_FOOTER
+    #define PLATFORM_ATTRIBUTE_INLINE       SDK_INLINE
 #else
-    # TO BE DEFINED
+    #error Unsupported platform!
 #endif
 
 typedef struct PLATFORM_LE8 {

@@ -13,13 +13,17 @@
 #include <nitro/snd/common/alarm.h>
 #include <nitro/snd/common/main.h>
 
+#if defined( SDK_PORT )
+#define ATTRIBUTE_ALIGN(x) __attribute__((aligned(x)))
+#endif
+
 #define SND_COMMAND_NUM 256
 #define SND_PXI_FIFO_MESSAGE_BUFSIZE   8
 #define SND_MSG_REQUEST_COMMAND_PROC   0
 
 #define UNPACK_COMMAND(arg, shift, bit) (((arg) >> (shift)) & ((1 << (bit)) - 1))
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     static SNDCommand sCommandArray[SND_COMMAND_NUM] ATTRIBUTE_ALIGN(32);
     static SNDCommand * sFreeList;
     static SNDCommand * sFreeListEnd;
@@ -37,15 +41,20 @@
     static u32 sFinishedTag;
 
     static SNDSharedWork sSharedWork ATTRIBUTE_ALIGN(32);
-#else
+#endif
+#if defined(SDK_ARM7) || defined(SDK_PORT)
     static OSMessage sCommandMesgBuffer[SND_PXI_FIFO_MESSAGE_BUFSIZE];
     static OSMessageQueue sCommandMesgQueue;
 #endif
 
+#ifdef SDK_PORT
+static void PxiFifoCallback(PXIFifoTag tag, u64 data, BOOL err);
+#else
 static void PxiFifoCallback(PXIFifoTag tag, u32 data, BOOL err);
+#endif
 static void InitPXI(void);
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     static void RequestCommandProc(void);
     static SNDCommand * AllocCommand(void);
     static BOOL IsCommandAvailable(void);
@@ -60,7 +69,7 @@ static void InitPXI(void);
 
 void SND_CommandInit (void)
 {
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     SNDCommand * command;
     int i;
 #endif
@@ -71,7 +80,7 @@ void SND_CommandInit (void)
 
     InitPXI();
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
 
     sFreeList = &sCommandArray[0];
     for (i = 0; i < SND_COMMAND_NUM - 1; i++) {
@@ -97,7 +106,11 @@ void SND_CommandInit (void)
     command = SND_AllocCommand(SND_COMMAND_BLOCK);
     if (command != NULL) {
         command->id = SND_COMMAND_SHARED_WORK;
+        #ifdef SDK_PORT
+        command->arg[0] = (u64)SNDi_SharedWork;
+        #else
         command->arg[0] = (u32)SNDi_SharedWork;
+        #endif
 
         SND_PushCommand(command);
         (void)SND_FlushCommand(SND_COMMAND_BLOCK);
@@ -108,7 +121,7 @@ void SND_CommandInit (void)
 #endif
 }
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
 const SNDCommand * SND_RecvCommandReply (u32 flags)
 {
     OSIntrMode bak_psr = OS_DisableInterrupts();
@@ -235,7 +248,13 @@ BOOL SND_FlushCommand (u32 flags)
     }
 
     DC_FlushRange(sCommandArray, sizeof(sCommandArray));
-    if (PXI_SendWordByFifo(PXI_FIFO_TAG_SOUND, (u32)sReserveList, FALSE) < 0) {
+    if (
+        #ifdef SDK_PORT
+        PXI_SendWordByFifo(PXI_FIFO_TAG_SOUND, (u64)sReserveList, FALSE) < 0
+        #else
+        PXI_SendWordByFifo(PXI_FIFO_TAG_SOUND, (u32)sReserveList, FALSE) < 0
+        #endif
+    ) {
         if ((flags & SND_COMMAND_BLOCK) == 0) {
             (void)OS_RestoreInterrupts(bak_psr);
             return FALSE;
@@ -569,7 +588,11 @@ void SND_CommandProc (void)
 }
 #endif
 
+#ifdef SDK_PORT
+static void PxiFifoCallback (PXIFifoTag tag, u64 data, BOOL)
+#else
 static void PxiFifoCallback (PXIFifoTag tag, u32 data, BOOL)
+#endif
 {
     OSIntrMode enabled;
     BOOL result;
@@ -580,7 +603,7 @@ static void PxiFifoCallback (PXIFifoTag tag, u32 data, BOOL)
 #pragma unused(tag)
 #endif
     enabled = OS_DisableInterrupts();
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
 #pragma unused(result)
     SNDi_CallAlarmHandler((int)data);
 #else
@@ -615,11 +638,13 @@ static void InitPXI (void)
 #endif
 }
 
-#ifdef SDK_ARM9
+#if defined( SDK_ARM9 ) || defined( SDK_PORT )
     static void RequestCommandProc (void)
     {
         while (PXI_SendWordByFifo(PXI_FIFO_TAG_SOUND, SND_MSG_REQUEST_COMMAND_PROC, FALSE) < 0) {
-
+            #ifdef SDK_PORT
+            break;
+            #endif
         }
     }
 

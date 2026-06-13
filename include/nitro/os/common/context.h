@@ -59,9 +59,18 @@ typedef struct OSContext {
 #ifdef SDK_ARM9
 	CPContext cp_context;
 #endif
+#ifdef SDK_PORT
+    u64     func;
+    u64     arg;
+    u64     exitFunc;
+#endif
 } OSContext;
 
+#ifdef SDK_PORT
+void OS_InitContext(OSContext * context, u64 newpc, u64 newsp);
+#else
 void OS_InitContext(OSContext * context, u32 newpc, u32 newsp);
+#endif
 BOOL OS_SaveContext(OSContext * context);
 void OS_LoadContext(OSContext * context);
 void OS_DumpContext(OSContext * context);

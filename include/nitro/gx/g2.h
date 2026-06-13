@@ -2,9 +2,15 @@
 #define NITRO_G2_H_
 
 #include <nitro/gx/gxcommon.h>
+#ifdef SDK_PORT
+#include <nitro/hw/X86/ioreg_G2.h>
+#include <nitro/hw/X86/ioreg_G2S.h>
+#include <nitro/hw/X86/ioreg_GX.h>
+#else
 #include <nitro/hw/ARM9/ioreg_G2.h>
 #include <nitro/hw/ARM9/ioreg_G2S.h>
 #include <nitro/hw/ARM9/ioreg_GX.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -103,11 +109,19 @@ static void G2S_SetBlendBrightnessExt(int plane1, int plane2, int ev1, int ev2, 
 static void G2S_ChangeBlendAlpha(int ev1, int ev2);
 static void G2S_ChangeBlendBrightness(int brightness);
 
+#ifdef SDK_PORT
+void G2x_SetBGyAffine_(u64 addr, const MtxFx22 *mtx, int centerX, int centerY, int x1, int y1);
+void G2x_SetBlendAlpha_(u64 addr, int plane1, int plane2, int ev1, int ev2);
+void G2x_SetBlendBrightness_(u64 addr, int plane, int brightness);
+void G2x_SetBlendBrightnessExt_(u64 addr, int plane1, int plane2, int ev1, int ev2, int brightness);
+void G2x_ChangeBlendBrightness_(u64 addr, int brightness);
+#else
 void G2x_SetBGyAffine_(u32 addr, const MtxFx22 * mtx, int centerX, int centerY, int x1, int y1);
 void G2x_SetBlendAlpha_(u32 addr, int plane1, int plane2, int ev1, int ev2);
 void G2x_SetBlendBrightness_(u32 addr, int plane, int brightness);
 void G2x_SetBlendBrightnessExt_(u32 addr, int plane1, int plane2, int ev1, int ev2, int brightness);
 void G2x_ChangeBlendBrightness_(u32 addr, int brightness);
+#endif
 
 static inline void G2_SetBG0Offset (int hOffset, int vOffset)
 {
@@ -166,7 +180,12 @@ static inline void G2_SetWnd0InsidePlane (int wnd, BOOL effect)
 
 static inline GXWndPlane G2_GetWnd0InsidePlane (void)
 {
+	#if(defined(SDK_PORT) && defined(__cplusplus))
+	GXWndPlane a;
+	return a;
+	#else
 	return *(volatile GXWndPlane *)(REG_WININ_ADDR);
+	#endif
 }
 
 static inline void G2_SetWnd1InsidePlane (int wnd, BOOL effect)
@@ -185,7 +204,12 @@ static inline void G2_SetWnd1InsidePlane (int wnd, BOOL effect)
 
 static inline GXWndPlane G2_GetWnd1InsidePlane (void)
 {
+    #if(defined(SDK_PORT) && defined(__cplusplus))
+    GXWndPlane a;
+    return a;
+    #else
 	return *(volatile GXWndPlane *)(REG_WININ_ADDR + 1);
+    #endif
 }
 
 static inline void G2_SetWndOutsidePlane (int wnd, BOOL effect)
@@ -204,7 +228,12 @@ static inline void G2_SetWndOutsidePlane (int wnd, BOOL effect)
 
 static inline GXWndPlane G2_GetWndOutsidePlane (void)
 {
+    #if(defined(SDK_PORT) && defined(__cplusplus))
+    GXWndPlane a;
+    return a;
+    #else
 	return *(volatile GXWndPlane *)(REG_WINOUT_ADDR);
+    #endif
 }
 
 static inline void G2_SetWndOBJInsidePlane (int wnd, BOOL effect)
@@ -224,7 +253,12 @@ static inline void G2_SetWndOBJInsidePlane (int wnd, BOOL effect)
 
 static inline GXWndPlane G2_GetWndOBJInsidePlane (void)
 {
+    #if(defined(SDK_PORT) && defined(__cplusplus))
+    GXWndPlane a;
+    return a;
+    #else
 	return *(volatile GXWndPlane *)(REG_WINOUT_ADDR + 1);
+    #endif
 }
 
 static inline void G2_SetWnd0Position (int x1, int y1, int x2, int y2)
@@ -285,32 +319,56 @@ static inline void G2_ChangeBlendAlpha (int ev1, int ev2)
 
 static inline void G2_SetBG2Affine (const MtxFx22 * mtx, int centerX, int centerY, int x1, int y1)
 {
+    #ifdef SDK_PORT
+    G2x_SetBGyAffine_((u64)&reg_G2_BG2PA, mtx, centerX, centerY, x1, y1);
+    #else
 	G2x_SetBGyAffine_((u32) & reg_G2_BG2PA, mtx, centerX, centerY, x1, y1);
+	#endif
 }
 
 static inline void G2_SetBG3Affine (const MtxFx22 * mtx, int centerX, int centerY, int x1, int y1)
 {
+    #ifdef SDK_PORT
+    G2x_SetBGyAffine_((u64)&reg_G2_BG3PA, mtx, centerX, centerY, x1, y1);
+    #else
 	G2x_SetBGyAffine_((u32) & reg_G2_BG3PA, mtx, centerX, centerY, x1, y1);
+    #endif
 }
 
 static inline void G2_SetBlendAlpha (int plane1, int plane2, int ev1, int ev2)
 {
+    #ifdef SDK_PORT
+    G2x_SetBlendAlpha_((u64)&reg_G2_BLDCNT, plane1, plane2, ev1, ev2);
+    #else
 	G2x_SetBlendAlpha_((u32) & reg_G2_BLDCNT, plane1, plane2, ev1, ev2);
+    #endif
 }
 
 static inline void G2_SetBlendBrightness (int plane, int brightness)
 {
+    #ifdef SDK_PORT
+    G2x_SetBlendBrightness_((u64)&reg_G2_BLDCNT, plane, brightness);
+    #else
 	G2x_SetBlendBrightness_((u32) & reg_G2_BLDCNT, plane, brightness);
+    #endif
 }
 
 static inline void G2_SetBlendBrightnessExt (int plane1, int plane2, int ev1, int ev2, int brightness)
 {
+    #ifdef SDK_PORT
+    G2x_SetBlendBrightnessExt_((u64)&reg_G2_BLDCNT, plane1, plane2, ev1, ev2, brightness);
+    #else
 	G2x_SetBlendBrightnessExt_((u32) & reg_G2_BLDCNT, plane1, plane2, ev1, ev2, brightness);
+    #endif
 }
 
 static inline void G2_ChangeBlendBrightness (int brightness)
 {
+    #ifdef SDK_PORT
+    G2x_ChangeBlendBrightness_((u64)&reg_G2_BLDCNT, brightness);
+    #else
 	G2x_ChangeBlendBrightness_((u32) & reg_G2_BLDCNT, brightness);
+    #endif
 }
 
 static inline void G2S_SetBG0Offset (int hOffset, int vOffset)
@@ -379,7 +437,12 @@ static inline void G2S_SetWnd0InsidePlane (int wnd, BOOL effect)
 
 static inline GXWndPlane G2S_GetWnd0InsidePlane (void)
 {
+    #if(defined(SDK_PORT) && defined(__cplusplus))
+    GXWndPlane a;
+    return a;
+    #else
 	return *(volatile GXWndPlane *)(REG_DB_WININ_ADDR);
+    #endif
 }
 
 static inline void G2S_SetWnd1InsidePlane (int wnd, BOOL effect)
@@ -399,7 +462,12 @@ static inline void G2S_SetWnd1InsidePlane (int wnd, BOOL effect)
 
 static inline GXWndPlane G2S_GetWnd1InsidePlane (void)
 {
+    #if(defined(SDK_PORT) && defined(__cplusplus))
+    GXWndPlane a;
+    return a;
+    #else
 	return *(volatile GXWndPlane *)(REG_DB_WININ_ADDR + 1);
+    #endif
 }
 
 static inline void G2S_SetWndOutsidePlane (int wnd, BOOL effect)
@@ -419,7 +487,12 @@ static inline void G2S_SetWndOutsidePlane (int wnd, BOOL effect)
 
 static inline GXWndPlane G2S_GetWndOutsidePlane (void)
 {
+    #if(defined(SDK_PORT) && defined(__cplusplus))
+    GXWndPlane a;
+    return a;
+    #else
 	return *(volatile GXWndPlane *)(REG_DB_WINOUT_ADDR);
+    #endif
 }
 
 static inline void G2S_SetWndOBJInsidePlane (int wnd, BOOL effect)
@@ -439,7 +512,12 @@ static inline void G2S_SetWndOBJInsidePlane (int wnd, BOOL effect)
 
 static inline GXWndPlane G2S_GetWndOBJInsidePlane (void)
 {
+    #if(defined(SDK_PORT) && defined(__cplusplus))
+    GXWndPlane a;
+    return a;
+    #else
 	return *(volatile GXWndPlane *)(REG_DB_WINOUT_ADDR + 1);
+    #endif
 }
 
 static inline void G2S_SetWnd0Position (int x1, int y1, int x2, int y2)
@@ -504,33 +582,57 @@ static inline void G2S_ChangeBlendAlpha (int ev1, int ev2)
 
 static inline void G2S_SetBG2Affine (const MtxFx22 * mtx, int centerX, int centerY, int x1, int y1)
 {
+    #ifdef SDK_PORT
+    G2x_SetBGyAffine_((u64)&reg_G2S_DB_BG2PA, mtx, centerX, centerY, x1, y1);
+    #else
 	G2x_SetBGyAffine_((u32) & reg_G2S_DB_BG2PA, mtx, centerX, centerY, x1, y1);
+    #endif
 }
 
 static inline void G2S_SetBG3Affine (const MtxFx22 * mtx, int centerX, int centerY, int x1, int y1)
 {
+    #ifdef SDK_PORT
+    G2x_SetBGyAffine_((u64)&reg_G2S_DB_BG3PA, mtx, centerX, centerY, x1, y1);
+    #else
 	G2x_SetBGyAffine_((u32) & reg_G2S_DB_BG3PA, mtx, centerX, centerY, x1, y1);
+    #endif
 }
 
 static inline void G2S_SetBlendAlpha (int plane1, int plane2, int ev1, int ev2)
 {
+    #ifdef SDK_PORT
+    G2x_SetBlendAlpha_((u64)&reg_G2S_DB_BLDCNT, plane1, plane2, ev1, ev2);
+    #else
 	G2x_SetBlendAlpha_((u32) & reg_G2S_DB_BLDCNT, plane1, plane2, ev1, ev2);
+    #endif
 }
 
 static inline void G2S_SetBlendBrightness (int plane, int brightness)
 {
+    #ifdef SDK_PORT
+    G2x_SetBlendBrightness_((u64)&reg_G2S_DB_BLDCNT, plane, brightness);
+    #else
 	G2x_SetBlendBrightness_((u32) & reg_G2S_DB_BLDCNT, plane, brightness);
+    #endif
 }
 
 static inline void G2S_SetBlendBrightnessExt (int plane1,
                                               int plane2, int ev1, int ev2, int brightness)
 {
+    #ifdef SDK_PORT
+    G2x_SetBlendBrightnessExt_((u64)&reg_G2S_DB_BLDCNT, plane1, plane2, ev1, ev2, brightness);
+    #else
 	G2x_SetBlendBrightnessExt_((u32) & reg_G2S_DB_BLDCNT, plane1, plane2, ev1, ev2, brightness);
+    #endif
 }
 
 static inline void G2S_ChangeBlendBrightness (int brightness)
 {
+    #ifdef SDK_PORT
+    G2x_ChangeBlendBrightness_((u64)&reg_G2S_DB_BLDCNT, brightness);
+    #else
 	G2x_ChangeBlendBrightness_((u32) & reg_G2S_DB_BLDCNT, brightness);
+    #endif
 }
 
 #endif

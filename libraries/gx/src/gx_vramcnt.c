@@ -5,6 +5,10 @@
 
 #include "gxstate.h"
 
+#ifdef SDK_PORT
+#include <simulator/sim.h>
+#endif
+
 typedef enum {
 	GX_VRAMCNT_A_DISABLE           = 0,
 	GX_VRAMCNT_A_LCDC_0x06800000   = (0 << REG_GX_VRAMCNT_A_MST_SHIFT) | (0 << REG_GX_VRAMCNT_A_OFS_SHIFT) | (1 << REG_GX_VRAMCNT_A_E_SHIFT),
@@ -389,6 +393,9 @@ static inline void texOff_ (void)
 
 static inline void GX_VRAMCNT_SetTEX_ (GXVRamTex tex)
 {
+    #ifdef SDK_PORT
+    s_SIM_GXVRamTex = tex;
+    #endif
 	if (tex == GX_VRAM_TEX_NONE) {
 		texOff_();
 		return;
@@ -775,6 +782,10 @@ static inline void GxSetBankForBGExtPltt (GXVRamBGExtPltt bgExtPltt)
 {
 	GX_VRAM_BGEXTPLTT_ASSERT(bgExtPltt);
 
+    #ifdef SDK_PORT
+    s_SIM_GXBgExtPltt = bgExtPltt;
+    #endif
+
 	gGXState.vramCnt.lcdc = (u16)(~bgExtPltt & (gGXState.vramCnt.lcdc | gGXState.vramCnt.bgExtPltt));
 	gGXState.vramCnt.bgExtPltt = bgExtPltt;
 
@@ -867,6 +878,9 @@ BOOL GX_TrySetBankForTex (GXVRamTex tex)
 static inline void GxSetBankForTexPltt (GXVRamTexPltt texPltt)
 {
 	GX_VRAM_TEXPLTT_ASSERT(texPltt);
+    #ifdef SDK_PORT
+    s_SIM_GXVRamTexPltt = texPltt;
+    #endif
 
 	gGXState.vramCnt.lcdc = (u16)(~texPltt & (gGXState.vramCnt.lcdc | gGXState.vramCnt.texPltt));
 	gGXState.vramCnt.texPltt = texPltt;
@@ -1051,6 +1065,10 @@ BOOL GX_TrySetBankForSubOBJ (GXVRamSubOBJ sub_obj)
 static inline void GxSetBankForSubBGExtPltt (GXVRamSubBGExtPltt sub_bgExtPltt)
 {
 	GX_VRAM_SUB_BGEXTPLTT_ASSERT(sub_bgExtPltt);
+
+    #ifdef SDK_PORT
+    s_SIM_GXSubBgExtPltt = sub_bgExtPltt;
+    #endif
 
 	gGXState.vramCnt.lcdc = (u16)(~sub_bgExtPltt & (gGXState.vramCnt.lcdc | gGXState.vramCnt.sub_bgExtPltt));
 	gGXState.vramCnt.sub_bgExtPltt = sub_bgExtPltt;

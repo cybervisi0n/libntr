@@ -9,6 +9,10 @@ extern "C" {
 #include <nitro/types.h>
 #include <nitro/os/common/thread.h>
 
+#ifndef SDK_BUILD_ARM
+#include <SDL2/SDL.h>
+#endif
+
 typedef void (*OSAlarmHandler) (void *);
 
 struct OSiAlarm {
@@ -20,6 +24,9 @@ struct OSiAlarm {
 	OSAlarm * next;
 	OSTick period;
 	OSTick start;
+#ifndef SDK_BUILD_ARM
+  SDL_TimerID sdlTimer;
+#endif
 };
 
 void OS_InitAlarm(void);

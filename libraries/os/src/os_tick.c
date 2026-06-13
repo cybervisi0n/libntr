@@ -62,6 +62,10 @@ OSTick OS_GetTick (void)
     OSIntrMode prev = OS_DisableInterrupts();
     SDK_ASSERT(OSi_UseTick);
 
+    #ifdef SDK_PORT
+    u64 milliseconds = SDL_GetTicks64();
+    return ((OSTick)( ((OS_SYSTEM_CLOCK/1000) * (u64)(milliseconds)) / 64 ));
+    #else
     countL = *(REGType16 *)((u32)REG_TM0CNT_L_ADDR + OSi_TICK_TIMER * 4);
     countH = OSi_TickCounter & 0xffffffffffffULL;
 
@@ -72,6 +76,7 @@ OSTick OS_GetTick (void)
     (void)OS_RestoreInterrupts(prev);
 
     return (countH << 16) | countL;
+    #endif
 }
 
 #pragma profile off
@@ -101,7 +106,11 @@ u32 OSi_GetTick_noProfile (void)
 u16 OS_GetTickLo (void)
 {
     SDK_ASSERT(OSi_UseTick);
+    #ifdef SDK_PORT
+    return *(REGType16 *)(REG_TM0CNT_L_ADDR + OSi_TICK_TIMER * 4);
+    #else
     return *(REGType16 *)((u32)REG_TM0CNT_L_ADDR + OSi_TICK_TIMER * 4);
+    #endif
 }
 
 void OS_SetTick (OSTick count)

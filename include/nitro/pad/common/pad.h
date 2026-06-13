@@ -7,12 +7,18 @@ extern "C" {
 
 #include <nitro/misc.h>
 #include <nitro/types.h>
-#include <nitro/hw/common/mmap_shared.h>
 
+#ifdef SDK_PORT
+    #include <nitro/hw/X86/mmap_shared.h>
+    #include <nitro/hw/X86/ioreg_PAD.h>
+#else
 #ifdef SDK_ARM9
+    #include <nitro/hw/common/mmap_shared.h>
     #include <nitro/hw/ARM9/ioreg_PAD.h>
 #else
+    #include <nitro/hw/common/mmap_shared.h>
     #include <nitro/hw/ARM7/ioreg_PAD.h>
+#endif
 #endif
 
 #define PAD_PLUS_KEY_MASK       0x00f0
@@ -40,8 +46,14 @@ extern "C" {
 
 static inline u16 PAD_Read (void)
 {
+	#ifdef SDK_PORT
+    u16 keys = (u16)(((reg_PAD_KEYINPUT | *(vu16 *)HW_BUTTON_XY_BUF) ^
+                  (PAD_PLUS_KEY_MASK | PAD_BUTTON_MASK)) & (PAD_PLUS_KEY_MASK | PAD_BUTTON_MASK));
+	return keys;
+	#else
 	return (u16)(((reg_PAD_KEYINPUT | *(vu16 *)HW_BUTTON_XY_BUF) ^
 	              (PAD_PLUS_KEY_MASK | PAD_BUTTON_MASK)) & (PAD_PLUS_KEY_MASK | PAD_BUTTON_MASK));
+	#endif
 }
 
 static inline BOOL PAD_DetectFold (void)

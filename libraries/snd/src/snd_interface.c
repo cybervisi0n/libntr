@@ -5,12 +5,20 @@
 #include <nitro/snd/common/seq.h>
 #include <nitro/snd/common/alarm.h>
 
+#ifdef SDK_PORT
+#define PushCommand(c, a0, a1, a2, a3) PushCommand_impl((c), (u64)(a0), (u64)(a1), (u64)(a2), (u64)(a3))
+#else
 #define PushCommand(c, a0, a1, a2, a3) PushCommand_impl((c), (u32)(a0), (u32)(a1), (u32)(a2), (u32)(a3))
+#endif
 
 #define GetOffset(type, member) ((u32)(&((type *)0)->member))
 #define GetSize(type, member) (sizeof(((type *)0)->member))
 
+#ifdef SDK_PORT
+static void PushCommand_impl(SNDCommandID command, u64 arg0, u64 arg1, u64 arg2, u64 arg3);
+#else
 static void PushCommand_impl(SNDCommandID command, u32 arg0, u32 arg1, u32 arg2, u32 arg3);
+#endif
 
 void SND_StartSeq (int playerNo, const void * base, u32 offset, const struct SNDBankData * bank)
 {
@@ -315,7 +323,11 @@ void SNDi_SkipSeq (int playerNo, u32 tick)
     PushCommand(SND_COMMAND_SKIP_SEQ, playerNo, tick, 0, 0);
 }
 
+#ifdef SDK_PORT
+static void PushCommand_impl (SNDCommandID id, u64 arg0, u64 arg1, u64 arg2, u64 arg3)
+#else
 static void PushCommand_impl (SNDCommandID id, u32 arg0, u32 arg1, u32 arg2, u32 arg3)
+#endif
 {
     SNDCommand * command = SND_AllocCommand(SND_COMMAND_BLOCK);
 

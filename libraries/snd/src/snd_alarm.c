@@ -2,7 +2,7 @@
 #include <nitro/pxi.h>
 #include <nitro/snd/common/work.h>
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     typedef struct AlarmCallbackInfo {
         void (*func)(void *);
         void * arg;
@@ -12,7 +12,7 @@
     } AlarmCallbackInfo;
 #endif
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     static AlarmCallbackInfo sCallbackTable[SND_ALARM_NUM];
 #endif
 
@@ -20,7 +20,7 @@
     static void AlarmHandler(void * arg);
 #endif
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     void SND_AlarmInit (void)
     {
         int alarmNo;
@@ -123,7 +123,7 @@
     }
 #endif
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     void SNDi_IncAlarmId (int alarmNo)
     {
         AlarmCallbackInfo * info;

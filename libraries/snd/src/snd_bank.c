@@ -191,14 +191,22 @@ BOOL SND_ReadInstData (const SNDBankData * bank, int prgNo, int key, SNDInstData
     case SND_INST_DIRECTPCM:
     case SND_INST_NULL:
     {
+        #ifdef SDK_PORT
+        const SNDInstParam * param = (const SNDInstParam *)((u8 *)bank + instOffset + 32);
+        #else
         const SNDInstParam * param = (const SNDInstParam *)((u8 *)bank + instOffset);
+        #endif
 
         inst->param = *param;
         break;
     }
     case SND_INST_DRUM_SET:
     {
+        #ifdef SDK_PORT
+        const SNDDrumSet * drumSet = (const SNDDrumSet *)((u8 *)bank + instOffset + 32);
+        #else
         const SNDDrumSet * drumSet = (const SNDDrumSet *)((u8 *)bank + instOffset);
+        #endif
         u8 min = MI_ReadByte(&drumSet->min);
         u8 max = MI_ReadByte(&drumSet->max);
 
@@ -213,7 +221,11 @@ BOOL SND_ReadInstData (const SNDBankData * bank, int prgNo, int key, SNDInstData
     case SND_INST_KEY_SPLIT:
     {
         int index = 0;
+        #ifdef SDK_PORT
+        const SNDKeySplit * keySplit = (const SNDKeySplit *)((u8 *)bank + instOffset + 32);
+        #else
         const SNDKeySplit * keySplit = (const SNDKeySplit *)((u8 *)bank + instOffset);
+        #endif
 
         while (key > MI_ReadByte(&keySplit->key[index])) {
             index++;
@@ -432,7 +444,7 @@ const SNDWaveData * SND_GetWaveDataAddress (const SNDWaveArc * waveArc, int inde
     return wave;
 }
 
-#ifdef SDK_ARM7
+#if defined( SDK_PORT ) || defined(SDK_ARM7)
 
 BOOL SND_NoteOn (SNDExChannel * ch_p, int key, int velocity, s32 length, const SNDBankData * bank, const SNDInstData * inst)
 {
@@ -496,7 +508,7 @@ BOOL SND_NoteOn (SNDExChannel * ch_p, int key, int velocity, s32 length, const S
 
 #endif
 
-#ifdef SDK_ARM7
+#if defined( SDK_PORT ) || defined(SDK_ARM7)
     static const SNDWaveData * GetWaveData (const SNDBankData * bank, int waveArcNo, int waveIndex)
     {
         const SNDWaveArc * arc;

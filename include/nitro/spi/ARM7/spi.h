@@ -6,7 +6,11 @@ extern "C" {
 #endif
 
 #include <nitro/ioreg.h>
+#ifdef SDK_BUILD_ARM
 #include <nitro/hw/ARM7/ioreg_SPI.h>
+#else
+#include <nitro/hw/X86/ioreg_SPI.h>
+#endif
 #include <nitro/misc.h>
 
 typedef enum {

@@ -60,7 +60,7 @@ s16 SND_CalcDecibelSquare (int scale)
 u16 SND_CalcTimer(int orgTimer, int pitch);
 u16 SND_CalcChannelVolume(int dB);
 
-#ifdef SDK_ARM7
+#if (defined(SDK_ARM7) || defined(SDK_PORT))
     u16 SND_CalcRandom(void);
     s8 SND_SinIdx(int index);
 #endif

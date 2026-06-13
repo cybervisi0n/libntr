@@ -1,6 +1,10 @@
 #include <nitro/os.h>
 #include <nitro/os/common/message.h>
 
+#ifdef SDK_PORT
+#include <SDL2/SDL.h>
+#endif
+
 void OS_InitMessageQueue (OSMessageQueue * mq, OSMessage * msgArray, s32 msgCount)
 {
     OS_InitThreadQueue(&mq->queueSend);
@@ -10,6 +14,9 @@ void OS_InitMessageQueue (OSMessageQueue * mq, OSMessage * msgArray, s32 msgCoun
     mq->msgCount = msgCount;
     mq->firstIndex = 0;
     mq->usedCount = 0;
+    #ifdef SDK_PORT
+    mq->semaphore = SDL_CreateSemaphore(0);
+    #endif
 }
 
 BOOL OS_SendMessage (OSMessageQueue * mq, OSMessage msg, s32 flags)
@@ -34,6 +41,9 @@ BOOL OS_SendMessage (OSMessageQueue * mq, OSMessage msg, s32 flags)
     mq->usedCount++;
 
     OS_WakeupThread(&mq->queueReceive);
+    #ifdef SDK_PORT
+    SDL_SemPost(mq->semaphore);
+    #endif
 
     (void)OS_RestoreInterrupts(enabled);
     return TRUE;
@@ -50,7 +60,11 @@ BOOL OS_ReceiveMessage (OSMessageQueue * mq, OSMessage * msg, s32 flags)
             (void)OS_RestoreInterrupts(enabled);
             return FALSE;
         } else {
+            #ifdef SDK_PORT
+            SDL_SemWaitTimeout(mq->semaphore, 1);
+            #else
             OS_SleepThread(&mq->queueReceive);
+            #endif
         }
     }
 

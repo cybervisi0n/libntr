@@ -10,14 +10,21 @@ extern "C" {
 
 void OS_InitReset(void);
 
+#ifdef SDK_PORT
+void    OS_ResetSystem(u32 parameter);
+#else
 #ifdef SDK_ARM9
     void OS_ResetSystem(u32 parameter);
 #else
     void OS_ResetSystem(void);
 #endif
+#endif
 
 BOOL OS_IsResetOccurred(void);
 
+#ifdef SDK_PORT
+static 
+#endif
 inline u32 OS_GetResetParameter (void)
 {
 	return (u32) * (u32 *)HW_RESET_PARAMETER_BUF;

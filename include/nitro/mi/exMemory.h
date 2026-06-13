@@ -113,7 +113,7 @@ typedef enum {
 
 #define MI_PHICONTROL_ASSERT(x)  SDK_ASSERT((u32)x <= MI_PHI_CLOCK_33MHZ)
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     static inline void MI_SetMainMemoryPriority (MIProcessor proc)
     {
         MI_PROCESSOR_ASSERT(proc);
@@ -127,7 +127,7 @@ static inline MIProcessor MI_GetMainMemoryPriority (void)
 	return (MIProcessor)((reg_MI_EXMEMCNT & REG_MI_EXMEMCNT_EP_MASK) >> REG_MI_EXMEMCNT_EP_SHIFT);
 }
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     static inline void MIi_SetCardProcessor (MIProcessor proc)
     {
         MI_PROCESSOR_ASSERT(proc);

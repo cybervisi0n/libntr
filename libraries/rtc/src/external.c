@@ -1,6 +1,10 @@
 #include <nitro/os.h>
 #include <nitro/rtc.h>
 
+#ifdef SDK_PORT
+#include <time.h>
+#endif
+
 typedef enum RTCLock {
     RTC_LOCK_OFF = 0,
     RTC_LOCK_ON,
@@ -43,7 +47,13 @@ static RTCWork rtcWork;
 static u16 rtcTickInitialized;
 static OSTick rtcInitialTotalTicks;
 
+#ifdef SDK_PORT
+static void RtcCommonCallback(PXIFifoTag tag, u64 data, BOOL err);
+static void getPCTime(RTCTime* theTime);
+static void getPCDate(RTCDate* theDate);
+#else
 static void RtcCommonCallback(PXIFifoTag tag, u32 data, BOOL err);
+#endif
 static u32 RtcBCD2HEX(u32 bcd);
 static u32 RtcHEX2BCD(u32 hex);
 static BOOL RtcCheckAlarmParam(const RTCAlarmParam * param);
@@ -70,8 +80,11 @@ void RTC_Init (void)
     rtcWork.buffer[1] = NULL;
 
     PXI_Init();
+
+    #ifndef SDK_PORT
     while (!PXI_IsCallbackReady(PXI_FIFO_TAG_RTC, PXI_PROC_ARM7)) {
     }
+    #endif
 
     PXI_SetFifoRecvCallback(PXI_FIFO_TAG_RTC, RtcCommonCallback);
 }
@@ -98,6 +111,13 @@ RTCResult RTC_GetDateAsync (RTCDate * date, RTCCallback callback, void * arg)
     rtcWork.buffer[0] = (void *)date;
     rtcWork.callback = callback;
     rtcWork.callbackArg = arg;
+
+    #ifdef SDK_PORT
+    getPCDate( date );
+    callback(RTC_RESULT_SUCCESS, arg);
+    rtcWork.lock = RTC_LOCK_OFF;
+    return RTC_RESULT_SUCCESS;
+    #endif
 
     if (RTCi_ReadRawDateAsync()) {
         return RTC_RESULT_SUCCESS;
@@ -138,6 +158,13 @@ RTCResult RTC_GetTimeAsync (RTCTime * time, RTCCallback callback, void * arg)
     rtcWork.callback = callback;
     rtcWork.callbackArg = arg;
 
+    #ifdef SDK_PORT
+    getPCTime( time );
+    callback(RTC_RESULT_SUCCESS, arg);
+    rtcWork.lock = RTC_LOCK_OFF;
+    return RTC_RESULT_SUCCESS;
+    #endif
+
     if (RTCi_ReadRawTimeAsync()) {
         return RTC_RESULT_SUCCESS;
     } else {
@@ -145,8 +172,37 @@ RTCResult RTC_GetTimeAsync (RTCTime * time, RTCCallback callback, void * arg)
     }
 }
 
+#ifdef SDK_PORT
+static void getPCTime( RTCTime* theTime )
+{
+    struct tm * timeinfo;
+    time_t currentTime = time( NULL );
+    timeinfo = localtime( &currentTime );
+    theTime->hour = timeinfo->tm_hour;
+    theTime->minute = timeinfo->tm_min;
+    theTime->second = timeinfo->tm_sec;
+}
+
+static void getPCDate( RTCDate* theDate )
+{
+    struct tm * timeinfo;
+    time_t currentTime = time( NULL );
+    timeinfo = localtime( &currentTime );
+
+    theDate->year = timeinfo->tm_year - 100;
+    theDate->month = timeinfo->tm_mon + 1;
+    theDate->day = timeinfo->tm_mday;
+    theDate->week = timeinfo->tm_wday;
+}
+#endif
+
 RTCResult RTC_GetTime (RTCTime * time)
 {
+    #ifdef SDK_PORT
+    getPCTime( time );
+    rtcWork.commonResult = 0;
+    return rtcWork.commonResult;
+    #else
     rtcWork.commonResult = RTC_GetTimeAsync(time, RtcGetResultCallback, NULL);
 
     if (rtcWork.commonResult == RTC_RESULT_SUCCESS) {
@@ -154,6 +210,7 @@ RTCResult RTC_GetTime (RTCTime * time)
     }
 
     return rtcWork.commonResult;
+    #endif
 }
 
 RTCResult RTC_GetDateTimeAsync (RTCDate * date, RTCTime * time, RTCCallback callback, void * arg)
@@ -180,6 +237,14 @@ RTCResult RTC_GetDateTimeAsync (RTCDate * date, RTCTime * time, RTCCallback call
     rtcWork.buffer[1] = (void *)time;
     rtcWork.callback = callback;
     rtcWork.callbackArg = arg;
+
+    #ifdef SDK_PORT
+    getPCTime( time );
+    getPCDate( date );
+    callback(RTC_RESULT_SUCCESS, arg);
+    rtcWork.lock = RTC_LOCK_OFF;
+    return RTC_RESULT_SUCCESS;
+    #endif
 
     if (RTCi_ReadRawDateTimeAsync()) {
         return RTC_RESULT_SUCCESS;
@@ -634,7 +699,11 @@ RTCResult RTC_SetAlarmParam (RTCAlarmChan chan, const RTCAlarmParam * param)
     return rtcWork.commonResult;
 }
 
+#ifdef SDK_PORT
+static void RtcCommonCallback (PXIFifoTag tag, u64 data, BOOL err)
+#else
 static void RtcCommonCallback (PXIFifoTag tag, u32 data, BOOL err)
+#endif
 {
 #pragma unused(tag)
 
@@ -1027,6 +1096,12 @@ static RTCResult RtcTickInit (void)
     return result;
 }
 
+#ifdef SDK_PORT
+static void RtcWaitBusy( void )
+{
+    return;
+}
+#else
 #include <nitro/code32.h>
 
 static asm void RtcWaitBusy (void)
@@ -1040,3 +1115,4 @@ loop:
 }
 
 #include <nitro/codereset.h>
+#endif

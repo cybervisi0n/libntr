@@ -1,5 +1,10 @@
 #include <nitro.h>
 
+#ifdef SDK_PORT
+#include <stdio.h>
+#include "simulator/assert.h"
+#endif
+
 #ifdef SDK_LINK_ISD
     #pragma warn_extracomma off
     #include <isdbglib.h>
@@ -51,6 +56,13 @@ static void OS_PutStringInit(const char * str);
     void (*OS_PutString) (const char * str) = OS_PutStringInit;
 #endif
 
+#ifdef SDK_PORT
+static void putsWrap(const char *str)
+{
+    fputs(str, stdout);
+}
+#endif
+
 static void OS_PutStringInit (const char * str)
 {
 #ifndef SDK_FINALROM
@@ -65,7 +77,11 @@ static void OS_PutStringInit (const char * str)
 #ifdef SDK_ARM7
         OS_PutString = OS_PutStringPrnSrv;
 #else
+#ifdef SDK_PORT
+        OS_PutString = putsWrap;
+#else
         OS_PutString = OS_PutStringISD;
+#endif
 #endif
     }
 
@@ -101,8 +117,10 @@ static void OS_PutStringInit (const char * str)
     {
         OS_InitLock();
 
+        #ifdef SDK_BUILD_ARM
         OS_PutString = ISDPrint;
         OS_PutString(str);
+        #endif
     }
 #endif
 
@@ -134,6 +152,7 @@ static void OS_PutStringInit (const char * str)
 #endif
 
 #ifndef SDK_FINALROM
+#ifdef SDK_BUILD_ARM
     SDK_WEAK_SYMBOL void OS_Printf (const char * fmt, ...)
     {
         va_list vlist;
@@ -142,6 +161,7 @@ static void OS_PutStringInit (const char * str)
         OS_VPrintf(fmt, vlist);
         va_end(vlist);
     }
+#endif
 
     SDK_WEAK_SYMBOL void OS_TPrintf (const char * fmt, ...)
     {

@@ -10,7 +10,9 @@ static BOOL CTRDGi_EnableFlag = FALSE;
 
 void CTRDGi_InitCommon (void)
 {
+    #if 0
 	SVC_CpuClear(0, &CTRDGi_Work, sizeof(CTRDGi_Work), 32);
+    #endif
 	CTRDGi_Work.lockID = (u16)OS_GetLockID();
 }
 
@@ -412,7 +414,7 @@ void CTRDG_Enable (BOOL enable)
 	OSIntrMode bak_cpsr = OS_DisableInterrupts();
 	CTRDGi_EnableFlag = enable;
 
-#if defined(SDK_ARM9)
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
 	if (!CTRDG_IsOptionCartridge()) {
 		u32 acc = (u32)(enable ? OS_PR3_ACCESS_RW : OS_PR3_ACCESS_RO);
 		(void)OS_SetDPermissionsForProtectionRegion(OS_PR3_ACCESS_MASK, acc);
@@ -424,7 +426,7 @@ void CTRDG_Enable (BOOL enable)
 
 void CTRDG_CheckEnabled (void)
 {
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
 	if (!CTRDG_IsOptionCartridge() && !CTRDG_IsEnabled()) {
 		OS_TPanic
 		    ("cartridge permission denied. (you must call CTRDG_Enable() under the guideline.)");

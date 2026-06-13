@@ -8,6 +8,11 @@
 extern "C" {
 #endif
 
+#ifdef SDK_PORT
+void WIN_Init_sTexStartAddrTable();
+void WIN_Init_sTexPlttStartAddrTable();
+#endif
+
 void GX_LoadBGPltt(const void * pSrc, u32 offset, u32 szByte);
 void GX_LoadOBJPltt(const void * pSrc, u32 offset, u32 szByte);
 void GX_LoadOAM(const void * pSrc, u32 offset, u32 szByte);

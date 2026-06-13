@@ -7,7 +7,7 @@ extern "C" {
 
 #include <nitro/ioreg.h>
 
-#ifdef SDK_ARM9
+#if (defined(SDK_ARM9) || defined(SDK_PORT))
     typedef enum {
         MI_WRAM_ARM9_ALL    = 0 << REG_GX_VRAMCNT_WRAM_BANK_SHIFT,
         MI_WRAM_1616_1      = 1 << REG_GX_VRAMCNT_WRAM_BANK_SHIFT,

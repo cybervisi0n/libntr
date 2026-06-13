@@ -25,11 +25,17 @@ typedef struct {
         PMi_Work.callbackArg = (arg);      \
     } while (0)
 
+#ifdef SDK_PORT
+static
+#endif
 inline u32 PMi_MakeData1 (u32 bit, u32 seq, u32 command, u32 data)
 {
     return (bit) | ((seq) << SPI_PXI_INDEX_SHIFT) | ((command) << 8) | ((data) & 0xff);
 }
 
+#ifdef SDK_PORT
+static
+#endif
 inline u32 PMi_MakeData2 (u32 bit, u32 seq, u32 data)
 {
     return (bit) | ((seq) << SPI_PXI_INDEX_SHIFT) | ((data) & 0xffff);
@@ -59,7 +65,10 @@ static PMSleepCallbackInfo * PMi_PostSleepCallbackList = NULL;
 static u32 PMi_SetAmp(PMAmpSwitch status);
 static PMAmpSwitch sAmpSwitch = PM_AMP_OFF;
 
-static BOOL PMi_Lock (void)
+#ifndef SDK_PORT
+static 
+#endif
+BOOL PMi_Lock (void)
 {
     OSIntrMode enabled = OS_DisableInterrupts();
 
@@ -76,18 +85,26 @@ static BOOL PMi_Lock (void)
 
 extern void PXIi_HandlerRecvFifoNotEmpty(void);
 
-static void PMi_WaitBusy (void)
+#ifndef SDK_PORT
+static
+#endif
+void PMi_WaitBusy (void)
 {
     volatile BOOL * p = &PMi_Work.lock;
 
+    #ifndef SDK_PORT
     while (*p) {
         if (OS_GetCpsrIrq() == OS_INTRMODE_IRQ_DISABLE) {
             PXIi_HandlerRecvFifoNotEmpty();
         }
     }
+    #endif
 }
 
-static void PMi_DummyCallback (u32 result, void * arg)
+#ifndef SDK_PORT
+static
+#endif
+void PMi_DummyCallback (u32 result, void * arg)
 {
     *(u32 *)arg = result;
 }
@@ -123,8 +140,10 @@ void PM_Init (void)
     PMi_Work.callback = NULL;
 
     PXI_Init();
+    #ifndef SDK_PORT
     while (!PXI_IsCallbackReady(PXI_FIFO_TAG_PM, PXI_PROC_ARM7)) {
     }
+    #endif
 
     PXI_SetFifoRecvCallback(PXI_FIFO_TAG_PM, PMi_CommonCallback);
 
@@ -137,7 +156,11 @@ void PM_Init (void)
     PMi_LCDCount = OS_GetVBlankCount();
 }
 
+#ifdef SDK_PORT
+void PMi_CommonCallback (PXIFifoTag tag, u64 data, BOOL err)
+#else
 void PMi_CommonCallback (PXIFifoTag tag, u32 data, BOOL err)
+#endif
 {
 #pragma unused(tag)
 
@@ -671,7 +694,9 @@ void PM_GoSleepMode (PMWakeUpTrigger trigger, PMLogic logic, u16 keyPattern)
         }
     }
 
+    #ifndef SDK_PORT
     OS_Halt();
+    #endif
 
     if ((trigger & PM_TRIGGER_CARD) && (OS_GetRequestIrqMask() & OS_IE_CARD_IREQ)) {
         powerOffFlag = TRUE;

@@ -8,10 +8,14 @@ extern "C" {
 #include <nitro/misc.h>
 #include <nitro/types.h>
 
+#ifdef SDK_PORT
+    #include <nitro/hw/X86/ioreg_PAD.h>
+#else
 #ifdef SDK_ARM9
     #include <nitro/hw/ARM9/ioreg_PAD.h>
 #else
     #include <nitro/hw/ARM7/ioreg_PAD.h>
+#endif
 #endif
 
 #define REG_PMIC_CTL_ADDR        0

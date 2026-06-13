@@ -1,6 +1,15 @@
 #ifndef NITRO_SND_H_
 #define NITRO_SND_H_
 
+#ifdef SDK_PORT
+#include <nitro/snd/common/main.h>
+#include <nitro/snd/common/alarm.h>
+#include <nitro/snd/common/command.h>
+#include <nitro/snd/common/global.h>
+
+#include <nitro/snd/ARM9/interface.h>
+#endif
+
 #if !(defined(SDK_WIN32) || defined(SDK_FROM_TOOL))
     #include <nitro/snd/common/main.h>
     #include <nitro/snd/common/alarm.h>

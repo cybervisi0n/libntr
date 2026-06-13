@@ -29,8 +29,11 @@ typedef struct {
 } OSArenaInfo;
 
 void OS_InitArena(void);
+#if defined( SDK_PORT )
+void    OS_InitArena7();
+#endif
 
-#ifdef SDK_ARM9
+#if defined( SDK_ARM9 ) || defined( SDK_PORT )
     void OS_InitArenaEx(void);
 #endif
 

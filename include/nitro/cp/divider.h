@@ -20,18 +20,46 @@ static inline void CP_SetDivImm32_32_NS_ (u32 numer, u32 denom)
 {
 	*(REGType32 *)REG_DIV_NUMER_ADDR = numer;
 	*(REGType64 *)REG_DIV_DENOM_ADDR = denom;
+	#ifdef SDK_PORT
+	if(denom == 0)
+	{
+	    return;
+	}
+	*(REGType64 *)REG_DIV_RESULT_ADDR = numer / denom;
+	*(REGType64 *)REG_DIVREM_RESULT_ADDR = numer % denom;
+	#endif
 }
 
+#ifdef SDK_PORT
+static inline void CP_SetDivImm64_32_NS_ (s64 numer, s32 denom)
+#else
 static inline void CP_SetDivImm64_32_NS_ (u64 numer, u32 denom)
+#endif
 {
 	*(REGType64 *)REG_DIV_NUMER_ADDR = numer;
 	*(REGType64 *)REG_DIV_DENOM_ADDR = denom;
+	#ifdef SDK_PORT
+	if(denom == 0)
+	{
+	    return;
+	}
+	*(REGType64 *)REG_DIV_RESULT_ADDR = numer / denom;
+	*(REGType64 *)REG_DIVREM_RESULT_ADDR = numer % denom;
+	#endif
 }
 
 static inline void CP_SetDivImm64_64_NS_ (u64 numer, u64 denom)
 {
 	*(REGType64 *)REG_DIV_NUMER_ADDR = numer;
 	*(REGType64 *)REG_DIV_DENOM_ADDR = denom;
+	#ifdef SDK_PORT
+	if(denom == 0)
+	{
+	    return;
+	}
+	*(REGType64 *)REG_DIV_RESULT_ADDR = numer / denom;
+	*(REGType64 *)REG_DIVREM_RESULT_ADDR = numer % denom;
+	#endif
 }
 
 static inline void CP_SetDivImm32_32 (u32 numer, u32 denom)
@@ -39,7 +67,11 @@ static inline void CP_SetDivImm32_32 (u32 numer, u32 denom)
 	CP_SetDivImm32_32_NS_(numer, denom);
 }
 
+#ifdef SDK_PORT
+static inline void CP_SetDivImm64_32 (s64 numer, s32 denom)
+#else
 static inline void CP_SetDivImm64_32 (u64 numer, u32 denom)
+#endif
 {
 	CP_SetDivImm64_32_NS_(numer, denom);
 }
@@ -59,12 +91,28 @@ static inline void CP_SetDiv64_32 (u64 numer, u32 denom)
 {
 	reg_CP_DIVCNT = CP_DIV_64_32BIT_MODE;
 	CP_SetDivImm64_32_NS_(numer, denom);
+	#ifdef SDK_PORT
+	if(denom == 0)
+	{
+	    return;
+	}
+	*(REGType64 *)REG_DIV_RESULT_ADDR = (s64)numer / (s32)denom;
+	*(REGType64 *)REG_DIVREM_RESULT_ADDR = (s64)numer % (s64)denom;
+	#endif
 }
 
 static inline void CP_SetDiv64_64 (u64 numer, u64 denom)
 {
 	reg_CP_DIVCNT = CP_DIV_64_64BIT_MODE;
 	CP_SetDivImm64_64_NS_(numer, denom);
+	#ifdef SDK_PORT
+	if(denom == 0)
+	{
+	    return;
+	}
+	*(REGType64 *)REG_DIV_RESULT_ADDR = (s64)numer / (s64)denom;
+	*(REGType64 *)REG_DIVREM_RESULT_ADDR = (s64)numer % (s64)denom;
+	#endif
 }
 
 static inline s32 CP_IsDivBusy (void)
