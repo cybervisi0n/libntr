@@ -7,37 +7,41 @@
 #include "../include/util.h"
 #include "../include/command.h"
 
+#ifdef SDK_PORT
+#include <string.h>
+#endif
+
 #if !defined(SDK_FINALROM)
-    const char *fsi_assert_fs_format = "[file-system] %s.\n";
-    const char *fsi_assert_is_init = "not initialized";
-    const char *fsi_assert_is_file = "invalid file-handle";
-    const char *fsi_assert_is_dir = "invalid directory-handle";
-    const char *fsi_assert_is_handle = "neither file-handle nor directory-handle";
-    const char *fsi_assert_is_idle = "specified file-handle is busy";
-    const char *fsi_assert_is_empty = "specified file-handle is already opened";
-    const char *fsi_assert_is_valid_arg = "invalid argument parameter";
-    const char *fsi_assert_is_valid_dma_channel = "cannot specify DMA channel 0";
-    const char *fsi_assert_irq_enabled = "not IRQ-enabled";
-    const char *fsi_assert_arc_free = "archive is still now registered";
-    const char *fsi_assert_arc_unloaded = "archive is still now loaded";
-    const char *fsi_assert_arc_not_rom = "cannot modify \"rom\" archive";
+const char *fsi_assert_fs_format = "[file-system] %s.\n";
+const char *fsi_assert_is_init = "not initialized";
+const char *fsi_assert_is_file = "invalid file-handle";
+const char *fsi_assert_is_dir = "invalid directory-handle";
+const char *fsi_assert_is_handle = "neither file-handle nor directory-handle";
+const char *fsi_assert_is_idle = "specified file-handle is busy";
+const char *fsi_assert_is_empty = "specified file-handle is already opened";
+const char *fsi_assert_is_valid_arg = "invalid argument parameter";
+const char *fsi_assert_is_valid_dma_channel = "cannot specify DMA channel 0";
+const char *fsi_assert_irq_enabled = "not IRQ-enabled";
+const char *fsi_assert_arc_free = "archive is still now registered";
+const char *fsi_assert_arc_unloaded = "archive is still now loaded";
+const char *fsi_assert_arc_not_rom = "cannot modify \"rom\" archive";
 #endif
 
 static BOOL is_init = FALSE;
 
 void FS_Init (u32 default_dma_no)
 {
-#if defined(FS_IMPLEMENT)
+	#if defined(FS_IMPLEMENT)
 	FS_ASSERT_DMA_CHANNEL(default_dma_no, void);
 	if (!is_init) {
 		is_init = TRUE;
 		FSi_InitRom(default_dma_no);
 	}
 
-#else
-#pragma unused(default_dma_no)
+	#else
+	#pragma unused(default_dma_no)
 	CARD_Init();
-#endif
+	#endif
 }
 
 BOOL FS_IsAvailable (void)
@@ -50,10 +54,10 @@ void FS_End (void)
 	OSIntrMode bak_psr = OS_DisableInterrupts();
 
 	if (is_init) {
-#if defined(FS_IMPLEMENT)
+		#if defined(FS_IMPLEMENT)
 		FSi_EndArchive();
 		OS_ReleaseLockID((u16)fsi_card_lock_id);
-#endif
+		#endif
 		is_init = FALSE;
 	}
 
@@ -65,9 +69,9 @@ void FS_InitFile (FSFile *p_file)
 {
 	FS_ASSERT_ARG(p_file, void);
 	p_file->link.next = p_file->link.prev = NULL;
-#if !defined(SDK_NO_THREAD)
+	#if !defined(SDK_NO_THREAD)
 	OS_InitThreadQueue(p_file->queue);
-#endif
+	#endif
 	p_file->arc = NULL;
 	p_file->command = FS_COMMAND_INVALID;
 	p_file->stat = 0;
@@ -102,7 +106,7 @@ static BOOL FSi_FindPath (FSFile *p_dir, const char *path, FSFileID *p_file_id, 
 					return FALSE;
 				} else if (!FS_IsArchiveLoaded(p_arc))   {
 					OS_Warning("[file-system] "
-					           "archive \"%*s\" is registered, but not loaded yet.", i, path);
+					"archive \"%*s\" is registered, but not loaded yet.", i, path);
 					return FALSE;
 				}
 
@@ -142,10 +146,10 @@ static s32 FSi_ReadFileCore (FSFile *p_file, void *dst, s32 len, BOOL async)
 	FS_ASSERT_IDLE(p_file, -1);
 
 	{
-        #ifdef SDK_PORT
-        s32 old_len;
-        old_len = len;
-        #endif
+		#ifdef SDK_PORT
+		s32 old_len;
+		old_len = len;
+		#endif
 		const s32 pos = (s32)p_file->prop.file.pos;
 		const s32 rest = (s32)p_file->prop.file.bottom - pos;
 		const u32 org = (u32)len;
@@ -158,18 +162,18 @@ static s32 FSi_ReadFileCore (FSFile *p_file, void *dst, s32 len, BOOL async)
 		p_file->arg.readfile.dst = dst;
 		p_file->arg.readfile.len_org = org;
 		p_file->arg.readfile.len = (u32)(len);
-        #ifdef SDK_PORT
-        if( p_file->pcFilePtr != NULL ){
-            return fread( dst, 1, old_len, p_file->pcFilePtr );
-        }
-        #endif
+		#ifdef SDK_PORT
+		if( p_file->pcFilePtr != NULL ){
+			return fread( dst, 1, old_len, p_file->pcFilePtr );
+		}
+		#endif
 
 		if (!async)
 			p_file->stat |= FS_FILE_STATUS_SYNC;
 
-        #ifdef SDK_BUILD_ARM
+		#ifdef SDK_BUILD_ARM
 		(void)FSi_SendCommand(p_file, FS_COMMAND_READFILE);
-        #endif
+		#endif
 
 		if (!async) {
 			if (FS_WaitAsync(p_file))
@@ -201,11 +205,11 @@ static s32 FSi_WriteFileCore (FSFile *p_file, const void *src, s32 len, BOOL asy
 		p_file->arg.writefile.src = src;
 		p_file->arg.writefile.len_org = org;
 		p_file->arg.writefile.len = (u32)(len);
-        #ifdef SDK_PORT
-        if( p_file->pcFilePtr != NULL ){
-            return fwrite( src, 1, len, p_file->pcFilePtr );
-        }
-        #endif
+		#ifdef SDK_PORT
+		if( p_file->pcFilePtr != NULL ){
+			return fwrite( src, 1, len, p_file->pcFilePtr );
+		}
+		#endif
 
 		if (!async)
 			p_file->stat |= FS_FILE_STATUS_SYNC;
@@ -253,28 +257,28 @@ BOOL FS_OpenFileDirect (FSFile *p_file, FSArchive *p_arc, u32 image_top, u32 ima
 		p_file->arg.openfiledirect.top = image_top;
 		p_file->arg.openfiledirect.bottom = image_bottom;
 
-        #ifdef SDK_BUILD_ARM
+		#ifdef SDK_BUILD_ARM
 		if (!FSi_SendCommand(p_file, FS_COMMAND_OPENFILEDIRECT))
 			return FALSE;
-        #endif
+		#endif
 
 		p_file->stat |= FS_FILE_STATUS_IS_FILE;
 		p_file->stat &= ~FS_FILE_STATUS_IS_DIR;
 	}
 
-    #ifdef SDK_PORT
-    const char* romName = "rom";
-    
-    p_file->pcFilePtr = NULL;
-    if( strcmp( romName, p_file->arc->name.ptr) == 0 )
-    {
-        p_file->pcFilePtr = fopen("main.srl", "rb");
-        if( p_file->pcFilePtr == NULL )
-        {
-            return FALSE;
-        }
-    }
-    #endif
+	#ifdef SDK_PORT
+	const char* romName = "rom";
+
+	p_file->pcFilePtr = NULL;
+	if( strcmp( romName, p_file->arc->name.ptr) == 0 )
+	{
+		p_file->pcFilePtr = fopen("main.srl", "rb");
+		if( p_file->pcFilePtr == NULL )
+		{
+			return FALSE;
+		}
+	}
+	#endif
 
 	return TRUE;
 }
@@ -306,39 +310,50 @@ BOOL FS_OpenFileFast (FSFile *p_file, FSFileID file_id)
 BOOL FS_OpenFile (FSFile *p_file, const char *path)
 {
 	FSFileID id;
-    #ifdef SDK_PORT
-    if(path[0] == 'r'
-    && path[1] == 'o'
-    && path[2] == 'm'
-    && path[3] == ':'
-    && strlen(path) > 4) {
-        path = path+4;
-    }
-    if( path[0] == '/')
-    {
-        path = path + 1;
-    }
-    p_file->pcFilePtr = NULL;
-    p_file->pcFilePtr = fopen(path, "rb");
-    if( p_file->pcFilePtr != NULL )
-    {
-        p_file->stat |= FS_FILE_STATUS_IS_FILE;
-        p_file->stat &= ~FS_FILE_STATUS_IS_DIR;
-        u32 fileSize;
-        fseek(p_file->pcFilePtr, 0, SEEK_END);
-        fileSize = ftell(p_file->pcFilePtr);
-        fseek(p_file->pcFilePtr, 0, SEEK_SET);
-        p_file->prop.file.top = 0;
-        p_file->prop.file.bottom = fileSize;
-        return TRUE;
-    }
-    else
-    {
-        return FALSE;
-    }
-    #else
+	#ifdef SDK_PORT
+	if(path[0] == 'r'
+		&& path[1] == 'o'
+	&& path[2] == 'm'
+	&& path[3] == ':'
+	&& strlen(path) > 4) {
+		path = path+4;
+	}
+	if( path[0] == '/')
+	{
+		path = path + 1;
+	}
+	p_file->pcFilePtr = NULL;
+	p_file->pcFilePtr = fopen(path, "rb");
+	if(p_file->pcFilePtr == NULL) {
+		// Try opening with lowercase path
+		char * lowercasePath = malloc(sizeof(char) * strlen(path) + 1);
+		memset(lowercasePath, 0, sizeof(char) * strlen(path) + 1);
+		strcpy(lowercasePath, path);
+		for(int i=0; i < strlen(path); i++) {
+			lowercasePath[i] = tolower(path[i]);
+		}
+		p_file->pcFilePtr = fopen(lowercasePath, "rb");
+		free(lowercasePath);
+	}
+	if( p_file->pcFilePtr != NULL )
+	{
+		p_file->stat |= FS_FILE_STATUS_IS_FILE;
+		p_file->stat &= ~FS_FILE_STATUS_IS_DIR;
+		u32 fileSize;
+		fseek(p_file->pcFilePtr, 0, SEEK_END);
+		fileSize = ftell(p_file->pcFilePtr);
+		fseek(p_file->pcFilePtr, 0, SEEK_SET);
+		p_file->prop.file.top = 0;
+		p_file->prop.file.bottom = fileSize;
+		return TRUE;
+	}
+	else
+	{
+		return FALSE;
+	}
+	#else
 	return (FS_ConvertPathToFileID(&id, path) && FS_OpenFileFast(p_file, id));
-    #endif
+	#endif
 }
 
 BOOL FS_CloseFile (FSFile *p_file)
@@ -348,22 +363,22 @@ BOOL FS_CloseFile (FSFile *p_file)
 	FS_ASSERT_FILE(p_file, FALSE);
 	FS_ASSERT_IRQ_ENABLED(FALSE);
 
-    #ifdef SDK_PORT
-    p_file->arc = NULL;
-    p_file->command = FS_COMMAND_INVALID;
-    p_file->stat &= ~(FS_FILE_STATUS_IS_FILE | FS_FILE_STATUS_IS_DIR);
-    if( p_file->pcFilePtr != NULL )
-    {
-        if( fclose( p_file->pcFilePtr ) == 0 )
-        {
-            return TRUE;
-        }else{
-            return FALSE;
-        }
-    } else {
-        return TRUE;
-    }
-    #endif
+	#ifdef SDK_PORT
+	p_file->arc = NULL;
+	p_file->command = FS_COMMAND_INVALID;
+	p_file->stat &= ~(FS_FILE_STATUS_IS_FILE | FS_FILE_STATUS_IS_DIR);
+	if( p_file->pcFilePtr != NULL )
+	{
+		if( fclose( p_file->pcFilePtr ) == 0 )
+		{
+			return TRUE;
+		}else{
+			return FALSE;
+		}
+	} else {
+		return TRUE;
+	}
+	#endif
 
 	if (!FSi_SendCommand(p_file, FS_COMMAND_CLOSEFILE))
 		return FALSE;
@@ -403,7 +418,7 @@ BOOL FS_WaitAsync (FSFile *p_file)
 	FS_ASSERT_ARG(p_file, FALSE);
 	FS_ASSERT_IRQ_ENABLED(-1);
 
-#if !defined(SDK_NO_THREAD)
+	#if !defined(SDK_NO_THREAD)
 	{
 		BOOL is_owner = FALSE;
 		OSIntrMode bak_psr = OS_DisableInterrupts();
@@ -427,10 +442,10 @@ BOOL FS_WaitAsync (FSFile *p_file)
 			return FSi_ExecuteSyncCommand(p_file);
 		}
 	}
-#else
+	#else
 	while (FS_IsBusy(p_file))
 		;
-#endif
+	#endif
 
 	return FS_IsSucceeded(p_file);
 }
@@ -476,31 +491,31 @@ s32 FS_WriteFile (FSFile *p_file, const void *src, s32 len)
 
 BOOL FS_SeekFile (FSFile *p_file, s32 offset, FSSeekFileMode origin)
 {
-    #ifdef SDK_BUILD_ARM
+	#ifdef SDK_BUILD_ARM
 	FS_ASSERT_INIT(FALSE);
 	FS_ASSERT_ARG(p_file, FALSE);
 	FS_ASSERT_FILE(p_file, FALSE);
-    #endif
+	#endif
 
-    #ifdef SDK_PORT
-    s32 temp_offset;
-    temp_offset = offset;
-    #endif
+	#ifdef SDK_PORT
+	s32 temp_offset;
+	temp_offset = offset;
+	#endif
 
 	{
 		switch (origin) {
-		case FS_SEEK_SET:
-			offset += p_file->prop.file.top;
-			break;
-		case FS_SEEK_CUR:
-			offset += p_file->prop.file.pos;
-			break;
-		case FS_SEEK_END:
-			offset += p_file->prop.file.bottom;
-			break;
-		default:
-			FS_ASSERT_ARG(FALSE, FALSE);
-			return FALSE;
+			case FS_SEEK_SET:
+				offset += p_file->prop.file.top;
+				break;
+			case FS_SEEK_CUR:
+				offset += p_file->prop.file.pos;
+				break;
+			case FS_SEEK_END:
+				offset += p_file->prop.file.bottom;
+				break;
+			default:
+				FS_ASSERT_ARG(FALSE, FALSE);
+				return FALSE;
 		}
 
 		if (offset < (s32)p_file->prop.file.top)
@@ -512,27 +527,27 @@ BOOL FS_SeekFile (FSFile *p_file, s32 offset, FSSeekFileMode origin)
 		p_file->prop.file.pos = (u32)offset;
 	}
 
-    #ifdef SDK_PORT
-    if( p_file->pcFilePtr != NULL )
-    {
-        switch(origin)
-        {
-            case FS_SEEK_SET:
-                fseek(p_file->pcFilePtr, temp_offset, SEEK_SET);
-                break;
-            case FS_SEEK_END:
-                fseek(p_file->pcFilePtr, temp_offset, SEEK_END);
-                break;
-            case FS_SEEK_CUR:
-                fseek(p_file->pcFilePtr, temp_offset, SEEK_CUR);
-                break;
-            default:
-                FS_ASSERT_ARG(FALSE, FALSE);
-                return FALSE;
-                break;
-        }
-    }
-    #endif
+	#ifdef SDK_PORT
+	if( p_file->pcFilePtr != NULL )
+	{
+		switch(origin)
+		{
+			case FS_SEEK_SET:
+				fseek(p_file->pcFilePtr, temp_offset, SEEK_SET);
+				break;
+			case FS_SEEK_END:
+				fseek(p_file->pcFilePtr, temp_offset, SEEK_END);
+				break;
+			case FS_SEEK_CUR:
+				fseek(p_file->pcFilePtr, temp_offset, SEEK_CUR);
+				break;
+			default:
+				FS_ASSERT_ARG(FALSE, FALSE);
+				return FALSE;
+				break;
+		}
+	}
+	#endif
 
 	return TRUE;
 }
