@@ -2048,6 +2048,16 @@ void SIM_PostRenderVBlank()
     SDL_SemPost(vcountResetSemaphore);
 }
 
+
+#ifdef _WIN32
+int main(int argc, char* argv[]);
+
+int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
+{
+    return main(__argc, __argv);
+}
+#endif
+
 int main(int argc, char* argv[]){
     //Load default config
     SIM_Config_LoadDefaults(&s_SIM_config);

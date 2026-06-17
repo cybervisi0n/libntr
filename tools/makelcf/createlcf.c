@@ -11,6 +11,9 @@
     #endif
     #include <nitro/memorymap.h>
 #else
+    #ifdef SDK_PORT
+    #undef SDK_PORT
+    #endif
     #include <io.h> // setmode()
     #include <fcntl.h> // setmode()
     #include <nitro_win32.h>
