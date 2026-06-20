@@ -52,86 +52,14 @@ void SIM_GUI_Main(void)
         frameTimeMs = (float)s_SIM_frameTime / 1000000.0f;
         igText("FrameTime %.3fms", frameTimeMs);
         igText("%.0ffps", 1000.0f / frameTimeMs);
-        if(igButton("Config", s_btnSize)) {
-            if(s_showWindowConfig){
-                s_showWindowConfig = 0;
-            } else {
-                s_showWindowConfig = 1;
-            }
-        }
 
-        if(igButton("Input", s_btnSize)) {
-            if(s_showWindowPad){
-                s_showWindowPad = 0;
-            } else {
-                s_showWindowPad = 1;
-            }
-        }
-
-        if(igButton("G2", s_btnSize)) {
-            if(s_showWindowG2){
-                s_showWindowG2 = 0;
-            } else {
-                s_showWindowG2 = 1;
-            }
-        }
-
-        if(igButton("Net", s_btnSize)) {
-            if(s_showWindowNet){
-                s_showWindowNet = 0;
-            } else {
-                GUI_AppNetInit();
-                s_showWindowNet = 1;
-            }
-        }
-    
-        if(igButton("Imgui Demo", s_btnSize)) {
-            if(s_showWindowImguiDemo){
-                s_showWindowImguiDemo = 0;
-            } else {
-                s_showWindowImguiDemo = 1;
-            }
-        }
-
-        if(igButton("Pause Game Logic", s_btnSize)) {
-            if(s_pauseGameLogic){
-                s_pauseGameLogic = 0;
-            } else {
-                s_pauseGameLogic = 1;
-            }
-        }
-
-        if(igButton("PrjSpecific", s_btnSize)) {
-            if(s_showWindowPrjSpecific){
-                s_showWindowPrjSpecific = 0;
-            } else {
-                s_showWindowPrjSpecific = 1;
-            }
-        }
-
-        if(s_showWindowConfig){
-            GUI_AppConfigMain(&s_showWindowConfig);
-        }
-
-        if(s_showWindowPad){
-            GUI_AppPadMain(&s_showWindowPad);
-        }
-
-        if(s_showWindowG2){
-            GUI_AppG2Main(&s_showWindowG2);
-        }
-
-        if(s_showWindowNet){
-            GUI_AppNetMain(&s_showWindowNet);
-        }
-
-        if(s_showWindowImguiDemo){
-            igShowDemoWindow(&s_showWindowImguiDemo);
-        }
-
-        if(s_showWindowPrjSpecific){
-            SIM_GUI_Prj_main(&s_showWindowPrjSpecific);
-        }
+        SIM_GUI_AppButton("Config", &s_showWindowConfig, GUI_AppConfigMain);
+        SIM_GUI_AppButton("Input", &s_showWindowPad, GUI_AppPadMain);
+        SIM_GUI_AppButton("G2", &s_showWindowG2, GUI_AppG2Main);
+        SIM_GUI_AppButton("Net", &s_showWindowNet, GUI_AppNetMain);
+        SIM_GUI_AppButton("Imgui Demo", &s_showWindowImguiDemo, igShowDemoWindow);
+        SIM_GUI_AppButton("PrjSpecific", &s_showWindowPrjSpecific, SIM_GUI_Prj_main);
+        igCheckbox("Pause Game Logic", &s_pauseGameLogic);
         igEnd();
     }
     return;
@@ -168,4 +96,19 @@ void SIM_GUI_Toggle(void)
 bool SIM_GUI_IsGameLogicPaused(void)
 {
     return s_pauseGameLogic;
+}
+
+void SIM_GUI_AppButton(const char * aLabel, bool * aState, void (*aAppFunc)(bool *))
+{
+    if(igButton(aLabel, s_btnSize)) {
+        if(*aState) {
+            *aState = false;
+        } else {
+            *aState = true;
+        }
+    }
+
+    if(*aState) {
+        aAppFunc(aState);
+    }
 }
