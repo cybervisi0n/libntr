@@ -101,6 +101,7 @@ if (build_target == 'nx')
         '-DSDK_AARCH64',
         '-DSDK_BUILD_NX',
         '-D_NITRO',
+        '-D__SWITCH__',
         '-w',
         '-I/opt/devkitpro/portlibs/switch/include',
         '-I/opt/devkitpro/libnx/include'

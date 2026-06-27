@@ -22,6 +22,15 @@ enet_dep = declare_dependency(dependencies: [enet_lib])
 
 libsim_dependencies = [sdl2_dep, enet_dep]
 
+if(build_target =='linux' or build_target == 'win64')
+tracy_native = dependency('tracy_native', static : true)
+libsim_dependencies += tracy_native
+else
+tracy = dependency('tracy', static : true)
+libsim_dependencies += tracy
+endif
+
+
 if(build_target == 'nx')
 glad_lib = meson.get_compiler('c').find_library('glad', dirs: '/opt/devkitpro/portlibs/switch/lib/')
 glad_dep = declare_dependency(dependencies: [glad_lib])
@@ -46,7 +55,7 @@ endif
 
 libsim = library('sim',
     c_pch: nitro_pch,
-    include_directories: [nitrosdk_includes, libsim_includes],
+    include_directories: [nitrosdk_includes, libsim_includes, subproject('tracy').get_variable('tracy_public_include_dirs')],
     pic: build_target == 'nx',
     sources: [libsim_srcs, fx_const_h],
     dependencies: libsim_dependencies,

@@ -55,6 +55,8 @@ extern int NitroSpMain(void * arg);
 #include "switch.h"
 #endif
 
+#include "tracy/TracyC.h"
+
 #include "sim_g2.h"
 
 //Simulator configuration
@@ -2006,6 +2008,7 @@ void * SIM_Render(void *arg){
 
         SDL_GL_SwapWindow(window);
         clock_gettime(CLOCK_MONOTONIC, &s_SIM_lastFrameEnd);
+        TracyCFrameMark;
 
         s_numG3CommandsThisFrame = 0;
         s_numG3DrawsThisFrame = 0;
