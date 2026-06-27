@@ -28,6 +28,11 @@
 //#define IMGUI_API __attribute__((visibility("default")))  // GCC/Clang: override visibility when set is hidden
 #define IMGUI_IMPL_API extern "C"
 
+#ifdef SDK_BUILD_NX
+#define IMGUI_IMPL_OPENGL_LOADER_CUSTOM
+#include <glad/glad.h>
+#endif
+
 //---- Don't define obsolete functions/enums/behaviors. Consider enabling from time to time after updating to clean your code of obsolete function/names.
 //#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 

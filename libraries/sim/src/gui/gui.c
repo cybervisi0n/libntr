@@ -38,9 +38,7 @@ void SIM_GUI_Init(SDL_Window * aWindow, SDL_GLContext aContext)
 
 	ImGui_ImplSDL2_InitForOpenGL(SIM_GUI_SDLwindow, SIM_GUI_GLcontext);
 	const char * glsl_version = "#version 420";
-    #ifndef SDK_BUILD_NX
   	ImGui_ImplOpenGL3_Init(glsl_version);
-    #endif
 
 	igStyleColorsDark(NULL);
 	ImFontAtlas_AddFontDefault(ioptr->Fonts, NULL);
@@ -69,9 +67,7 @@ void SIM_GUI_Main(void)
 
 void SIM_GUI_NewFrame(void)
 {
-    #ifndef SDK_BUILD_NX
     ImGui_ImplOpenGL3_NewFrame();
-    #endif
     ImGui_ImplSDL2_NewFrame();
     igNewFrame();
 }
@@ -85,9 +81,7 @@ void SIM_GUI_ProcessEvent(SDL_Event * aEvent)
 void SIM_GUI_Render(void)
 {
 	igRender();
-    #ifndef SDK_BUILD_NX
 	ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
-    #endif
 }
 
 void SIM_GUI_Toggle(void)

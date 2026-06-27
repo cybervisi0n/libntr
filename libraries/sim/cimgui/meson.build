@@ -17,12 +17,9 @@ cimgui_srcs = files(
     'imgui/imgui_demo.cpp',
     'imgui/imgui_tables.cpp',
     'imgui/imgui_widgets.cpp',
-    'imgui/backends/imgui_impl_sdl2.cpp'
+    'imgui/backends/imgui_impl_sdl2.cpp',
+    'imgui/backends/imgui_impl_opengl3.cpp'
 )
-
-if(build_target == 'linux' or build_target == 'win64')
-    cimgui_srcs += 'imgui/backends/imgui_impl_opengl3.cpp'
-endif
 
 libcimgui = library('cimgui',
     sources: cimgui_srcs,

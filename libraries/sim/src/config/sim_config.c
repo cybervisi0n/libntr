@@ -323,9 +323,15 @@ BOOL SIM_Config_LoadConfigFile(SIM_config_type * aConfig)
 // Initialize a SIM_config_type to default values
 void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
 {
+#ifdef SDK_BUILD_NX
+    aConfig->internalResolutionScale = 2;
+    aConfig->windowHeight = 1080;
+    aConfig->windowWidth = 1920;
+#else
     aConfig->internalResolutionScale = 10;
     aConfig->windowHeight = 0;
     aConfig->windowWidth = 0;
+#endif
     aConfig->screenLayout = SIM_CONFIG_SCREEN_LAYOUT_VERTICAL;
     aConfig->swapScreens = FALSE;
     aConfig->vsyncInterval = 1;
@@ -345,18 +351,29 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->padSettings.startKey = SDLK_RETURN;
     aConfig->padSettings.selectKey = SDLK_RSHIFT;
     aConfig->padSettings.guiKey = SDLK_TAB;
-    aConfig->padSettings.aJoyKey = SIM_CONFIG_JOY_INVALID_KEY;
-    aConfig->padSettings.bJoyKey = SIM_CONFIG_JOY_INVALID_KEY;
-    aConfig->padSettings.xJoyKey = SIM_CONFIG_JOY_INVALID_KEY;
-    aConfig->padSettings.yJoyKey = SIM_CONFIG_JOY_INVALID_KEY;
-    aConfig->padSettings.upJoyKey = SIM_CONFIG_JOY_INVALID_KEY;
-    aConfig->padSettings.downJoyKey = SIM_CONFIG_JOY_INVALID_KEY;
-    aConfig->padSettings.leftJoyKey = SIM_CONFIG_JOY_INVALID_KEY;
-    aConfig->padSettings.rightJoyKey = SIM_CONFIG_JOY_INVALID_KEY;
-    aConfig->padSettings.lJoyKey = SIM_CONFIG_JOY_INVALID_KEY;
-    aConfig->padSettings.rJoyKey = SIM_CONFIG_JOY_INVALID_KEY;
-    aConfig->padSettings.startJoyKey = SIM_CONFIG_JOY_INVALID_KEY;
-    aConfig->padSettings.selectJoyKey = SIM_CONFIG_JOY_INVALID_KEY;
+    aConfig->padSettings.aJoyKey = 0;
+    aConfig->padSettings.bJoyKey = 1;
+    aConfig->padSettings.xJoyKey = 2;
+    aConfig->padSettings.yJoyKey = 3;
+#ifdef SDK_BUILD_NX
+    aConfig->padSettings.upJoyKey = 13;
+    aConfig->padSettings.downJoyKey = 15;
+    aConfig->padSettings.leftJoyKey = 12;
+    aConfig->padSettings.rightJoyKey = 14;
+    aConfig->padSettings.lJoyKey = 6;
+    aConfig->padSettings.rJoyKey = 7;
+    aConfig->padSettings.startJoyKey = 10;
+    aConfig->padSettings.selectJoyKey = 11;
+#else
+    aConfig->padSettings.upJoyKey = SDL_HAT_UP | SIM_CONFIG_JOY_HAT_MASK;
+    aConfig->padSettings.downJoyKey = SDL_HAT_DOWN | SIM_CONFIG_JOY_HAT_MASK;
+    aConfig->padSettings.leftJoyKey = SDL_HAT_LEFT | SIM_CONFIG_JOY_HAT_MASK;
+    aConfig->padSettings.rightJoyKey = SDL_HAT_RIGHT | SIM_CONFIG_JOY_HAT_MASK;
+    aConfig->padSettings.lJoyKey = 9;
+    aConfig->padSettings.rJoyKey = 10;
+    aConfig->padSettings.startJoyKey = 6;
+    aConfig->padSettings.selectJoyKey = 4;
+#endif
 
     // Set a random MAC address (with a nintendo prefix)
     aConfig->macAddr[0] = 0x98;

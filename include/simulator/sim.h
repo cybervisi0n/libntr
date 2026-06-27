@@ -5,6 +5,7 @@
 #include <nitro/gx/gx_vramcnt.h>
 #include <SDL2/SDL.h>
 #include <simulator/config/sim_config.h>
+#include <simulator/sim_debug.h>
 
 #include "simulator/assert.h"
 

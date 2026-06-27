@@ -13,6 +13,7 @@ libsim_srcs = files(
     'queue.c',
     'sim_assert.c',
     'sim_audio.c',
+    'sim_debug.c',
     'sim_g2.c',
     'sim_main.c',
     'sim_net.c',

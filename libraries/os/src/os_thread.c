@@ -622,7 +622,7 @@ void OS_CreateThread (OSThread * thread, void (*func)(void *), void * arg, void 
 
 #ifdef SDK_PORT
     thread->win_sdlThread = SDL_CreateThread(SIM_OS_RunThread, thread->funcName, (void*)thread);
-	thread->win_threadState = 1;
+    thread->win_threadState = 1;
 #endif
 
     thread->alarmForSleep = NULL;
