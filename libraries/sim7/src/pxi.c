@@ -9,6 +9,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_thread.h>
 
+#include "tracy/TracyC.h"
+
 SIM_queue_t * drawQueuePtr;
 SIM_queue_t * pxiQueuePtr;
 SIM_queue_t * pxi7to9QueuePtr;
@@ -378,7 +380,9 @@ int SIM_procPxiThread( void * arg )
 	while(1)
 	{
 		SDL_SemWait(pxiSemaphore);
+		TracyCZone(ctx, 1);
 		SIM_procPXI();
+		TracyCZoneEnd(ctx);
 	}
 	return 0;
 }
@@ -393,7 +397,9 @@ int SIM_procPxi7to9Thread( void * arg )
 	while(1)
 	{
 		SDL_SemWait(pxi7to9Semaphore);
+		TracyCZone(ctx, 1);
 		SIM_procPXI7to9();
+		TracyCZoneEnd(ctx);
 	}
 	return 0;
 }

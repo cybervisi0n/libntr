@@ -1663,6 +1663,7 @@ void * SIM_Render(void *arg){
     G3SIM_DrawItems();
 
     do {
+        TracyCZone(SimRenderZone, 1);
         //SIM_Net_Process();
         if((*((u32*)HW_VBLANK_COUNT_BUF) % 10) == 0) {
             SIM_Net_SendBeaconIndication();
@@ -1991,6 +1992,7 @@ void * SIM_Render(void *arg){
         s_SIM_frameTime = frameNs;
 
 
+        TracyCZoneEnd(SimRenderZone);
         //Limit framerate to 60 fps
         if(s_SIM_config.capFrameRate)
         {
@@ -2073,6 +2075,19 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 #endif
 
 int main(int argc, char* argv[]){
+    #ifdef SDK_BUILD_NX
+    //Start up libnx sockets
+    socketInitializeDefault();
+    #endif
+
+    //Start up Tracy profiler
+    ___tracy_startup_profiler();
+
+    while(!TracyCIsStarted) {
+        SDL_Delay(1);
+    }
+
+
     //Start up debug system
     SIM_Dbg_Init();
 

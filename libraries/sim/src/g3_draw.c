@@ -14,6 +14,8 @@
 #include <signal.h>
 #endif
 
+#include "tracy/TracyC.h"
+
 #define G3_DRAW_MAX_ITEMS 1000
 
 #define getbit(x,n) ( ( (x) >> (n) ) & 1 )
@@ -163,6 +165,9 @@ void G3SIM_FlushArray()
 		// No verts to draw
 		return;
 	}
+
+	TracyCZone(FlushArrayZone, 1);
+
 	if( s_texImageParam.textureFormat != GX_TEXFMT_NONE )
 	{
 		GLuint g3TextureId;
@@ -327,6 +332,7 @@ void G3SIM_FlushArray()
 	}
 
 	G3SIM_DrawCleanUp();
+	TracyCZoneEnd(FlushArrayZone);
 }
 
 void G3SIM_DrawItems()

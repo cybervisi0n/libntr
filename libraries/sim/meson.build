@@ -23,10 +23,26 @@ enet_dep = declare_dependency(dependencies: [enet_lib])
 libsim_dependencies = [sdl2_dep, enet_dep]
 
 if(build_target =='linux' or build_target == 'win64')
-tracy_native = dependency('tracy_native', static : true)
+tracy_native = dependency(
+    'tracy_native', 
+    default_options: {
+        'no_sampling': true,
+        'only_ipv4': true,
+        'delayed_init': true,
+        'manual_lifetime': true,
+    },
+    static : true)
 libsim_dependencies += tracy_native
 else
-tracy = dependency('tracy', static : true)
+tracy = dependency(
+    'tracy', 
+    default_options: {
+        'no_sampling': true,
+        'only_ipv4': true,
+        'delayed_init': true,
+        'manual_lifetime': true,
+    },
+    static : true)
 libsim_dependencies += tracy
 endif
 
