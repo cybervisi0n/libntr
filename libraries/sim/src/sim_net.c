@@ -28,6 +28,8 @@
     #define INVALID_SOCKET  (socket_t)-1
 #endif
 
+#include "tracy/TracyC.h"
+
 enum {
     SIM_NET_CHANNEL_MGMT, // Control, commands, etc
     SIM_NET_CHANNEL_APPDATA, // NDS application data
@@ -74,11 +76,13 @@ void SIM_Net_Process()
     
     ENetEvent event;
     while(enet_host_service(net.enetHost, &event, 0) > 0) {
+        TracyCZone(ctx, 1);
         if(net.state == SIM_NET_STATE_CLIENT) {
             ProcessClientEvent(&event);
         } else if(net.state == SIM_NET_STATE_HOST) {
             ProcessHostEvent(&event);
         }
+        TracyCZoneEnd(ctx);
     }
 }
 

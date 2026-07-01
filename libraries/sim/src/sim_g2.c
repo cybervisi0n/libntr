@@ -59,6 +59,14 @@ static void* getBgExtPlttVramBank(BOOL isSub);
 void G2SIM_DrawBG( u8 bgNum, u8 bgMode, u8 bg03D, u8 isSub )
 {
     TracyCZone(ctx, 1);
+    char zoneNameBuf[50] = {0};
+    snprintf(zoneNameBuf, 49, 
+             "G2SIM_DrawBG%s%d %s",
+             isSub ? "S" : "",
+             bgNum,
+             (bgNum == 0) && !isSub && bg03D ? "(3D)" : "");
+    TracyCZoneName(ctx, zoneNameBuf, strlen(zoneNameBuf));
+
     if(isSub){
         if(!s_SIM_DBG_BGSenable[bgNum]) {
             // Return early if the BgNum has been disabled

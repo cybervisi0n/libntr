@@ -91,7 +91,7 @@ if (build_target == 'linux')
         '-DSDK_CODE_X86',
         '-DSDK_BUILD_LINUX',
         '-D_NITRO',
-        '-w'
+        '-w',
     ]
 endif
 

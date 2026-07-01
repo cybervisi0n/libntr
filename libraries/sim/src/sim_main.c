@@ -323,6 +323,7 @@ GLuint SIM_GetTextureID()
 
 static void DrawScreenQuad()
 {
+    TracyCZone(ctx, 1);
     glBindVertexArray(g2vertexArray);
     glBindBuffer(GL_ARRAY_BUFFER, g2vertexBuffer);
     G3SIM_Vertex_t * quadArray = sim_GetScreenQuadArray(s_SIM_config.screenLayout, s_SIM_config.swapScreens);
@@ -336,6 +337,7 @@ static void DrawScreenQuad()
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(G3SIM_Vertex_t), (void*)offsetof(G3SIM_Vertex_t, s));
 
     glDrawArrays(GL_TRIANGLES,0,arrayCount);
+    TracyCZoneEnd(ctx);
 }
 
 
@@ -1288,6 +1290,10 @@ void * SIM_RenderInit(void * arg){
 
 
 static void DrawEngine(BOOL isSub) {
+    const char * zoneName;
+    zoneName = isSub ? "DrawEngine (SUB)" : "DrawEngine (MAIN)";
+    TracyCZone(ctx, 1);
+    TracyCZoneName(ctx, zoneName, strlen(zoneName));
     u8 bg0as3d;
     u8 maxPriority;
     u8 maxPriorityBG;
@@ -1554,6 +1560,7 @@ static void DrawEngine(BOOL isSub) {
         glActiveTexture(GL_TEXTURE0 + s_objTexUnits[0]);
         glBindTexture(GL_TEXTURE_2D, dummyScreenTextureId);
     }
+    TracyCZoneEnd(ctx);
 }
 
 
@@ -2080,12 +2087,14 @@ int main(int argc, char* argv[]){
     socketInitializeDefault();
     #endif
 
+    #ifdef TRACY_ENABLE
     //Start up Tracy profiler
     ___tracy_startup_profiler();
 
     while(!TracyCIsStarted) {
         SDL_Delay(1);
     }
+    #endif
 
 
     //Start up debug system
