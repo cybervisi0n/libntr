@@ -9,6 +9,7 @@
 
 #ifdef SDK_PORT
 #include <string.h>
+#include <SDL2/SDL.h>
 #endif
 
 #if !defined(SDK_FINALROM)
@@ -349,7 +350,10 @@ BOOL FS_OpenFile (FSFile *p_file, const char *path)
 	}
 	else
 	{
-		return FALSE;
+        char messageBuf[200] = {0};
+        snprintf(messageBuf, 199, "Failed to open file '%s'. Please extract your ROM into the same directory as the executable.", path);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "FS Error", messageBuf, NULL);
+        return FALSE;
 	}
 	#else
 	return (FS_ConvertPathToFileID(&id, path) && FS_OpenFileFast(p_file, id));
