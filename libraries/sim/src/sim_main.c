@@ -2131,7 +2131,7 @@ int main(int argc, char* argv[]){
 
     //Read the first 0x160 bytes of the rom and put it in the HW_ROM_HEADER_BUF
     FILE * romFile;
-    romFile = fopen( "main.srl", "r" );
+    romFile = fopen( "header.bin", "r" );
 
     if(romFile != NULL){
         //Read the fields of the struct

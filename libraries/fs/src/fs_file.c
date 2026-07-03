@@ -273,7 +273,7 @@ BOOL FS_OpenFileDirect (FSFile *p_file, FSArchive *p_arc, u32 image_top, u32 ima
 	p_file->pcFilePtr = NULL;
 	if( strcmp( romName, p_file->arc->name.ptr) == 0 )
 	{
-		p_file->pcFilePtr = fopen("main.srl", "rb");
+		p_file->pcFilePtr = fopen("header.bin", "rb");
 		if( p_file->pcFilePtr == NULL )
 		{
 			return FALSE;
