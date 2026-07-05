@@ -24,6 +24,9 @@ WVRResult WVR_StartUpAsync (GXVRamARM7 vram, WVRCallbackFunc callback, void * ar
     PXI_Init();
 
     #ifdef SDK_PORT
+    if(callback) {
+        callback(NULL, WVR_RESULT_SUCCESS);
+    }
     return WVR_RESULT_OPERATING;
     #endif
 

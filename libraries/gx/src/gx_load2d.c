@@ -469,8 +469,8 @@ void GXS_LoadBG3Char (const void *pSrc, u32 offset, u32 szByte)
 
 static GXVRamBGExtPltt sBGExtPltt = (GXVRamBGExtPltt)(0);
 #ifdef SDK_PORT
-static u32 sBGExtPlttLCDCBlk = 0;
-static u32 sBGExtPlttLCDCOffset = 0;
+static u64 sBGExtPlttLCDCBlk = 0;
+static u64 sBGExtPlttLCDCOffset = 0;
 #else
 static u32 sBGExtPlttLCDCBlk = 0;
 static u32 sBGExtPlttLCDCOffset = 0;

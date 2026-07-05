@@ -401,20 +401,18 @@ void G2SIM_PlotPixel(u8 * screenBuf, u8 r, u8 g, u8 b, u32 x, u32 y, BOOL isSub)
 
     BOOL topScreen = dispSel ? !isSub : isSub;
 
-    if( topScreen )
-    {
-        screenBuf[(4*x)+(4*SIM_NDS_SCREEN_WIDTH*((SIM_NDS_SCREEN_HEIGHT*2)-1-y))] = r;
-        screenBuf[(4*x)+(4*SIM_NDS_SCREEN_WIDTH*((SIM_NDS_SCREEN_HEIGHT*2)-1-y))+1] = g;
-        screenBuf[(4*x)+(4*SIM_NDS_SCREEN_WIDTH*((SIM_NDS_SCREEN_HEIGHT*2)-1-y))+2] = b;
-        screenBuf[(4*x)+(4*SIM_NDS_SCREEN_WIDTH*((SIM_NDS_SCREEN_HEIGHT*2)-1-y))+3] = 255;
+    u8 * screenBufBase;
+
+    if(topScreen) {
+        screenBufBase = screenBuf + (4*x)+(4*SIM_NDS_SCREEN_WIDTH*((SIM_NDS_SCREEN_HEIGHT*2)-1-y));
+    } else {
+        screenBufBase = screenBuf + (4*x)+(4*SIM_NDS_SCREEN_WIDTH*((SIM_NDS_SCREEN_HEIGHT*2)-1-(y+SIM_NDS_SCREEN_HEIGHT)));
     }
-    else
-    {
-        screenBuf[(4*x)+(4*SIM_NDS_SCREEN_WIDTH*((SIM_NDS_SCREEN_HEIGHT*2)-1-(y+SIM_NDS_SCREEN_HEIGHT)))] = r;
-        screenBuf[(4*x)+(4*SIM_NDS_SCREEN_WIDTH*((SIM_NDS_SCREEN_HEIGHT*2)-1-(y+SIM_NDS_SCREEN_HEIGHT)))+1] = g;
-        screenBuf[(4*x)+(4*SIM_NDS_SCREEN_WIDTH*((SIM_NDS_SCREEN_HEIGHT*2)-1-(y+SIM_NDS_SCREEN_HEIGHT)))+2] = b;
-        screenBuf[(4*x)+(4*SIM_NDS_SCREEN_WIDTH*((SIM_NDS_SCREEN_HEIGHT*2)-1-(y+SIM_NDS_SCREEN_HEIGHT)))+3] = 255;							
-    }
+    
+    screenBufBase[0] = r;
+    screenBufBase[1] = g;
+    screenBufBase[2] = b;
+    screenBufBase[3] = 255;
 }
 
 static void DrawBGLine_Text(u32 line, u32 bgnum, u8 mosaic, u8 isSub){
