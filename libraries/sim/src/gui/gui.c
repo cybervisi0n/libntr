@@ -21,7 +21,7 @@ static bool s_showWindowPad = 0;
 static bool s_showWindowPrjSpecific = 0;
 static bool s_showWindowImguiDemo = 0;
 static bool s_pauseGameLogic = 0;
-static ImVec2 s_btnSize = {75, 20};
+static ImVec2 s_btnSize = {100, 20};
 
 extern void SIM_GUI_Prj_main(bool *) __attribute__((weak));
 
