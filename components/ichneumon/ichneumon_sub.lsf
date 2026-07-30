@@ -7,7 +7,7 @@ Static ichneumon_sub
 Autoload MAIN
 {
     Address 0x027E0000
-    Library ichneumon_sub.p/src_dtcm.c.o
+    Object OBJECT(WVR_ShelterExtWram, libwvr_arm7.a) (.text)
 }
 
 Autoload WRAM
@@ -41,5 +41,4 @@ Autoload EXT
     Address 0x06000000
     Library libwm_arm7.a
     Library libwl_arm7.a
-    Object ichneumon_sub.p/src_ext.c.o
 }
