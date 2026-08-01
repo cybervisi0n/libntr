@@ -37,7 +37,7 @@ extern  "C"
       backupFilePtr = fopen("save.bin", "wb");
 
       // Zero out the file with the len
-      u8 * buf = malloc(len + src);
+      u8 * buf = (u8*)malloc(len + src);
       memset(buf, 0, len + src);
       fwrite(buf, 1, len + src, backupFilePtr);
       fclose(backupFilePtr);

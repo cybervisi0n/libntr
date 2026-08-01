@@ -55,7 +55,9 @@ extern int NitroSpMain(void * arg);
 #include "switch.h"
 #endif
 
+#ifdef SDK_TRACY_ENABLE
 #include "tracy/TracyC.h"
+#endif
 
 #include "sim_g2.h"
 
@@ -323,7 +325,9 @@ GLuint SIM_GetTextureID()
 
 static void DrawScreenQuad()
 {
+    #ifdef SDK_TRACY_ENABLE
     TracyCZone(ctx, 1);
+    #endif
     glBindVertexArray(g2vertexArray);
     glBindBuffer(GL_ARRAY_BUFFER, g2vertexBuffer);
     G3SIM_Vertex_t * quadArray = sim_GetScreenQuadArray(s_SIM_config.screenLayout, s_SIM_config.swapScreens);
@@ -337,7 +341,9 @@ static void DrawScreenQuad()
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(G3SIM_Vertex_t), (void*)offsetof(G3SIM_Vertex_t, s));
 
     glDrawArrays(GL_TRIANGLES,0,arrayCount);
+    #ifdef SDK_TRACY_ENABLE
     TracyCZoneEnd(ctx);
+    #endif
 }
 
 
@@ -1086,7 +1092,7 @@ void * SIM_RenderInit(void * arg){
         windowWidth = s_SIM_config.windowWidth;
     }
 
-    char * windowTitle = "NitroSDK Application";
+    char * windowTitle = "libntr Application";
 
     if(strlen(s_SIM_game_name) > 0) {
         windowTitle = s_SIM_game_name;
@@ -1289,8 +1295,10 @@ void * SIM_RenderInit(void * arg){
 static void DrawEngine(BOOL isSub) {
     const char * zoneName;
     zoneName = isSub ? "DrawEngine (SUB)" : "DrawEngine (MAIN)";
+    #ifdef SDK_TRACY_ENABLE
     TracyCZone(ctx, 1);
     TracyCZoneName(ctx, zoneName, strlen(zoneName));
+    #endif
     u8 bg0as3d;
     u8 maxPriority;
     u8 maxPriorityBG;
@@ -1557,7 +1565,9 @@ static void DrawEngine(BOOL isSub) {
         glActiveTexture(GL_TEXTURE0 + s_objTexUnits[0]);
         glBindTexture(GL_TEXTURE_2D, dummyScreenTextureId);
     }
+    #ifdef SDK_TRACY_ENABLE
     TracyCZoneEnd(ctx);
+    #endif
 }
 
 
@@ -1667,7 +1677,9 @@ void * SIM_Render(void *arg){
     G3SIM_DrawItems();
 
     do {
+        #ifdef SDK_TRACY_ENABLE
         TracyCZone(SimRenderZone, 1);
+        #endif
         //SIM_Net_Process();
         if((*((u32*)HW_VBLANK_COUNT_BUF) % 10) == 0) {
             SIM_Net_SendBeaconIndication();
@@ -1996,7 +2008,9 @@ void * SIM_Render(void *arg){
         s_SIM_frameTime = frameNs;
 
 
+        #ifdef SDK_TRACY_ENABLE
         TracyCZoneEnd(SimRenderZone);
+        #endif
         //Limit framerate to 60 fps
         if(s_SIM_config.capFrameRate)
         {
@@ -2014,7 +2028,9 @@ void * SIM_Render(void *arg){
 
         SDL_GL_SwapWindow(window);
         clock_gettime(CLOCK_MONOTONIC, &s_SIM_lastFrameEnd);
+        #ifdef SDK_TRACY_ENABLE
         TracyCFrameMark;
+        #endif
 
         s_numG3CommandsThisFrame = 0;
         s_numG3DrawsThisFrame = 0;

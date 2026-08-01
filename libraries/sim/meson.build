@@ -21,31 +21,38 @@ endif
 enet_dep = declare_dependency(dependencies: [enet_lib])
 
 libsim_dependencies = [sdl2_dep, enet_dep]
+libsim_args = []
 
-if(build_target =='linux' or build_target == 'win64')
-tracy_native = dependency(
-    'tracy_native', 
-    default_options: {
-        'no_sampling': true,
-        'only_ipv4': true,
-        'delayed_init': true,
-        'manual_lifetime': true,
-        'no_callstack': true,
-    },
-    static : true)
-libsim_dependencies += tracy_native
-else
-tracy = dependency(
-    'tracy', 
-    default_options: {
-        'no_sampling': true,
-        'only_ipv4': true,
-        'delayed_init': true,
-        'manual_lifetime': true,
-        'no_callstack': true,
-    },
-    static : true)
-libsim_dependencies += tracy
+if(get_option('tracy_enable') == true)
+    if(build_target =='linux' or build_target == 'win64')
+        tracy_native = dependency(
+            'tracy_native', 
+            default_options: {
+                'no_sampling': true,
+                'only_ipv4': true,
+                'delayed_init': true,
+                'manual_lifetime': true,
+                'no_callstack': true,
+            },
+            static : true)
+        libsim_dependencies += tracy_native
+    else
+        tracy = dependency(
+            'tracy', 
+            default_options: {
+                'no_sampling': true,
+                'only_ipv4': true,
+                'delayed_init': true,
+                'manual_lifetime': true,
+                'no_callstack': true,
+            },
+            static : true)
+        libsim_dependencies += tracy
+    endif
+    libsim_includes += subproject('tracy').get_variable('tracy_public_include_dirs')
+    libsim_args += [
+        '-DSDK_TRACY_ENABLE'
+    ]
 endif
 
 
@@ -73,8 +80,9 @@ endif
 
 libsim = library('sim',
     c_pch: nitro_pch,
-    include_directories: [nitrosdk_includes, libsim_includes, subproject('tracy').get_variable('tracy_public_include_dirs')],
+    include_directories: [nitrosdk_includes, libsim_includes],
     pic: build_target == 'nx',
+    c_args: libsim_args,
     sources: [libsim_srcs, fx_const_h],
     dependencies: libsim_dependencies,
     native: (build_target == 'linux' or build_target == 'win64')

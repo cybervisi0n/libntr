@@ -21,7 +21,9 @@
 #include <simulator/g3_draw.h>
 #include <simulator/sim.h>
 
+#ifdef SDK_TRACY_ENABLE
 #include "tracy/TracyC.h"
+#endif
 
 //Constants
 const G3SIM_Matrix_t G3SIM_IdentityMatrix = 
@@ -711,7 +713,9 @@ void G3SIM_DecodeTex256(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
 
 void G3SIM_DecodeTexA3I5(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t)
 {
+    #ifdef SDK_TRACY_ENABLE
     TracyCZone(ctx, 1);
+    #endif
     u32 texOffset = 0;
     u8 colorIdx;
     u8 alpha;
@@ -742,12 +746,16 @@ void G3SIM_DecodeTexA3I5(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t)
             vramTex++;
         }
     }
+    #ifdef SDK_TRACY_ENABLE
     TracyCZoneEnd(ctx);
+    #endif
 }
 
 void G3SIM_DecodeTexA5I3(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t)
 {
+    #ifdef SDK_TRACY_ENABLE
     TracyCZone(ctx, 1);
+    #endif
     u32 texOffset = 0;
     u8 colorIdx;
     u8 alpha;
@@ -776,12 +784,16 @@ void G3SIM_DecodeTexA5I3(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t)
             vramTex++;
         }
     }
+    #ifdef SDK_TRACY_ENABLE
     TracyCZoneEnd(ctx);
+    #endif
 }
 
 void G3SIM_DecodeTexDirect(u8* vramTex, u8* out, u32 s, u32 t)
 {
+    #ifdef SDK_TRACY_ENABLE
     TracyCZone(ctx, 1);
+    #endif
     u16 * colorAddr = (u16*)vramTex;
     u8 r;
     u8 g;
@@ -804,7 +816,9 @@ void G3SIM_DecodeTexDirect(u8* vramTex, u8* out, u32 s, u32 t)
             colorAddr++;
         }
     }
+    #ifdef SDK_TRACY_ENABLE
     TracyCZoneEnd(ctx);
+    #endif
 }
 
 void G3SIM_DiffAmb(u32 data)

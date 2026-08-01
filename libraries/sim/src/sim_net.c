@@ -28,7 +28,9 @@
     #define INVALID_SOCKET  (socket_t)-1
 #endif
 
+#ifdef SDK_TRACY_ENABLE
 #include "tracy/TracyC.h"
+#endif
 
 enum {
     SIM_NET_CHANNEL_MGMT, // Control, commands, etc
@@ -76,13 +78,17 @@ void SIM_Net_Process()
     
     ENetEvent event;
     while(enet_host_service(net.enetHost, &event, 0) > 0) {
+        #ifdef SDK_TRACY_ENABLE
         TracyCZone(ctx, 1);
+        #endif
         if(net.state == SIM_NET_STATE_CLIENT) {
             ProcessClientEvent(&event);
         } else if(net.state == SIM_NET_STATE_HOST) {
             ProcessHostEvent(&event);
         }
+        #ifdef SDK_TRACY_ENABLE
         TracyCZoneEnd(ctx);
+        #endif
     }
 }
 

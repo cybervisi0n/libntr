@@ -5,7 +5,9 @@
 #include <simulator/sim_net.h>
 #include <simulator/assert.h>
 
+#ifdef SDK_TRACY_ENABLE
 #include "tracy/TracyC.h"
+#endif
 #endif
 
 static void WmspRequestFuncDummy(OSMessage msg);
@@ -84,7 +86,9 @@ void WMSP_RequestThread(void *arg)
         }
 
         #ifndef SDK_BUILD_ARM
+        #ifdef SDK_TRACY_ENABLE
         TracyCZone(ctx, 1);
+        #endif
         #endif
         apiid = *((u16 *)msg);
         if (apiid & WM_API_REQUEST_ACCEPTED)
@@ -110,7 +114,9 @@ void WMSP_RequestThread(void *arg)
         *((u16 *)msg) = (u16)(apiid | WM_API_REQUEST_ACCEPTED);
 
         #ifndef SDK_BUILD_ARM
+        #ifdef SDK_TRACY_ENABLE
         TracyCZoneEnd(ctx);
+        #endif
         #endif
     }
 }

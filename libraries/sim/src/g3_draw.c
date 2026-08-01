@@ -14,7 +14,9 @@
 #include <signal.h>
 #endif
 
+#ifdef SDK_TRACY_ENABLE
 #include "tracy/TracyC.h"
+#endif
 
 #define G3_DRAW_MAX_ITEMS 1000
 
@@ -166,7 +168,9 @@ void G3SIM_FlushArray()
 		return;
 	}
 
+	#ifdef SDK_TRACY_ENABLE
 	TracyCZone(FlushArrayZone, 1);
+	#endif
 
 	if( s_texImageParam.textureFormat != GX_TEXFMT_NONE )
 	{
@@ -332,7 +336,9 @@ void G3SIM_FlushArray()
 	}
 
 	G3SIM_DrawCleanUp();
+	#ifdef SDK_TRACY_ENABLE
 	TracyCZoneEnd(FlushArrayZone);
+	#endif
 }
 
 void G3SIM_DrawItems()

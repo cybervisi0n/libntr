@@ -6,7 +6,9 @@
 
 #include "blip_buf.h"
 
+#ifdef SDK_TRACY_ENABLE
 #include "tracy/TracyC.h"
+#endif
 
 static SDL_AudioSpec s_requestedAudioSpec, s_actualAudioSpec;
 static SDL_AudioDeviceID s_audioDevice;
@@ -102,7 +104,9 @@ static void PanOutput(s32 in, s32 * left, s32 * right, int chNo);
 
 void SIM_Audio_Callback(void *userdata, Uint8 *stream, int len)
 {
+    #ifdef SDK_TRACY_ENABLE
     TracyCZone(ctx, 1);
+    #endif
     // Run NitroComposer
     SND_UpdateExChannel();
     SND_SeqMain(TRUE);
@@ -166,7 +170,9 @@ void SIM_Audio_Callback(void *userdata, Uint8 *stream, int len)
     s16 * tempbuf = (s16*)stream;
     blip_read_samples(s_BlipLeft, tempbuf, avail, TRUE);
     blip_read_samples(s_BlipRight, tempbuf+1, avail, TRUE);
+    #ifdef SDK_TRACY_ENABLE
     TracyCZoneEnd(ctx);
+    #endif
 }
 
 void SIM_Audio_StartChannel(int chNo)
