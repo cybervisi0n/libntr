@@ -1,4 +1,5 @@
 # libntr
+![logo](images/libntr.png)
 Drop-in replacement for NitroSDK that targets Nintendo DS, PC, and other platforms.
 
 libntr makes it easier to port Nintendo DS games to PC and other platforms by handling the logic for common libraries used by nearly all Nintendo DS games.
