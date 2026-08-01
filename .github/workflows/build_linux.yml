@@ -2,7 +2,7 @@ name: build_linux
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
     paths-ignore:
       - '**.md'
   pull_request:
