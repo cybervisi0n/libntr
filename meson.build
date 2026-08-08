@@ -1,4 +1,4 @@
-project('NitroSDK', 'c', 'cpp',
+project('libntr', 'c', 'cpp',
     default_options: {
         'default_library': 'static',
         'prefer_static':    false
