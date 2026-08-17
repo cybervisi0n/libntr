@@ -3,7 +3,7 @@ project('NitroSDK', ['c', 'nasm'],
         'default_library': 'static',
         'prefer_static':    true
     },
-    meson_version: '>=1.2.0',
+    meson_version: '>=1.3.0',
     version: '4.2.30001'
 )
 
