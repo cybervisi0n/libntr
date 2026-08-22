@@ -49,6 +49,10 @@ typedef struct WIN_snd_alarm_info {
 	u8 isRunning;
 } WIN_snd_alarm_info;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void SIM_PreRenderVBlank(void);
 void SIM_PostRenderVBlank(void);
 void SIM_procPXI(void);
@@ -78,5 +82,9 @@ extern void * win_snd_channel_bufs[32];
 extern WIN_snd_channel_info win_snd_channels[32];
 extern WIN_snd_channel_info win_sndi_channels[16];
 extern WIN_snd_alarm_info win_snd_alarms[32];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

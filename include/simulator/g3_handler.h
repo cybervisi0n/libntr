@@ -79,6 +79,10 @@ typedef struct {
     GLfloat a;
 } G3SIM_FxVtx_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const char * G3SIM_VertexShader;
 extern const char * G3SIM_FragmentShader;
 extern const char * G2SIM_VertexShader;
@@ -142,4 +146,9 @@ int G3SIM_ClipPolygon(fx32 verts[][4], int nVerts, int clipStart, BOOL attribs);
 u8 G3SIM_SwapBuffersCalledThisFrame();
 void G3SIM_ResetSwapBuffersCall();
 void G3SIM_SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

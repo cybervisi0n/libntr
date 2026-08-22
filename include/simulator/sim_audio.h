@@ -6,6 +6,10 @@
 #include <simulator/sim.h>
 #include <SDL2/SDL.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern u32 s_SIM_sndcnt[16];
 extern u8 * s_SIM_sndsad[16];
 extern u16 s_SIM_sndtmr[16];
@@ -24,5 +28,9 @@ void SIM_Audio_NextSamplePCM16(int chNo);
 void SIM_Audio_NextSampleADPCM(int chNo);
 void SIM_Audio_NextSamplePSG(int chNo);
 void SIM_Audio_NextSampleNoise(int chNo);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

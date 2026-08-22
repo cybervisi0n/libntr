@@ -63,9 +63,17 @@ typedef struct {
     SIM_config_net_settings_type netSettings; /* Net Settings */
 } SIM_config_type;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 BOOL SIM_Config_LoadConfigFile(SIM_config_type * aConfig);
 void SIM_Config_LoadDefaults(SIM_config_type * aConfig);
 void SIM_Config_SaveConfigFile(SIM_config_type * aConfig);
 void SIM_Config_SetOSNVRAMConfig(SIM_config_type * aConfig);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

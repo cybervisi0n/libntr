@@ -127,5 +127,13 @@ struct draw_msg {
 };
 typedef struct draw_msg draw_msg_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void SIM_HandleG3Command(draw_msg_t * msg);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

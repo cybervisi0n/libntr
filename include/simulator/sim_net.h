@@ -145,6 +145,10 @@ typedef struct {
     u8 data[];
 } SIM_Net_MpDataPacket_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void SIM_Net_Init();
 void SIM_Net_Process();
 void SIM_Net_SendBeaconIndication();
@@ -168,5 +172,9 @@ BOOL SIM_Net_SendMPData(u16 aidBitmap, u8 port, u8 * data, int dataLen);
 
 
 int SIM_Net_Scan(WMBssDesc * bssDescOut);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

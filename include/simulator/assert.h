@@ -8,8 +8,16 @@
 #define SIM_assert_msg(exp, ...) (exp)? ((void)0) : SIM_handleAssertionFailureMsg(__FILE__, __LINE__, __VA_ARGS__);
 #define SIM_assert_always_msg(...) SIM_handleAssertionFailureMsg(__FILE__, __LINE__, __VA_ARGS__);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void SIM_handleAssertionFailure(const char* filename, unsigned int lineno, const char* exp);
 void SIM_handleAssertionFailureMsg(const char* filename, unsigned int lineno, const char* fmt, ...);
 void SIM_debugBreak();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

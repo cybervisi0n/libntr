@@ -412,4 +412,3 @@ TPData s_tpData;
 //Wireless
 u8 s_HW_WIRELESS_INTF0[0x8000];
 u8 s_HW_WIRELESS_INTF1[0x8000];
-
