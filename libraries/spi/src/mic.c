@@ -431,8 +431,6 @@ static BOOL MicAdjustAutoSampling (u32 span)
 
 static void MicGetResultCallback (MICResult result, void * arg)
 {
-#pragma unused(arg)
-
     micWork.commonResult = result;
 }
 

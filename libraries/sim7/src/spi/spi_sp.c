@@ -138,7 +138,7 @@ void SPI_Unlock(u32 id)
     }
 }
 
-void SPIi_ReturnResult(u16 command, u16 result)
+void SPIi_ReturnResult(u32 command, u32 result)
 {
     PXIFifoTag tag;
 

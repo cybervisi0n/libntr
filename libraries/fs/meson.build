@@ -9,6 +9,14 @@ libfs = library('fs',
     pic: false,
     sources: [libfs_srcs, fx_const_h]
 )
+
+libfs_arm7 = library('fs_arm7',
+    c_pch: nitro_pch,
+    include_directories: [nitrosdk_includes, libfs_includes],
+    pic: false,
+    sources: [libfs_srcs, fx_const_h],
+    dependencies: [nitrosdk_arm7_args_dep]
+)
 else
 libfs = library('fs',
     c_pch: nitro_pch,
@@ -20,3 +28,6 @@ libfs = library('fs',
 endif
 
 nitrosdk_libs += libfs
+if(build_target == 'arm')
+    nitrosdk_arm7_libs += libfs_arm7
+endif

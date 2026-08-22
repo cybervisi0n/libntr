@@ -1,9 +1,7 @@
 #ifndef	__WLSTALIST_H_
 #define	__WLSTALIST_H_
 
-
-typedef struct
-{
+typedef struct {
 	u16			state;
 	u16			aid;
 
@@ -24,8 +22,7 @@ typedef struct
 
 } WlStaElement;
 
-typedef	struct
-{
+typedef	struct {
 	u16	rssi;
 	u16	channel;
 	u16	capaInfo;
@@ -36,5 +33,6 @@ typedef	struct
 	u16	lifeTime;
 } WlApElement;
 
-#endif
+#endif	// __WLSTALIST_H_
+
 

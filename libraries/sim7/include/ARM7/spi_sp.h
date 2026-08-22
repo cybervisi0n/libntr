@@ -55,7 +55,7 @@ SPIWork;
 void    SPI_Lock(u32 id);
 void    SPI_Unlock(u32 id);
 
-void    SPIi_ReturnResult(u16 command, u16 result);
+void    SPIi_ReturnResult(u32 command, u32 result);
 BOOL    SPIi_CheckException(SPIDeviceType type);
 void    SPIi_GetException(SPIDeviceType type);
 void    SPIi_ReleaseException(SPIDeviceType type);

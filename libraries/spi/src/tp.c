@@ -1,7 +1,7 @@
 #include <nitro.h>
+#include <nitro/spi/ARM9/spi.h>
 #include <nitro/spi/ARM9/tp.h>
 #include <nitro/spi/common/config.h>
-#include "spi.h"
 
 #ifdef SDK_PORT
 extern TPData s_tpData;

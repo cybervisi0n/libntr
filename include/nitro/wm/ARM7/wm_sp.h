@@ -5,7 +5,6 @@
 extern "C" {
 #endif
 
-
 #include <nitro.h>
 #include <nitro_wl/common/version_wl.h>
 #include <nitro_wl/ARM7/WlLib.h>
@@ -60,4 +59,3 @@ void WM_sp_SIM_init(void);
 #endif
 
 #endif
-

@@ -1,8 +1,7 @@
 #ifndef	__WLFRAME_H_
 #define	__WLFRAME_H_
 
-typedef	struct
-{
+typedef	struct {
 	u16			frameId;
 	u8			rsv1[4];
 	u16			length;
@@ -10,8 +9,10 @@ typedef	struct
 	u16			status;
 	u16			rsvm1;
 	u16			rsvm2;
+//	u8			rsv2[6];
 	u8			rate;
 	u8			rssi;
+//	u8			rsv3[4];
 	u32			rsvm3;
 
 	u8			rsv4[4];
@@ -22,8 +23,7 @@ typedef	struct
 	u16*		datap;
 } WlTxFrame;
 
-typedef	struct
-{
+typedef	struct {
 	u16			frameId;
 	u8			rsv1[4];
 	u16			length;
@@ -43,8 +43,7 @@ typedef	struct
 	u8			data[4];
 } WlRxFrame;
 
-typedef	struct
-{
+typedef	struct {
 	u8			rsv1[6];
 	u16			length;
 
@@ -55,8 +54,7 @@ typedef	struct
 	u8			data[4];
 } WlTestFrame;
 
-typedef	struct
-{
+typedef	struct {
 	u8			rsv1[6];
 	u16			length;
 
@@ -76,8 +74,7 @@ typedef	struct
 	u16*		datap;
 } WlTxMpFrame;
 
-typedef	struct
-{
+typedef	struct {
 	u8			rsv1[6];
 	u16			length;
 
@@ -99,8 +96,7 @@ typedef	struct
 	u16			data[1];
 } WlRxMpFrame;
 
-typedef	struct
-{
+typedef	struct {
 	u8			rsv1[6];
 	u16			length;
 
@@ -121,8 +117,7 @@ typedef	struct
 	u16			bitmap;
 } WlRxMpAckFrame;
 
-typedef	struct
-{
+typedef	struct {
 	u16			length;
 	u8			rate;
 	u8			rssi;
@@ -131,8 +126,7 @@ typedef	struct
 	u8			cdata[4];
 } WlMpKeyData;
 
-typedef	struct
-{
+typedef	struct {
 	u16			bitmap;
 	u16			errBitmap;
 	u16			count;
@@ -142,10 +136,8 @@ typedef	struct
 	WlMpKeyData	data[1];
 } WlMpKey;
 
-typedef	struct
-{
-	struct
-	{
+typedef	struct {
+	struct {
 		u32		success;
 		u32		failed;
 		u32		retry;
@@ -157,8 +149,7 @@ typedef	struct
 		u32		beacon;
 	} tx;
 
-	struct
-	{
+	struct {
 		u32		rts;
 		u32		fragment;
 		u32		unicast;
@@ -180,8 +171,7 @@ typedef	struct
 		u32		fcsOk;
 	} rx;
 
-	struct
-	{
+	struct {
 		u32		txMp;
 		u32		txKey;
 		u32		txNull;
@@ -191,4 +181,5 @@ typedef	struct
 	} multiPoll;
 } WlCounter;
 
-#endif
+#endif	// __WLFRAME_H_
+

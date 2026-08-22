@@ -66,4 +66,5 @@ extern u8 s_HW_WIRELESS_INTF1[0x8000];
 #define	V_TSF_H					(WL_VTSF_ADRS+1)
 
 
-#endif
+#endif	// __WLLIB_H_
+

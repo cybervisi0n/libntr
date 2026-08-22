@@ -148,4 +148,5 @@
 #define	WL_DIAG_ERR_RF_REG					0x0100
 #define	WL_DIAG_ERR_RF_LD					0x0200
 
-#endif
+#endif	// __WLCMDLABEL_H_
+

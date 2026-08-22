@@ -18,9 +18,12 @@ extern "C" {
     #include <nitro/spi/ARM9/tp.h>
     #include <nitro/spi/ARM9/mic.h>
     #include <nitro/spi/ARM9/pm.h>
+    #include <nitro/spi/ARM9/spi.h>
 #else
     #include <nitro/spi/ARM7/spi.h>
     #include <nitro/spi/ARM7/pm.h>
+    #include <nitro/spi/ARM7/mic.h>
+    #include <nitro/spi/ARM7/tp.h>
 #endif
 #endif
 

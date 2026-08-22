@@ -1,4 +1,5 @@
 nitrosdk_libs = []
+nitrosdk_arm7_libs = []
 nitrosdk_prebuilt = []
 
 subdir('card')
@@ -31,6 +32,13 @@ subdir('wm')
 subdir('wvr')
 
 build_target = get_option('build_target')
+if(build_target == 'arm')
+    subdir('exi')
+    subdir('nvram')
+    subdir('pad')
+    subdir('wm_arm7')
+endif
+
 if (build_target != 'arm')
     subdir('sim')
     subdir('sim7')

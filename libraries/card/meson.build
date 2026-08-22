@@ -7,7 +7,15 @@ libcard = library('card',
     c_pch: nitro_pch,
     include_directories: [nitrosdk_includes, libcard_includes],
     pic: false,
-    sources: [libcard_srcs, fx_const_h]
+    sources: [libcard_srcs, fx_const_h],
+)
+
+libcard_arm7 = library('card_arm7',
+    c_pch: nitro_pch,
+    include_directories: [nitrosdk_includes, libcard_includes],
+    pic: false,
+    sources: [libcard_arm7_srcs, fx_const_h],
+    dependencies: [nitrosdk_arm7_args_dep]
 )
 else
 libcard = library('card',
@@ -20,3 +28,6 @@ libcard = library('card',
 endif
 
 nitrosdk_libs += libcard
+if(build_target == 'arm')
+    nitrosdk_arm7_libs += libcard_arm7
+endif
