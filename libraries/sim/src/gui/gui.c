@@ -47,7 +47,7 @@ void SIM_GUI_Init(SDL_Window * aWindow, SDL_GLContext aContext)
 void SIM_GUI_Main(void)
 {
     if(SIM_GUI_State){
-        igBegin("NitroSDK", &SIM_GUI_State, 0);
+        igBegin("libntr", &SIM_GUI_State, 0);
         float frameTimeMs = 0.0f;
         frameTimeMs = (float)s_SIM_frameTime / 1000000.0f;
         igText("FrameTime %.3fms", frameTimeMs);
