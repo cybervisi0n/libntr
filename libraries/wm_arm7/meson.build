@@ -2,6 +2,7 @@ subdir('src')
 
 libwm_arm7_includes = include_directories('include')
 
+if(build_target == 'arm')
 libwm_arm7 = library('wm_arm7',
     c_pch: nitro_pch,
     include_directories: [nitrosdk_includes, libwm_arm7_includes],
@@ -11,3 +12,4 @@ libwm_arm7 = library('wm_arm7',
 )
 
 nitrosdk_arm7_libs += libwm_arm7
+endif

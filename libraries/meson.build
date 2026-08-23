@@ -29,6 +29,7 @@ subdir('utest')
 subdir('wbt')
 subdir('wfs')
 subdir('wm')
+subdir('wm_arm7')
 subdir('wvr')
 
 build_target = get_option('build_target')
