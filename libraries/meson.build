@@ -34,9 +34,12 @@ subdir('wvr')
 
 build_target = get_option('build_target')
 if(build_target == 'arm')
+    # ARM7-only libraries
     subdir('exi')
     subdir('nvram')
     subdir('pad')
+    subdir('syscall')
+    subdir('wl_arm7')
 endif
 
 if (build_target != 'arm')

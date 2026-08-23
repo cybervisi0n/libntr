@@ -3,6 +3,20 @@
 #include <nitro/ctrdg.h>
 #endif
 
+#ifdef SDK_PORT
+void OS_Terminate (void) {
+
+}
+
+void OS_Halt() {
+
+}
+
+void OS_Exit (int status) {
+
+}
+#else
+
 SDK_WEAK_SYMBOL void OS_Terminate (void)
 {
 #ifdef SDK_ARM7
@@ -14,12 +28,7 @@ SDK_WEAK_SYMBOL void OS_Terminate (void)
     }
 }
 
-#ifdef SDK_PORT
-void OS_Halt( void )
-{
-  
-}
-#else
+#ifdef SDK_ARM9
 #include <nitro/code32.h>
 
 SDK_WEAK_SYMBOL asm void OS_Halt (void)
@@ -30,7 +39,6 @@ SDK_WEAK_SYMBOL asm void OS_Halt (void)
 }
 
 #include <nitro/codereset.h>
-#endif
 
 SDK_WEAK_SYMBOL void OS_Exit (int status)
 {
@@ -41,3 +49,5 @@ SDK_WEAK_SYMBOL void OS_Exit (int status)
     OS_Printf("\n" OS_EXIT_STRING, status);
     OS_Terminate();
 }
+#endif
+#endif

@@ -23,9 +23,19 @@ ichneumon_sub_link_args = [
     '-wrap:sdk', '2.0/sp2p2',
 ]
 
+ichneumon_link_args_list = []
+
 fp_fulli_v4t_le = files('FP_fullI_v4t_LE.a')[0]
 fp_fulli_v4t_le_relpath = fs.relative_to(fp_fulli_v4t_le, meson.global_build_root())
 ichneumon_sub_lcf_relpath = fs.relative_to(ichneumon_sub_lcf, meson.global_build_root())
+
+if(build_target == 'arm')
+    ichneumon_link_args_list += [
+        fp_fulli_v4t_le_relpath,
+        ichneumon_sub_link_args,
+        ichneumon_sub_lcf_relpath
+    ]
+endif
 
 ichneumon_sub = executable('ichneumon_sub',
     sources: [
@@ -34,9 +44,7 @@ ichneumon_sub = executable('ichneumon_sub',
     c_pch: nitro_pch,
     dependencies: [nitrosdk_arm7_dep],
     link_args: [
-        fp_fulli_v4t_le_relpath,
-        ichneumon_sub_link_args,
-        ichneumon_sub_lcf_relpath,
+        ichneumon_link_args_list
     ],
     link_depends: ichneumon_sub_lcf,
     native: false

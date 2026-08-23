@@ -3,6 +3,7 @@
 #include "nitro/os/common/printf.h"
 #include <nitro/spi/common/pm_common.h>
 #include <nitro/spi/ARM7/pm.h>
+#include <nitro/exi.h>
 
 u16 PMi_TriggerBL = 0; // at 038094ce
 u16 PMi_KeyPattern = 0; // at 038094cc

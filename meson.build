@@ -1,4 +1,4 @@
-project('libntr', 'c', 'cpp',
+project('libntr', 'c', 'cpp', 'nasm',
     default_options: {
         'default_library': 'static',
         'prefer_static':    false
@@ -107,16 +107,24 @@ if (build_target == 'nx')
         '-I/opt/devkitpro/libnx/include'
     ]
 endif
-nitrosdk_arm7_args = [
-    '-proc', 'arm7tdmi',
-    '-USDK_ARM9',
-    '-DSDK_ARM7',
-    '-DSP1P3_BUG_FOR_CONDITIONAL_ASM_INSTRUCTIONS',
-    '-O4,s',
-    '-sym', 'on',
-    '-fp', 'soft',
-    '-wrap:sdk', '2.0/sp1p2',
-]
+
+nitrosdk_arm7_args = []
+
+if(build_target == 'arm')
+    nitrosdk_arm7_args = [
+        '-proc', 'arm7tdmi',
+        '-USDK_ARM9',
+        '-DSDK_ARM7',
+        '-DSP1P3_BUG_FOR_CONDITIONAL_ASM_INSTRUCTIONS',
+        '-O4,s',
+        '-sym', 'on',
+        '-fp', 'soft',
+        '-wrap:sdk', '2.0/sp1p2',
+    ]
+else
+    nitrosdk_arm7_args = nitrosdk_args
+endif
+
 
 nitrosdk_arm7_args_dep = declare_dependency(
   compile_args: nitrosdk_arm7_args
@@ -155,24 +163,18 @@ subdir('specfiles')
 ############################################################
 subdir('tools')
 
-nitrosdk_arm7_dep = []
-
-if(build_target == 'arm')
-    nitrosdk_arm7_dep = declare_dependency(
-        compile_args: nitrosdk_args + nitrosdk_arm7_args,
-        include_directories: nitrosdk_includes,
-        link_with: nitrosdk_arm7_libs,
-        objects: crt0_obj_arm7,
-        sources: fx_const_h
-    )
-endif
+nitrosdk_arm7_dep = declare_dependency(
+    compile_args: nitrosdk_args + nitrosdk_arm7_args,
+    include_directories: nitrosdk_includes,
+    link_with: nitrosdk_arm7_libs,
+    objects: crt0_obj_arm7,
+    sources: fx_const_h
+)
 
 ############################################################
 ###                ARM7 PREBUILT BINARIES                ###
 ############################################################
-if(build_target == 'arm')
-    subdir('components')
-endif
+subdir('components')
 
 ############################################################
 ###                    FOR CONSUMERS                     ###

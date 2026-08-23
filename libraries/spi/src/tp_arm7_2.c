@@ -1,3 +1,4 @@
+#include <nitro/exi.h>
 
 static u16 last_touch_flg;
 static void SPI_DummyWait2(void);

@@ -1,5 +1,7 @@
 #include <nitro/os.h>
+#ifdef SDK_BUILD_ARM
 #include <nitro/nvram.h>
+#endif
 
 extern void WVR_ShelterExtWram(void);
 extern u16 WMSP_GetAllowedChannel(u16 bitField);
@@ -7,6 +9,11 @@ extern u16 WMSP_GetAllowedChannel(u16 bitField);
 static u32 GetRomValidLanguage(void);
 static void VBlankIntr(void);
 
+#ifdef SDK_PORT
+int main() { return 0; }
+
+void NitroSpMain(void) {}
+#else
 asm void NitroSpMain(void)
 {
     stmdb sp!, {r3, r4, r5, r6, r7, r8, r9, r10, r11, lr}
@@ -365,3 +372,4 @@ _037F84D8:
     ldmia sp!, {r3, lr}
     bx lr
 }
+#endif

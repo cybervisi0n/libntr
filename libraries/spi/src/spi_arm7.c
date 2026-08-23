@@ -4,6 +4,7 @@
 #include <nitro/os/common/thread.h>
 #include <nitro/os/common/message.h>
 #include <nitro/pxi/common/fifo.h>
+#include <nitro/nvram.h>
 
 #define SPI_MESSAGE_QUEUE_LENGTH 0x10
 #define SPI_THREAD_STACK_SIZE 0x200
