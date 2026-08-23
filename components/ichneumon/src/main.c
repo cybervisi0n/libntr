@@ -3,6 +3,10 @@
 #include <nitro/nvram.h>
 #endif
 
+#if defined(SDK_PORT) && defined(_WIN32)
+#include <windows.h>
+#endif
+
 extern void WVR_ShelterExtWram(void);
 extern u16 WMSP_GetAllowedChannel(u16 bitField);
 
@@ -10,9 +14,16 @@ static u32 GetRomValidLanguage(void);
 static void VBlankIntr(void);
 
 #ifdef SDK_PORT
-int main() { return 0; }
+int main(int argc, char * argv[]) { return 0; }
 
 void NitroSpMain(void) {}
+
+#ifdef _WIN32
+int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
+{
+    return main(__argc, __argv);
+}
+#endif
 #else
 asm void NitroSpMain(void)
 {

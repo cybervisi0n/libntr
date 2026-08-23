@@ -179,7 +179,7 @@ void SPIi_ReturnResult(u32 command, u32 result)
     }
 }
 
-BOOL SPIi_CheckException(SPIDeviceType type)
+BOOL SPIi_CheckException(u32 type)
 {
 #pragma unused( type )
 
@@ -190,13 +190,13 @@ BOOL SPIi_CheckException(SPIDeviceType type)
     return TRUE;
 }
 
-void SPIi_GetException(SPIDeviceType type)
+void SPIi_GetException(u32 type)
 {
     spiWork.exception = TRUE;
     spiWork.type = type;
 }
 
-void SPIi_ReleaseException(SPIDeviceType type)
+void SPIi_ReleaseException(u32 type)
 {
     if (spiWork.type == type)
     {
@@ -206,7 +206,7 @@ void SPIi_ReleaseException(SPIDeviceType type)
     }
 }
 
-BOOL SPIi_SetEntry(SPIDeviceType type, u32 process, u16 args, ...)
+BOOL SPIi_SetEntry(u32 type, u32 process, u16 args, ...)
 {
     OSIntrMode e;
     void   *w;
