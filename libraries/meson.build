@@ -37,7 +37,6 @@ if(build_target == 'arm')
     subdir('exi')
     subdir('nvram')
     subdir('pad')
-    subdir('wm_arm7')
 endif
 
 if (build_target != 'arm')
