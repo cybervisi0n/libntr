@@ -29,7 +29,6 @@ static s32 s_SIM_internalADPCMIndex[16] = {0};
 static u8 s_SIM_internalADPCMCurByte[16] = {0};
 static s32 s_SIM_internalNextADPCMByte[16] = {0};
 static u16 s_SIM_internalNoiseVal[16] = {0};
-SIM_sndChCnt s_SIM_sndChCnt[16] = {0};
 
 static int s_blipTimer = 0;
 static blip_t* s_BlipLeft;

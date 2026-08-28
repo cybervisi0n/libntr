@@ -278,7 +278,7 @@ void G2SIM_DrawOBJ( u32 line, u8 isSub, int bgnum ) {
     if( isSub )
     {
         dispcnt = s_reg_GXS_DB_DISPCNT;
-        oam = (void *)s_HW_DB_OAM;
+        oam = (u16 *)s_HW_DB_OAM;
 
         if(!s_SIM_DBG_OAMSenable) {
             // Return early when OAM is turned off
@@ -289,7 +289,7 @@ void G2SIM_DrawOBJ( u32 line, u8 isSub, int bgnum ) {
     else
     {
         dispcnt = s_reg_GX_DISPCNT;
-        oam = (void *)s_HW_OAM;
+        oam = (u16 *)s_HW_OAM;
 
         if(!s_SIM_DBG_OAMenable) {
             // Return early when OAM is turned off
@@ -1455,15 +1455,15 @@ static void DrawOBJ_RotScale(u32 num, u32 boundwidth, u32 boundheight, u32 width
     if( isSub )
     {
         dispcnt = s_reg_GXS_DB_DISPCNT;
-        oam = (void *)s_HW_DB_OAM;
-        objvram = (void *)s_HW_DB_OBJ_VRAM;
+        oam = (u16 *)s_HW_DB_OAM;
+        objvram = (u8 *)s_HW_DB_OBJ_VRAM;
         objvrammask = 0x1FFFF;
     }
     else
     {
         dispcnt = s_reg_GX_DISPCNT;
-        oam = (void *)s_HW_OAM;
-        objvram = (void *)s_HW_OBJ_VRAM;
+        oam = (u16 *)s_HW_OAM;
+        objvram = (u8 *)s_HW_OBJ_VRAM;
         objvrammask = 0x3FFFF;
     }
 
@@ -1693,15 +1693,15 @@ static void DrawOBJ_Normal(u32 num, u32 width, u32 height, s32 xpos, s32 ypos, u
     if( isSub )
     {
         dispcnt = s_reg_GXS_DB_DISPCNT;
-        oam = (void *)s_HW_DB_OAM;
-        objvram = (void *)s_HW_DB_OBJ_VRAM;
+        oam = (u16 *)s_HW_DB_OAM;
+        objvram = (u8 *)s_HW_DB_OBJ_VRAM;
         objvrammask = 0x1FFFF;
     }
     else
     {
         dispcnt = s_reg_GX_DISPCNT;
-        oam = (void *)s_HW_OAM;
-        objvram = (void *)s_HW_OBJ_VRAM;
+        oam = (u16 *)s_HW_OAM;
+        objvram = (u8 *)s_HW_OBJ_VRAM;
         objvrammask = 0x3FFFF;
     }
 

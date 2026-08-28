@@ -11,8 +11,9 @@
 
 #ifndef SIM_G3_HANDLER_H
 #define SIM_G3_HANDLER_H
+
 //Type definitions
-typedef struct G3SIM_Matrix_t { fx32 nums[4][4] } G3SIM_Matrix_t;
+typedef struct G3SIM_Matrix_t { fx32 nums[4][4]; } G3SIM_Matrix_t;
 
 typedef struct {
     G3SIM_Matrix_t mtxs[32];

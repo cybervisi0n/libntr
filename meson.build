@@ -18,7 +18,7 @@ build_target = get_option('build_target')
 ############################################################
 
 if not meson.is_subproject() and buildtype != 'plain' and build_target == 'arm'
-c_args = [
+shared_args = [
     '-O4,p',
     '-proc', 'arm946e',
     '-enum', 'int',
@@ -34,24 +34,32 @@ c_args = [
     '-stdinc'
 ]
 else
-c_args = []
+shared_args = []
 endif
 
 mwrap_ver = get_option('mwrap_ver')
 if mwrap_ver != 'default' and build_target == 'arm'
-    c_args += ['-wrap:ver', mwrap_ver]
+    shared_args += ['-wrap:ver', mwrap_ver]
 endif
 
 mwrap_sdk = get_option('mwrap_sdk')
 if mwrap_sdk != 'default' and build_target == 'arm'
-  c_args += ['-wrap:sdk', mwrap_sdk]
+  shared_args += ['-wrap:sdk', mwrap_sdk]
 endif
 
 if get_option('sp1p3_conditionals')
-    c_args += '-DSP1P3_BUG_FOR_CONDITIONAL_ASM_INSTRUCTIONS'
+    shared_args += '-DSP1P3_BUG_FOR_CONDITIONAL_ASM_INSTRUCTIONS'
 endif
 
+c_args = shared_args
+cpp_args = shared_args
+
 add_project_arguments(c_args,
+    language: 'c',
+    native: (build_target == 'linux' or build_target == 'win64')
+)
+
+add_project_arguments(cpp_args,
     language: 'c',
     native: (build_target == 'linux' or build_target == 'win64')
 )
@@ -132,6 +140,11 @@ nitrosdk_arm7_args_dep = declare_dependency(
 
 add_project_arguments(nitrosdk_args,
     language: 'c',
+    native: (build_target == 'linux' or build_target == 'win64')
+)
+
+add_project_arguments(nitrosdk_args,
+    language: 'cpp',
     native: (build_target == 'linux' or build_target == 'win64')
 )
 

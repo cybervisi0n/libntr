@@ -331,7 +331,7 @@ static void calculateClipMatrix()
     fxMtx._32 = currentClipMatrix.nums[3][2];
     fxMtx._33 = currentClipMatrix.nums[3][3];
 
-    memcpy( &s_reg_G3X_CLIPMTX_RESULT_0, &fxMtx, sizeof( MtxFx44 ) );
+    memcpy( (void*)&s_reg_G3X_CLIPMTX_RESULT_0, &fxMtx, sizeof( MtxFx44 ) );
 
 
     return;

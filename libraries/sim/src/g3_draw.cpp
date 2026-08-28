@@ -197,8 +197,8 @@ void G3SIM_FlushArray()
 		
 		//Convert the DS texture data into a format opengl can understand
 		memset(s_SIM_g3tex, 0, 4*s_texImageParam.textureSSize * s_texImageParam.textureTSize);
-		u8 * vramTex = getTextureVramBank() + s_texImageParam.textureOffset;
-		u8 * vramPltt = getTexPlttVramBank() + s_texPlttBase;
+		u8 * vramTex = (u8*)(getTextureVramBank() + s_texImageParam.textureOffset);
+		u8 * vramPltt = (u8*)(getTexPlttVramBank() + s_texPlttBase);
 		u16 * colorAddr = (u16*)vramPltt;
 
 
@@ -326,7 +326,7 @@ void G3SIM_FlushArray()
 		memcpy(&item->texImageParam, &s_texImageParam, sizeof(G3SIM_TexImageParam_t));
 
 		//Allocate and copy the verts
-		item->verts = malloc(sizeof(G3SIM_Vertex_t) * s_G3DrawCurVertIdx);
+		item->verts = (G3SIM_Vertex_t*)(malloc(sizeof(G3SIM_Vertex_t) * s_G3DrawCurVertIdx));
 		item->vertsCount = s_G3DrawCurVertIdx;
 		memcpy(item->verts, s_G3DrawVerts, sizeof(G3SIM_Vertex_t) * s_G3DrawCurVertIdx);
 

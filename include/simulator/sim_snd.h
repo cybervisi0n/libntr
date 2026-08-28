@@ -5,6 +5,11 @@
 
 //This file is DEPRECATED!!!
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 //See GBATEK DS Sound Channels 0..15
 typedef struct SIM_sndChCnt {
 	u8 volumeMul;
@@ -25,5 +30,9 @@ extern u32 s_SIM_sndlen[16];
 
 extern u8 s_SIM_dbg_dumpSound;
 extern u8 s_SIM_dbg_soundSoloChannel;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

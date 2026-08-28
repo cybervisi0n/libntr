@@ -1,6 +1,6 @@
 #include <nitro.h>
 #include <simulator/sim.h>
-#include <simulator/sim_snd.h>
+#include <simulator/sim_audio.h>
 
 #include <nitro/wm/ARM7/wm_sp.h>
 

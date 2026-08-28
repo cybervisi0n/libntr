@@ -1,5 +1,5 @@
-extern void NitroMain();
-extern int NitroSpMain(void * arg);
+extern "C" void NitroMain();
+extern "C" int NitroSpMain(void * arg);
 #define SDL_MAIN_HANDLED
 #define _POSIX_C_SOURCE 199309L
 
@@ -13,7 +13,6 @@ extern int NitroSpMain(void * arg);
 #include <simulator/glad/glad.h>
 #endif
 #include <simulator/sim.h>
-#include <simulator/sim_snd.h>
 #include <simulator/sim_audio.h>
 #include <simulator/sim_net.h>
 
@@ -178,10 +177,10 @@ static GLuint g2vertexBuffer;
 static GLuint g3RenderBufferId;
 
 //Shaders
-static GLuint g2VertexShader;
-static GLuint g2FragmentShader;
-static GLuint myVertexShader;
-static GLuint myFragmentShader;
+static GLint g2VertexShader;
+static GLint g2FragmentShader;
+static GLint myVertexShader;
+static GLint myFragmentShader;
 
 //GL Context
 static SDL_GLContext context;
@@ -734,10 +733,10 @@ void SIM_HandleG3Command(draw_msg_t * msg)
         case DRAW_CMD_G3_DUMMY:
             break;
         case DRAW_CMD_G3_BEGIN:
-            G3SIM_Begin(msg->data.numU8);
+            G3SIM_Begin(static_cast<GXBegin>(msg->data.numU8));
             break;
         case DRAW_CMD_G3_MTXMODE:
-            G3SIM_MtxMode(msg->data.numU8);
+            G3SIM_MtxMode(static_cast<GXMtxMode>(msg->data.numU8));
             break;
         case DRAW_CMD_G3_IDENTITY:
             G3SIM_Identity();
@@ -799,18 +798,20 @@ void SIM_HandleG3Command(draw_msg_t * msg)
             SIM_HandleG3Command( msg );
             break;
         case DRAW_CMD_G3_VTXDIFF:
-            //The conversion works a bit different from vtx10
-            msg->type = DRAW_CMD_G3_VTX16;
-            temp = msg->data.numU32;
+            {
+                //The conversion works a bit different from vtx10
+                msg->type = DRAW_CMD_G3_VTX16;
+                temp = msg->data.numU32;
 
-            s16 x = (s16)((temp & 0x000003FF) << 6) >> 6;
-            s16 y = (s16)((temp & 0x000FFC00) >> 4) >> 6;
-            s16 z = (s16)((temp & 0x3FF00000) >> 14) >> 6;
+                s16 x = (s16)((temp & 0x000003FF) << 6) >> 6;
+                s16 y = (s16)((temp & 0x000FFC00) >> 4) >> 6;
+                s16 z = (s16)((temp & 0x3FF00000) >> 14) >> 6;
 
-            msg->data.xyz.x = prevXYZ.x + x;
-            msg->data.xyz.y = prevXYZ.y + y;
-            msg->data.xyz.z = prevXYZ.z + z;
-            SIM_HandleG3Command( msg );
+                msg->data.xyz.x = prevXYZ.x + x;
+                msg->data.xyz.y = prevXYZ.y + y;
+                msg->data.xyz.z = prevXYZ.z + z;
+                SIM_HandleG3Command( msg );
+            }
             break;
         case DRAW_CMD_G3_VTX10:
             msg->type = DRAW_CMD_G3_VTX16;
@@ -953,7 +954,7 @@ void SIM_HandleG3Command(draw_msg_t * msg)
             {
                 G3SIM_CommandBlock_t * cmdBlockPtr;
                 draw_msg_t tempMsg;
-                cmdBlockPtr = msg->data.ptr;
+                cmdBlockPtr = static_cast<G3SIM_CommandBlock_t*>(msg->data.ptr);
                 u64 curOffset;
                 curOffset = 0;
                 u8 numParams;
@@ -1017,6 +1018,7 @@ void SIM_HandleG3Command(draw_msg_t * msg)
                                     }
                                     break;
                                 default:
+                                    break;
                             }
                             paramPtr += paramSize;
                             curOffset += paramSize;
@@ -1025,13 +1027,14 @@ void SIM_HandleG3Command(draw_msg_t * msg)
                         ConvertMsgParams( &tempMsg );
                         SIM_HandleG3Command(&tempMsg);
                     }
-                    cmdBlockPtr = (void *)paramPtr;
+                    cmdBlockPtr = static_cast<G3SIM_CommandBlock_t*>(paramPtr);
                 }
             }
             free(msg->data.ptr);
             //TODO
             break;
-                                default:
+        default:
+            break;
                                     //printf( "Draw command %d not implemented\n", msg->type );
     }
 }
@@ -1112,7 +1115,7 @@ void * SIM_RenderInit(void * arg){
     glDebugMessageCallback( MessageCallback, 0 );
 
     GLenum glErrCode;
-    GLuint status;
+    GLint status;
     GLint logSize = 0;
 
     GLchar * errorBuf;
@@ -1166,8 +1169,8 @@ void * SIM_RenderInit(void * arg){
     if( status != GL_TRUE ) \
     { \
         glGetShaderiv(g2FragmentShader, GL_INFO_LOG_LENGTH, &logSize); \
-        errorBuf = malloc( logSize * sizeof( GLchar ) ); \
-        glGetShaderInfoLog(_id, logSize, &logSize, (void *)errorBuf); \
+        errorBuf = static_cast<GLchar*>(malloc( logSize * sizeof( GLchar ) )); \
+        glGetShaderInfoLog(_id, logSize, &logSize, (GLchar *)errorBuf); \
         printf( "ERROR COMPILING _source SHADER:\n%s\n", errorBuf ); \
         free( errorBuf ); \
     }
@@ -1189,8 +1192,8 @@ void * SIM_RenderInit(void * arg){
     if( status != GL_TRUE ) \
     { \
         glGetProgramiv(_id, GL_INFO_LOG_LENGTH, &logSize); \
-        errorBuf = malloc( logSize * sizeof( GLchar ) ); \
-        glGetProgramInfoLog(_id, logSize, &logSize, (void *)errorBuf); \
+        errorBuf = (GLchar*)malloc( logSize * sizeof( GLchar ) ); \
+        glGetProgramInfoLog(_id, logSize, &logSize, (GLchar *)errorBuf); \
         glErrCode = glGetError(); \
         printf( "ERROR LINKING _id SHADER:\n%s\n", errorBuf ); \
         free( errorBuf ); \
@@ -1304,8 +1307,8 @@ static void DrawEngine(BOOL isSub) {
     u8 maxPriorityBG;
     u8 bgEnabled[4];
     u8 bgMode;
-    GLuint bgOrder[4];
-    GLuint bgPriorities[4];
+    GLint bgOrder[4];
+    GLint bgPriorities[4];
 
     u32 dispSel = s_reg_GX_POWCNT >> 15;
 
