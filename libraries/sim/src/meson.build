@@ -9,15 +9,15 @@ libsim_srcs = files(
     'gui/gui_pad.c',
     'g3_draw.cpp',
     'g3_handler.cpp',
-    'g3_shader.c',
     'queue.c',
     'sim_assert.c',
     'sim_audio.c',
-    'sim_debug.c',
+    'sim_debug.cpp',
     'sim_g2.cpp',
     'sim_main.cpp',
-    'sim_net.c',
-    'sim_screenquads.c'
+    'sim_net.cpp',
+    'sim_screenquads.c',
+    'sim_shaders.cpp'
 )
 
 if(build_target == 'linux' or build_target == 'win64')

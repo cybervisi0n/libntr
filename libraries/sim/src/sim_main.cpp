@@ -16,6 +16,7 @@ extern "C" int NitroSpMain(void * arg);
 #include <simulator/sim.h>
 #include <simulator/sim_audio.h>
 #include <simulator/sim_net.h>
+#include <simulator/sim_shaders.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1270,14 +1271,14 @@ void * SIM_RenderInit(void * arg){
 
     //Setup G3 Shader Program
     g3shaderProgramID = glCreateProgram();
-    CompileVertexShader(myVertexShader, G3SIM_VertexShader);
-    CompileFragmentShader(myFragmentShader, G3SIM_FragmentShader);
+    CompileVertexShader(myVertexShader, SIM::G3VertexShader);
+    CompileFragmentShader(myFragmentShader, SIM::G3FragmentShader);
     LinkShader(g3shaderProgramID, myVertexShader, myFragmentShader);
 
     //Setup G2 Shader Program
     g2shaderProgramID = glCreateProgram();
-    CompileVertexShader(g2VertexShader, G2SIM_VertexShader);
-    CompileFragmentShader(g2FragmentShader, G2SIM_FragmentShader);
+    CompileVertexShader(g2VertexShader, SIM::G2VertexShader);
+    CompileFragmentShader(g2FragmentShader, SIM::G2FragmentShader);
     LinkShader(g2shaderProgramID, g2VertexShader, g2FragmentShader);
 
     GLint texUnitLoc = glGetUniformLocation(g2shaderProgramID, "myTexture");

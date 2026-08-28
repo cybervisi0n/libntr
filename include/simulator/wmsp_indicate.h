@@ -4,6 +4,10 @@
 #include <nitro/types.h>
 #include <simulator/sim_net.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
     SIM_Net_MPPacketCmd_t cmd;
     u16 aid;
@@ -15,5 +19,8 @@ typedef struct {
 void WMSP_Indicate(SIM_WMSP_Indicate_t * indicate);
 void WMSP_IndicateSendBeacon();
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

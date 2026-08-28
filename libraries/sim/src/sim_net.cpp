@@ -364,7 +364,7 @@ BOOL SIM_Net_DisconnectMP(u16 aidBitmap, u16 * resultBitmap)
 BOOL SIM_Net_SendMPData(u16 aidBitmap, u8 port, u8 * data, int dataLen)
 {
     int mpDataPacketSize = dataLen + sizeof(SIM_Net_MpDataPacket_t);
-    SIM_Net_MpDataPacket_t * mpDataPacket = malloc(mpDataPacketSize);
+    SIM_Net_MpDataPacket_t * mpDataPacket = (SIM_Net_MpDataPacket_t *)malloc(mpDataPacketSize);
     memset(mpDataPacket, 0, mpDataPacketSize);
     InitPacketHeader(&mpDataPacket->common.header);
     mpDataPacket->common.cmd = SIM_NET_MPPACKETCMD_DATA;
