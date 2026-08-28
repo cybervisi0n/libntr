@@ -1292,6 +1292,8 @@ void * SIM_RenderInit(void * arg){
     SIM_GUI_Init(window, context);
 
     clock_gettime(CLOCK_MONOTONIC, &s_SIM_lastFrameEnd);
+
+    return nullptr;
 }
 
 
@@ -2068,6 +2070,8 @@ void * SIM_Render(void *arg){
 
     glCullFace(GL_FRONT);
     glFrontFace(GL_CW);
+
+    return nullptr;
 }
 
 void SIM_PreRenderVBlank()
