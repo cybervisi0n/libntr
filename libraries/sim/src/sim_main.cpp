@@ -3,6 +3,7 @@ extern "C" int NitroSpMain(void * arg);
 #define SDL_MAIN_HANDLED
 #define _POSIX_C_SOURCE 199309L
 
+#include <string>
 #include <pthread.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
@@ -65,8 +66,6 @@ SIM_config_type s_SIM_config = {};
 
 //Thread
 extern OSThreadInfo OSi_ThreadInfo;
-
-static char s_SIM_game_name[13] = {}; // The name of the game from the ROM header (if present)
 
 static u32 s_TouchPanelCoords[4] = {}; // The bounding box of the touch screen
 
@@ -1095,13 +1094,23 @@ void * SIM_RenderInit(void * arg){
         windowWidth = s_SIM_config.windowWidth;
     }
 
-    char * windowTitle = "libntr Application";
+    std::string windowTitle = "libntr Application";
 
-    if(strlen(s_SIM_game_name) > 0) {
-        windowTitle = s_SIM_game_name;
+    CARDRomHeader * cardHeader = (CARDRomHeader*)(HW_ROM_HEADER_BUF);
+
+    if(strlen(cardHeader->game_name) > 0) {
+        char gameName[13] = {0};
+        char gameCode[5] = {0};
+        char makerCode[3] = {0};
+        
+        strncpy(gameName, cardHeader->game_name, 12);
+        strncpy(gameCode, (char*)&cardHeader->game_code, 4);
+        strncpy(makerCode, (char*)&cardHeader->maker_code, 2);
+
+        windowTitle = std::string(gameName) + " [" + std::string(gameCode) + std::string(makerCode) + "]";
     }
 
-    window = SDL_CreateWindow( windowTitle, 100, 100, windowWidth, windowHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE );
+    window = SDL_CreateWindow( windowTitle.c_str(), 100, 100, windowWidth, windowHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE );
     context = SDL_GL_CreateContext(window);
 
     gladLoadGLLoader(SDL_GL_GetProcAddress);
@@ -2156,10 +2165,19 @@ int main(int argc, char* argv[]){
     if(romFile != NULL){
         //Read the fields of the struct
         fread( (void *)HW_ROM_HEADER_BUF, 1, 0x160, romFile);
-        memcpy(s_SIM_game_name, (void *)HW_ROM_HEADER_BUF, 12);
-        s_SIM_game_name[12] = 0;
         fclose(romFile);
     }
+
+    CARDRomHeader * cardHeader = (CARDRomHeader*)(HW_ROM_HEADER_BUF);
+
+    #ifdef LIBNTR_CARD_GAME_CODE
+    const char * gameCode = LIBNTR_CARD_GAME_CODE;
+    strncpy((char*)&cardHeader->game_code, gameCode, sizeof(u32));
+    #endif
+    #ifdef LIBNTR_CARD_MAKER_CODE
+    const char * makerCode = LIBNTR_CARD_MAKER_CODE;
+    strncpy((char*)&cardHeader->maker_code, makerCode, sizeof(u16));
+    #endif
 
     memset( (void *)HW_MAIN_MEM_SHARED, 0, 0x160 );
 

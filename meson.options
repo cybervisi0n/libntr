@@ -4,3 +4,5 @@ option('mwrap_sdk', type: 'string', value: 'default', description: 'Version of M
 option('sp1p3_conditionals', type: 'boolean', value: false)
 option('build_target', type: 'combo', choices: ['arm', 'win64', 'linux', 'nx'], value: 'arm', description: 'Target build platform', yield: true)
 option('tracy_enable' , type : 'boolean' , value : false, description : 'Enable profiling', yield: true)
+option('card_game_code', type: 'string', value: '', description: 'Game Code. Must be exactly four letters.')
+option('card_maker_code', type: 'string', value: '', description: 'Maker Code. Must be exactly two characters. Typically 01.')

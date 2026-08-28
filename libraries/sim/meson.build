@@ -23,6 +23,16 @@ enet_dep = declare_dependency(dependencies: [enet_lib])
 libsim_dependencies = [sdl2_dep, enet_dep]
 libsim_args = []
 
+# CARD Game code/Maker code
+if(get_option('card_game_code') != '')
+    card_game_code_define = '-DLIBNTR_CARD_GAME_CODE="' + get_option('card_game_code') + '"'
+    libsim_args += card_game_code_define
+endif
+if(get_option('card_maker_code') != '')
+    card_game_code_define = '-DLIBNTR_CARD_MAKER_CODE="' + get_option('card_maker_code') + '"'
+    libsim_args += card_game_code_define
+endif
+
 if(get_option('tracy_enable') == true)
     if(build_target =='linux' or build_target == 'win64')
         tracy_native = dependency(

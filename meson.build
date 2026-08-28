@@ -133,7 +133,6 @@ else
     nitrosdk_arm7_args = nitrosdk_args
 endif
 
-
 nitrosdk_arm7_args_dep = declare_dependency(
   compile_args: nitrosdk_arm7_args
 )
