@@ -9,6 +9,8 @@
 #include <nitro/gx/g3.h>
 #include <nitro/gx/gx_load.h>
 #include <nitro/gx/gx_vramcnt.h>
+#include <unordered_map>
+#include <simulator/sim_crc32.h>
 
 #ifdef SDK_BUILD_LINUX
 #include <signal.h>
@@ -32,6 +34,9 @@ typedef struct {
 } g3_draw_item_t;
 
 G3SIM_Vertex_t s_G3DrawVerts[G3_DRAW_MAX_VERTS];
+
+// Texture cache based on the CRC of the texture and palette
+std::unordered_map<u64, u8*> sTextureCache;
 
 //The item list is used for drawing translucent things sorted by Z position
 static g3_draw_item_t s_G3DrawItemList[G3_DRAW_MAX_ITEMS];
@@ -172,6 +177,8 @@ void G3SIM_FlushArray()
 	TracyCZone(FlushArrayZone, 1);
 	#endif
 
+	u8 * texBuf = nullptr;
+
 	if( s_texImageParam.textureFormat != GX_TEXFMT_NONE )
 	{
 		GLuint g3TextureId;
@@ -193,45 +200,67 @@ void G3SIM_FlushArray()
 		} else {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		}
-		
-		
-		//Convert the DS texture data into a format opengl can understand
-		memset(s_SIM_g3tex, 0, 4*s_texImageParam.textureSSize * s_texImageParam.textureTSize);
+
 		u8 * vramTex = (u8*)(getTextureVramBank() + s_texImageParam.textureOffset);
 		u8 * vramPltt = (u8*)(getTexPlttVramBank() + s_texPlttBase);
 		u16 * colorAddr = (u16*)vramPltt;
 
+		//Calculate the texture + palette CRC
+		u32 paletteCRC = SIM_crc32buf(vramPltt, 512);
+		u32 vramTexBufSize = 0;
 
-		switch( s_texImageParam.textureFormat ){
-			case GX_TEXFMT_A3I5:
-				G3SIM_DecodeTexA3I5(vramTex, colorAddr, s_SIM_g3tex, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
-				//TODO
-				break;
-			case GX_TEXFMT_PLTT4:
-				G3SIM_DecodeTex4(vramTex, colorAddr, s_SIM_g3tex, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
-				//TODO
-				break;
-			case GX_TEXFMT_PLTT16:
-				G3SIM_DecodeTex16(vramTex, colorAddr, s_SIM_g3tex, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
-				break;
-			case GX_TEXFMT_PLTT256:
-				G3SIM_DecodeTex256(vramTex, colorAddr, s_SIM_g3tex, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
-				break;
-			case GX_TEXFMT_COMP4x4:
-				SIM_assert_always();
-				//TODO
-				break;
-			case GX_TEXFMT_A5I3:
-				G3SIM_DecodeTexA5I3(vramTex, colorAddr, s_SIM_g3tex, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
-				//TODO
-				break;
-			case GX_TEXFMT_DIRECT:
-				G3SIM_DecodeTexDirect(vramTex, s_SIM_g3tex, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
-				break;
+		if(s_texImageParam.textureFormat == GX_TEXFMT_PLTT4) {
+			vramTexBufSize = (s_texImageParam.textureSSize * s_texImageParam.textureTSize) >> 2;
+		} else if(s_texImageParam.textureFormat == GX_TEXFMT_PLTT16) {
+			vramTexBufSize = (s_texImageParam.textureSSize * s_texImageParam.textureTSize) >> 1;
+		} else {
+			vramTexBufSize = (s_texImageParam.textureSSize * s_texImageParam.textureTSize);
 		}
+
+		u32 textureCRC = SIM_crc32buf(vramTex, vramTexBufSize);
+
+		u64 finalCRC = (paletteCRC | ((u64)textureCRC << 32));
 		
 
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, s_texImageParam.textureSSize, s_texImageParam.textureTSize, GL_RGBA, GL_UNSIGNED_BYTE, (void *)s_SIM_g3tex);
+		if(sTextureCache.count(finalCRC)) {
+			// Texture is in the cache
+			texBuf = sTextureCache[finalCRC];
+		} else {
+			//Convert the DS texture data into a format opengl can understand
+			u8 * outTexBuf = new u8[4*s_texImageParam.textureSSize * s_texImageParam.textureTSize];
+			memset((void*)outTexBuf, 0, 4*s_texImageParam.textureSSize * s_texImageParam.textureTSize);
+
+
+			switch( s_texImageParam.textureFormat ){
+				case GX_TEXFMT_A3I5:
+					G3SIM_DecodeTexA3I5(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
+					break;
+				case GX_TEXFMT_PLTT4:
+					G3SIM_DecodeTex4(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
+					break;
+				case GX_TEXFMT_PLTT16:
+					G3SIM_DecodeTex16(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
+					break;
+				case GX_TEXFMT_PLTT256:
+					G3SIM_DecodeTex256(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
+					break;
+				case GX_TEXFMT_COMP4x4:
+					SIM_assert_always();
+					//TODO
+					break;
+				case GX_TEXFMT_A5I3:
+					G3SIM_DecodeTexA5I3(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
+					break;
+				case GX_TEXFMT_DIRECT:
+					G3SIM_DecodeTexDirect(vramTex, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
+					break;
+			}
+
+			sTextureCache[finalCRC] = outTexBuf;
+			texBuf = outTexBuf;
+		}
+
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, s_texImageParam.textureSSize, s_texImageParam.textureTSize, GL_RGBA, GL_UNSIGNED_BYTE, (void *)texBuf);
 
 		GLint texUnitLoc = glGetUniformLocation(g3shaderProgramID, "myTexture");
 		//set texture 0 in the shader
@@ -316,7 +345,7 @@ void G3SIM_FlushArray()
 	
         	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, s_texImageParam.textureSSize, s_texImageParam.textureTSize, 0,
         	         GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, s_texImageParam.textureSSize, s_texImageParam.textureTSize, GL_RGBA, GL_UNSIGNED_BYTE, (void *)s_SIM_g3tex);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, s_texImageParam.textureSSize, s_texImageParam.textureTSize, GL_RGBA, GL_UNSIGNED_BYTE, (void *)texBuf);
 		}
 
 		//Copy over the polygonattr
