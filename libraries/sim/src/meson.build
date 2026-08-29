@@ -11,7 +11,7 @@ libsim_srcs = files(
     'g3_handler.cpp',
     'queue.c',
     'sim_assert.c',
-    'sim_audio.c',
+    'sim_audio.cpp',
     'sim_crc32.c',
     'sim_debug.cpp',
     'sim_g2.cpp',

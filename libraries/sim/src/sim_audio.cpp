@@ -205,7 +205,7 @@ s32 SIM_Audio_RunChannel(u32 cycles, int chNo)
     }
 
     if((type < 3) && 
-       (s_SIM_sndlen[chNo] + s_SIM_sndpnt < 16)) {
+       (s_SIM_sndlen[chNo] + s_SIM_sndpnt[chNo] < 16)) {
         return 0;
     }
 
