@@ -23,6 +23,13 @@ enet_dep = declare_dependency(dependencies: [enet_lib])
 libsim_dependencies = [sdl2_dep, enet_dep]
 libsim_args = []
 
+if(build_target == 'win64')
+ws2_32_lib = meson.get_compiler('c').find_library('ws2_32')
+
+ws2_32_dep = declare_dependency(dependencies: [ws2_32_lib])
+libsim_dependencies += ws2_32_dep
+endif
+
 # CARD Game code/Maker code
 if(get_option('card_game_code') != '')
     card_game_code_define = '-DLIBNTR_CARD_GAME_CODE="' + get_option('card_game_code') + '"'
