@@ -1,8 +1,8 @@
 # libntr
 ![logo](images/libntr.png)
-Drop-in replacement for NitroSDK that targets Nintendo DS, PC, and other platforms.
+Drop-in replacement for NitroSDK that targets Nintendo DS/DSi, PC, and other platforms.
 
-libntr makes it easier to port Nintendo DS games to PC and other platforms by handling the logic for common libraries used by nearly all Nintendo DS games.
+libntr makes it easier to port Nintendo DS/DSi games to PC and other platforms by handling the logic for common libraries used by nearly all Nintendo DS games.
 
 See also: 
  * [libntrsystem](https://github.com/cybervisi0n/libntrsystem)
@@ -22,3 +22,15 @@ Select the build target with the 'build_target' meson option.
  * linux (x86_64 Linux PC)
  * win64 (x86_64 Windows PC)
  * nx (Switch via libnx)
+
+## DSi Support (WIP)
+DSi Support has been added for the following libraries
+* camera
+* dsp
+* el
+* fx
+* cp
+* env
+* gx
+* scfg
+* wxc
