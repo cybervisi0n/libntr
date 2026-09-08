@@ -12,6 +12,8 @@ fs = import('fs')
 buildtype = get_option('buildtype')
 cc = meson.get_compiler('c')
 build_target = get_option('build_target')
+sdk_version_major = get_option('sdk_version_major')
+hardware_type = get_option('hardware_type')
 
 ############################################################
 ###                    COMPILER FLAGS                    ###
@@ -114,6 +116,34 @@ if (build_target == 'nx')
         '-I/opt/devkitpro/portlibs/switch/include',
         '-I/opt/devkitpro/libnx/include'
     ]
+endif
+
+# Add major version number
+nitrosdk_args += [
+    '-DSDK_VERSION_MAJOR=' + sdk_version_major.to_string()
+]
+
+# SDK 5 (TWL) args
+if(sdk_version_major == 5)
+    if(hardware_type == 'ntr')
+        nitrosdk_args += [
+            '-DSDK_NITRO'
+        ]
+    endif
+
+    if(hardware_type == 'twl_hyb')
+        nitrosdk_args += [
+            '-DSDK_TWL',
+            '-DSDK_TWLHYB'
+        ]
+    endif
+
+    if(hardware_type == 'twl_ltd')
+        nitrosdk_args += [
+            '-DSDK_TWL',
+            '-DSDK_TWLLTD'
+        ]
+    endif
 endif
 
 nitrosdk_arm7_args = []
