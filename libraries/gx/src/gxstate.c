@@ -1,5 +1,9 @@
 #include "../include/gxstate.h"
+#if SDK_VERSION_MAJOR == 5 && defined(SDK_TWL)
+#include <twl/hw/ARM9/mmap_vram.h>
+#else
 #include <nitro/gx/gx_vramcnt.h>
+#endif
 
 GX_State gGXState;
 

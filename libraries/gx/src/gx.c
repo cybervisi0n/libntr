@@ -2,8 +2,19 @@
 #include <nitro/mi/dma.h>
 #include "../include/gxstate.h"
 
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+#include <twl/mi/common/dma.h>
+#endif
+
+#include <nitro/os/common/spinLock.h>
+#endif
+
 #ifdef SDK_ARM9
     #include <nitro/os/ARM9/vramExclusive.h>
+#if SDK_VERSION_MAJOR == 5
+	#include <nitro/spi/ARM9/pm.h>
+#endif
 #endif
 
 #ifdef SDK_TEG_WA_VBLANK
@@ -47,6 +58,26 @@ void GX_Init (void)
 	reg_GX_DISPSTAT = 0;
 	reg_GX_DISPCNT = 0;
 	if (GXi_DmaId != GX_DMA_NOT_USE) {
+#if SDK_VERSION_MAJOR == 5 && defined(SDK_TWL)
+    if (GXi_DmaId > 3) {
+      #ifdef SDK_PORT
+		  MI_NDmaFill(GXi_DmaId, (void *)REG_BG0CNT_ADDR, 0,
+		             REG_DISP_MMEM_FIFO_OFFSET - REG_BG0CNT_OFFSET);
+      #else
+      MI_NDmaFill(GXi_DmaId - 4, (void *)REG_BG0CNT_ADDR, 0,
+                  REG_DISP_MMEM_FIFO_ADDR - REG_BG0CNT_ADDR);
+      #endif
+      reg_GX_MASTER_BRIGHT = 0;
+
+      #ifdef SDK_PORT
+      MI_NDmaFill(GXi_DmaId - 4, (void *)REG_DB_DISPCNT_ADDR, 0,
+                  REG_DB_MASTER_BRIGHT_OFFSET - REG_DB_DISPCNT_OFFSET + 4);
+      #else
+      MI_NDmaFill(GXi_DmaId - 4, (void *)REG_DB_DISPCNT_ADDR, 0,
+                  REG_DB_MASTER_BRIGHT_ADDR - REG_DB_DISPCNT_ADDR + 4);
+      #endif
+    } else {
+#endif
         #ifdef SDK_PORT
 		MI_DmaFill32(GXi_DmaId, (void *)REG_BG0CNT_ADDR, 0,
 		             REG_DISP_MMEM_FIFO_OFFSET - REG_BG0CNT_OFFSET);
@@ -63,6 +94,9 @@ void GX_Init (void)
 		MI_DmaFill32(GXi_DmaId, (void *)REG_DB_DISPCNT_ADDR, 0,
 		             REG_DB_MASTER_BRIGHT_ADDR - REG_DB_DISPCNT_ADDR + 4);
         #endif
+#if SDK_VERSION_MAJOR == 5 && defined(SDK_TWL)
+		}
+#endif
 	} else {
         #ifdef SDK_PORT
 		MI_CpuFill32((void *)REG_BG0CNT_ADDR, 0, REG_DISP_MMEM_FIFO_OFFSET - REG_BG0CNT_OFFSET);
@@ -251,7 +285,15 @@ u32 GX_SetDefaultDMA (u32 dma_no)
 	SDK_ASSERT((dma_no <= MI_DMA_MAX_NUM) || (dma_no == GX_DMA_NOT_USE));
 
 	if (GXi_DmaId != GX_DMA_NOT_USE) {
+#if SDK_VERSION_MAJOR == 5 && defined(SDK_TWL)
+    if (GXi_DmaId > 3) {
+      MI_WaitNDma(GXi_DmaId - 4);
+    } else {
+#endif
 		MI_WaitDma(GXi_DmaId);
+#if SDK_VERSION_MAJOR == 5 && defined(SDK_TWL)
+		}
+#endif
 	}
 
 	enabled = OS_DisableInterrupts();
@@ -259,5 +301,44 @@ u32 GX_SetDefaultDMA (u32 dma_no)
 
 	(void)OS_RestoreInterrupts(enabled);
 
+#if SDK_VERSION_MAJOR == 5
+	if (previous > 3) {
+	  return GX_DMA_NOT_USE;
+	}
+#endif
+
 	return previous;
 }
+
+#if SDK_VERSION_MAJOR == 5 && defined(SDK_TWL)
+u32 GX_SetDefaultNDMA(u32 ndma_no) {
+  u32 previous = GXi_DmaId;
+  OSIntrMode enabled;
+
+  if (OS_IsRunOnTwl()) {
+    SDK_ASSERT((ndma_no <= MI_DMA_MAX_NUM) || (ndma_no == GX_DMA_NOT_USE));
+
+    if (GXi_DmaId != GX_DMA_NOT_USE) {
+      if (GXi_DmaId > 3) {
+        MI_WaitNDma(GXi_DmaId - 4);
+      } else {
+        MI_WaitDma(GXi_DmaId);
+      }
+    }
+
+    enabled = OS_DisableInterrupts();
+
+    GXi_DmaId = ndma_no;
+    if (ndma_no != GX_DMA_NOT_USE) {
+      GXi_DmaId += 4;
+    }
+
+    (void)OS_RestoreInterrupts(enabled);
+
+    if ((previous > 3) && (previous != GX_DMA_NOT_USE)) {
+      return previous - 4;
+    }
+  }
+  return GX_DMA_NOT_USE;
+}
+#endif

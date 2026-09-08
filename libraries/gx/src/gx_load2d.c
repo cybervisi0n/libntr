@@ -1,10 +1,22 @@
 #include <nitro/gx/gx_load.h>
 #include <nitro/gx/gx_vramcnt.h>
 #include <nitro/gx/gx_bgcnt.h>
+#if SDK_VERSION_MAJOR == 4
 #ifdef SDK_PORT
 #include <nitro/hw/X86/mmap_global.h>
 #else
 #include <nitro/hw/ARM9/mmap_global.h>
+#endif
+#elif SDK_VERSION_MAJOR == 5
+#ifdef SDK_NITRO
+#include <nitro/hw/ARM9/mmap_global.h>
+#include <nitro/hw/ARM9/mmap_vram.h>
+#else
+#include <twl/hw/ARM9/mmap_global.h>
+#include <twl/hw/ARM9/mmap_vram.h>
+#endif
+#else
+#error Unsupported SDK version
 #endif
 #include <nitro/mi/dma.h>
 

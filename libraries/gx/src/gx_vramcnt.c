@@ -1,7 +1,23 @@
 #include <nitro/gx/gx_vramcnt.h>
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/hw/ARM9/ioreg_G3X.h>
 #include <nitro/hw/ARM9/ioreg_GX.h>
 #include <nitro/hw/ARM9/ioreg_GXS.h>
+#elif SDK_VERSION_MAJOR == 5
+#ifdef SDK_NITRO
+#include <nitro/hw/ARM9/ioreg_G3X.h>
+#include <nitro/hw/ARM9/ioreg_GX.h>
+#include <nitro/hw/ARM9/ioreg_GXS.h>
+#include <nitro/hw/ARM9/mmap_vram.h>
+#else
+#include <twl/hw/ARM9/ioreg_G3X.h>
+#include <twl/hw/ARM9/ioreg_GX.h>
+#include <twl/hw/ARM9/ioreg_GXS.h>
+#include <twl/hw/ARM9/mmap_vram.h>
+#endif /* SDK_NITRO */
+#else
+#error Unsupported SDK version
+#endif
 
 #include "gxstate.h"
 

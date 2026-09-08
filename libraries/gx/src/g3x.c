@@ -1,3 +1,4 @@
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/gx/g3x.h>
 #include <nitro/gx/g3imm.h>
 #include <nitro/gx/gx.h>
@@ -8,6 +9,41 @@
 #include <nitro/fx/fx_const.h>
 #include <nitro/mi/dma.h>
 #include <nitro/mi/memory.h>
+#elif SDK_VERSION_MAJOR == 5
+#include <nitro/gx/g3x.h>
+#include <nitro/gx/g3imm.h>
+#include <nitro/gx/gx.h>
+#include <nitro/gx/gx_bgcnt.h>
+#ifdef SDK_NITRO
+#ifdef SDK_PORT
+#include <nitro/hw/X86/ioreg_GX.h>
+#include <nitro/hw/X86/ioreg_G3.h>
+#include <nitro/hw/X86/ioreg_G2.h>
+#else
+#include <nitro/hw/ARM9/ioreg_GX.h>
+#include <nitro/hw/ARM9/ioreg_G3.h>
+#include <nitro/hw/ARM9/ioreg_G2.h>
+#endif
+#else
+#ifdef SDK_PORT
+#include <twl/hw/X86/ioreg_GX.h>
+#include <twl/hw/X86/ioreg_G3.h>
+#include <twl/hw/X86/ioreg_G2.h>
+#else
+#include <twl/hw/ARM9/ioreg_GX.h>
+#include <twl/hw/ARM9/ioreg_G3.h>
+#include <twl/hw/ARM9/ioreg_G2.h>
+#endif
+#endif
+#include <nitro/fx/fx_const.h>
+#include <nitro/mi/dma.h>
+
+#ifdef SDK_TWL
+#include <twl/mi/common/dma.h>
+#endif
+
+#include <nitro/mi/memory.h>
+#endif
 
 #include "gxasm.h"
 
@@ -257,8 +293,18 @@ void G3X_InitTable (void)
 	int i;
 
 	if (GXi_DmaId != GX_DMA_NOT_USE) {
+#if SDK_VERSION_MAJOR == 5 && defined(SDK_TWL)
+    if (GXi_DmaId > 3) {
+      MI_NDmaFillAsync(GXi_DmaId - 4, (void *)REG_EDGE_COLOR_0_L_ADDR, 0, 16,
+                       NULL, NULL);
+      MI_NDmaFill(GXi_DmaId - 4, (void *)REG_FOG_TABLE_0_ADDR, 0, 96);
+    } else {
+#endif
 		MI_DmaFill32Async(GXi_DmaId, (void *)REG_EDGE_COLOR_0_L_ADDR, 0, 16, NULL, NULL);
 		MI_DmaFill32(GXi_DmaId, (void *)REG_FOG_TABLE_0_ADDR, 0, 96);
+#if SDK_VERSION_MAJOR == 5 && defined(SDK_TWL)
+		}
+#endif
 	} else {
 		MI_CpuFill32((void *)REG_EDGE_COLOR_0_L_ADDR, 0, 16);
 		MI_CpuFill32((void *)REG_FOG_TABLE_0_ADDR, 0, 96);
