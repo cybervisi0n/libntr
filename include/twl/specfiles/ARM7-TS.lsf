@@ -1,0 +1,41 @@
+#
+#  Nitro LCF SPEC FILE
+#
+
+Static $(TARGET_NAME)
+{
+	Address		0x02380000
+	Library		crt0.HYB.TWL.o
+	Object		$(OBJDIR)/initScfg.o
+	StackSize	1024 512
+}
+
+#Objects on MAIN RAM	# nothing for elf2bin
+#Autoload MAIN
+#{
+#	Address		0x027e0000
+#	Library		
+#}
+
+Autoload WRAM
+{
+	Address		0x037f8000
+	Object		$(OBJS_STATIC)
+	Library		$(LLIBS) $(GLIBS) $(CC_LIBS)
+	Object		* (.etable)
+	Object		* (.wram)
+	Object		* (.main)
+}
+
+Ltdautoload LTDWRAM
+{
+        Address         0x03000000
+        Object          * (.ltdwram)
+        Library         libi2c_sp$(LIBSUFFIX).a	\
+        				libcamera_sp$(LIBSUFFIX).a
+}
+Ltdautoload LTDMAIN
+{
+	Address		0x02f88000
+        Object          * (.ltdmain)
+}

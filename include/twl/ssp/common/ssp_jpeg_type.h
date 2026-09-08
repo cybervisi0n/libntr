@@ -1,0 +1,36 @@
+#ifndef TWL_SSP_JPEG_TYPE_H_
+#define TWL_SSP_JPEG_TYPE_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define SSP_JPEG_THUMBNAIL 0x0001
+
+#define SSP_JPEG_RGB555 0x0004
+
+#define SSP_JPEG_EXIF 0x0010
+
+#define SSP_JPEG_YUV422 0x0100
+
+#define SSP_JPEG_FORMAT_MASK (SSP_JPEG_RGB555 | SSP_JPEG_YUV422)
+
+#define SSP_JPEG_THUMBNAIL_WIDTH 160
+#define SSP_JPEG_THUMBNAIL_HEIGHT 120
+#define SSP_JPEG_THUMBNAIL_BUFFER_WIDTH 160
+#define SSP_JPEG_THUMBNAIL_BUFFER_HEIGHT 128
+
+#define SSP_JPEG_OUTPUT_YUV444 1
+#define SSP_JPEG_OUTPUT_YUV420 2
+#define SSP_JPEG_OUTPUT_YUV422 3
+
+typedef enum {
+  SSP_MAKERNOTE_PHOTO = 0x1001,
+  SSP_MAKERNOTE_USER = 0x1002
+} SSPJpegMakernote;
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
+#endif /* TWL_SSP_JPEG_TYPE_H_ */

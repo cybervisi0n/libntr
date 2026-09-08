@@ -1,0 +1,40 @@
+#
+#  TWL LCF SPEC FILE
+#
+
+Static $(TARGET_NAME)
+{
+	Address		$(ADDRESS_STATIC)
+	Object		$(OBJS_STATIC)
+	Library		$(LLIBS) $(GLIBS) $(CC_LIBS)
+}
+
+Autoload ITCM
+{
+	Address		$(ADDRESS_ITCM)
+	Object		*     		 (.itcm)
+	Object		$(OBJS_AUTOLOAD) (.text)
+	Object		$(OBJS_AUTOLOAD) (.rodata)
+	Object		$(OBJS_AUTOLOAD) (.init)
+	Object		$(OBJS_AUTOLOAD) (.ctor)
+	Object		$(OBJS_AUTOLOAD) (.sinit)
+}
+
+Autoload DTCM
+{
+	Address		$(ADDRESS_DTCM)
+	Object		*     		 (.dtcm)
+	Object		$(OBJS_AUTOLOAD) (.data)
+	Object		$(OBJS_AUTOLOAD) (.sdata)
+	Object		$(OBJS_AUTOLOAD) (.bss)
+	Object		$(OBJS_AUTOLOAD) (.sbss)
+}
+
+Ltdautoload LTDMAIN
+{
+	# If there is a shared overlay for NITRO/TWL, must put it after that
+	After		$(TARGET_NAME)
+	Object		* (.ltdmain)
+	Object		$(OBJS_LTDAUTOLOAD)
+	Library		$(LLIBS_EX) $(GLIBS_EX)
+}
