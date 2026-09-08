@@ -33,6 +33,14 @@ subdir('wm')
 subdir('wm_arm7')
 subdir('wvr')
 
+if(sdk_version_major == 5)
+    subdir('camera')
+    subdir('dsp')
+    subdir('el')
+    subdir('scfg')
+    subdir('wxc')
+endif
+
 build_target = get_option('build_target')
 if(build_target == 'arm')
     # ARM7-only libraries
