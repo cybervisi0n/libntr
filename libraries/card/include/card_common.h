@@ -1,8 +1,18 @@
 #ifndef __NITRO_CARD_COMMON_H__
 #define __NITRO_CARD_COMMON_H__
 
+#if (SDK_VERSION_MAJOR == 4)
 #include <nitro.h>
 #include <nitro/pxi.h>
+#endif
+#if (SDK_VERSION_MAJOR == 5)
+#include <nitro/card/common.h>
+#include <nitro/card/backup.h>
+
+#include "../include/card_utility.h"
+#include "../include/card_task.h"
+#include "../include/card_command.h"
+#endif
 
 #if defined( SDK_PORT )
 #define ATTRIBUTE_ALIGN(x) __attribute__((aligned(x)))
@@ -21,17 +31,30 @@ enum {
 	CARD_STAT_INIT_CMD    = (1 << 1),
 	CARD_STAT_BUSY        = (1 << 2),
 	CARD_STAT_TASK        = (1 << 3),
+#if (SDK_VERSION_MAJOR == 4)
 	CARD_STAT_RECV        = (1 << 4),
 	CARD_STAT_REQ         = (1 << 5),
+#endif
+#if (SDK_VERSION_MAJOR == 5)
+	CARD_STAT_WAITFOR7ACK = (1 << 5),
+#endif
 	CARD_STAT_CANCEL      = (1 << 6)
 };
+
+#if (SDK_VERSION_MAJOR == 5)
+#define CARD_UNSYNCHRONIZED_BUFFER (void *)0x80000000
+#endif
 
 typedef enum {
 	CARD_TARGET_NONE,
 	CARD_TARGET_ROM,
-	CARD_TARGET_BACKUP
+	CARD_TARGET_BACKUP,
+#if (SDK_VERSION_MAJOR == 5)
+	CARD_TARGET_RW,
+#endif
 } CARDTargetMode;
 
+#if (SDK_VERSION_MAJOR == 4)
 #define CARD_BACKUP_CAPS_AVAILABLE          (u32)(CARD_BACKUP_CAPS_READ - 1)
 #define CARD_BACKUP_CAPS_READ               (u32)(1 << CARD_REQ_READ_BACKUP)
 #define CARD_BACKUP_CAPS_WRITE              (u32)(1 << CARD_REQ_WRITE_BACKUP)
@@ -43,9 +66,27 @@ typedef enum {
 #define CARD_BACKUP_CAPS_READ_STATUS        (u32)(1 << CARD_REQ_READ_STATUS)
 #define CARD_BACKUP_CAPS_WRITE_STATUS       (u32)(1 << CARD_REQ_WRITE_STATUS)
 #define CARD_BACKUP_CAPS_ERASE_SUBSECTOR    (u32)(1 << CARD_REQ_ERASE_SUBSECTOR_BACKUP)
+#endif
+#if (SDK_VERSION_MAJOR == 5)
+
+typedef u32 CARDAccessLevel;
+#define CARD_ACCESS_LEVEL_NONE 0x0000UL
+#define CARD_ACCESS_LEVEL_BACKUP_R 0x0001UL
+#define CARD_ACCESS_LEVEL_BACKUP_W 0x0002UL
+#define CARD_ACCESS_LEVEL_BACKUP                                               \
+  (u32)(CARD_ACCESS_LEVEL_BACKUP_R | CARD_ACCESS_LEVEL_BACKUP_W)
+#define CARD_ACCESS_LEVEL_ROM 0x0004UL
+#define CARD_ACCESS_LEVEL_FULL                                                 \
+  (u32)(CARD_ACCESS_LEVEL_BACKUP | CARD_ACCESS_LEVEL_ROM)
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef s32 CARDiOwner;
 
+#if (SDK_VERSION_MAJOR == 4)
 typedef struct CARDiCommandArg {
 	CARDResult result;
 	CARDBackupType type;
@@ -75,6 +116,7 @@ typedef struct CARDiCommandArg {
 		u8 padding2[4];
 	} spec;
 } CARDiCommandArg;
+#endif
 
 typedef struct CARDiCommon {
 	CARDiCommandArg * cmd;
@@ -90,6 +132,14 @@ typedef struct CARDiCommon {
 	OSThreadQueue lock_queue[1];
 #endif
 	CARDTargetMode lock_target;
+#if (SDK_VERSION_MAJOR == 5)
+  struct {
+    OSThread context[1];
+    u8 stack[0x400];
+  } thread;
+  const CARDDmaInterface *DmaCall;
+  OSThread *current_thread_9;
+#endif
 	u32 src;
 	u32 dst;
 	u32 len;
@@ -123,7 +173,16 @@ SDK_COMPILER_ASSERT(sizeof(CARDiCommandArg) % 32 == 0);
 SDK_COMPILER_ASSERT(sizeof(CARDiCommon) % 32 == 0);
 
 extern CARDiCommon cardi_common;
+#if (SDK_VERSION_MAJOR == 5)
+extern u32 cardi_rom_base;
+BOOL CARDi_ExecuteOldTypeTask(void (*task)(CARDiCommon *), BOOL async);
+BOOL CARDi_WaitForTask(CARDiCommon *p, BOOL restart, MIDmaCallback callback,
+                       void *callback_arg);
+void CARDi_EndTask(CARDiCommon *p);
+void CARDi_OldTypeTaskThread(void *arg);
+#endif
 
+#if SDK_VERSION_MAJOR == 4
 static inline void CARDi_SendPxi (u32 data)
 {
     #ifndef SDK_PORT
@@ -137,6 +196,7 @@ void CARDi_OnFifoRecv(PXIFifoTag tag, u64 data, BOOL err);
 #else
 void CARDi_OnFifoRecv(PXIFifoTag tag, u32 data, BOOL err);
 #endif
+#endif
 
 static inline CARDTargetMode CARDi_GetTargetMode (void)
 {
@@ -146,6 +206,7 @@ static inline CARDTargetMode CARDi_GetTargetMode (void)
 BOOL CARDi_WaitAsync(void);
 BOOL CARDi_TryWaitAsync(void);
 
+#if (SDK_VERSION_MAJOR == 4)
 static inline void CARDi_WaitTask (CARDiCommon * p, MIDmaCallback callback, void * callback_arg)
 {
 	OSIntrMode bak_psr = OS_DisableInterrupts();
@@ -193,6 +254,19 @@ void CARDi_InitCommon(void);
 
 #if defined(SDK_ARM9) || defined(SDK_PORT)
     BOOL CARDi_Request(CARDiCommon * p, int req_type, int retry_max);
+#endif
+#endif
+
+#if (SDK_VERSION_MAJOR == 5)
+void CARDi_LockResource(CARDiOwner owner, CARDTargetMode target);
+void CARDi_UnlockResource(CARDiOwner owner, CARDTargetMode target);
+CARDAccessLevel CARDi_GetAccessLevel(void);
+void CARDi_InitResourceLock(void);
+void CARDi_InitCommand(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

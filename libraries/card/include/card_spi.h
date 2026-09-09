@@ -27,6 +27,10 @@
 #define COMM_STATUS_BP2_BIT          0x10
 #define COMM_STATUS_WPBEN_BIT        0x80
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void CARDi_InitStatusRegister(void);
 void CARDi_IdentifyBackupCore(CARDBackupType type);
 
@@ -40,5 +44,9 @@ void CARDi_EraseBackupSectorCore(u32 dst, u32 len);
 void CARDi_EraseBackupSubSectorCore(u32 dst, u32 len);
 void CARDi_EraseChipCore(void);
 void CARDi_SetWriteProtectCore(u16 stat);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

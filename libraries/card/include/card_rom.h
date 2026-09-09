@@ -4,10 +4,15 @@
 #include <nitro.h>
 #include "../include/card_common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(SDK_TEG)
     #define SDK_ARM7_READROM_SUPPORT
 #endif
 
+#if (SDK_VERSION_MAJOR == 4)
 #define REG_CARD_MASTER_CNT    (HW_REG_BASE + 0x1A1)
 #define REG_CARDCNT            (HW_REG_BASE + 0x1A4)
 #define REG_CARD_CMD           (HW_REG_BASE + 0x1A8)
@@ -76,6 +81,24 @@ static inline u32 CARDi_GetRomFlag (u32 flag)
 	return (u32)((rom_ctrl & ~CARD_COMMAND_MASK) | flag |
 	             CARD_READ_MODE | CARD_START | CARD_RESET_HI);
 }
+#endif
+#if SDK_VERSION_MAJOR == 5
+typedef struct CARDTransferInfo {
+  u32 command;
+  void (*callback)(void *userdata);
+  void *userdata;
+  u32 src;
+  u32 dst;
+  u32 len;
+  u32 work;
+} CARDTransferInfo;
+
+typedef void (*CARDTransferCallbackFunction)(void *userdata);
+
+int CARDi_ReadRomWithCPU(void *userdata, void *buffer, u32 offset, u32 length);
+void CARDi_ReadRomWithDMA(CARDTransferInfo *info);
+void CARDi_InitRom(void);
+#endif
 
 void CARDi_CheckPulledOutCore(u32 id);
 
@@ -102,9 +125,18 @@ void (*CARDi_GetRomAccessor(void))(CARDRomStat *);
 void CARDi_ReadCard(CARDRomStat * p);
 BOOL CARDi_TryReadCardDma(CARDRomStat * p);
 
+#if SDK_VERSION_MAJOR == 5
+u32 CARDi_ReadRomStatusCore(void);
+void CARDi_RefreshRomCore(void);
+#endif
+
 #if defined(SDK_TEG)
     void CARDi_ReadCartridge(CARDRomStat * p);
     void CARDi_ReadPxi(CARDRomStat * p);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif
