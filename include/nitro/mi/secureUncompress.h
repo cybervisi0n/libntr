@@ -1,7 +1,7 @@
 #ifndef NITRO_MI_SECURE_UNCOMPRESSION_H__
 #define NITRO_MI_SECURE_UNCOMPRESSION_H__
 
-#if SDK_VERSION_MAJOR != 5
+#if SDK_VERSION_MAJOR < 5
 #error This file is for SDK version 5 only!
 #endif
 

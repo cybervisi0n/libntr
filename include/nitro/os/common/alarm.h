@@ -8,6 +8,9 @@ extern "C" {
 #include <nitro/misc.h>
 #include <nitro/types.h>
 #include <nitro/os/common/thread.h>
+#if SDK_VERSION_MAJOR == 5
+#include <nitro/os/common/tick.h>
+#endif
 
 #ifndef SDK_BUILD_ARM
 #include <SDL2/SDL.h>
@@ -29,6 +32,12 @@ struct OSiAlarm {
 #endif
 };
 
+#if SDK_VERSION_MAJOR == 5
+typedef struct OSAlarmResource {
+  int num;
+} OSAlarmResource;
+#endif
+
 void OS_InitAlarm(void);
 void OS_EndAlarm(void);
 
@@ -41,6 +50,10 @@ void OS_SetAlarmTag(OSAlarm * alarm, u32 tag);
 void OS_CancelAlarm(OSAlarm * alarm);
 void OS_CancelAlarms(u32 tag);
 void OS_CancelAllAlarms(void);
+#if SDK_VERSION_MAJOR == 5
+int OS_GetNumberOfAlarm(void);
+BOOL OS_GetAlarmResource(OSAlarmResource *resource);
+#endif
 
 struct OSiAlarmQueue {
 	OSAlarm * head;

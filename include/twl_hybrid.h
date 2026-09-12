@@ -1,7 +1,7 @@
 #ifndef TWL_HYBRID_H_
 #define TWL_HYBRID_H_
 
-#if SDK_VERSION_MAJOR != 5
+#if SDK_VERSION_MAJOR < 5
 #error This file is only supported on SDK version 5
 #endif
 

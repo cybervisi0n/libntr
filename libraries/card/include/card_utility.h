@@ -3,7 +3,7 @@
 
 #include <nitro/types.h>
 
-#if SDK_VERSION_MAJOR != 5
+#if SDK_VERSION_MAJOR < 5
 #error This file is for SDK version 5 only!
 #endif
 

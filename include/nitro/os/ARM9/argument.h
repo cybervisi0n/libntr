@@ -1,6 +1,10 @@
 #ifndef NITRO_OS_ARGUMENT_H_
 #define NITRO_OS_ARGUMENT_H_
 
+#if (SDK_VERSION_MAJOR == 5) && defined(SDK_TWL)
+#include <twl/hw/common/mmap_parameter.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

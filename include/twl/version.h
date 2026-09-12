@@ -2,7 +2,7 @@
 #define TWLSDK_VERSION_H_
 #define SDK_VERSION_DATE 2020100715
 #define SDK_VERSION_TIME 312
-#define SDK_VERSION_MAJOR 5
+//#define SDK_VERSION_MAJOR 5 /* This now gets defined through meson build commands */
 #define SDK_VERSION_MINOR 5
 #define SDK_VERSION_RELSTEP 30000
 #define SDK_BUILDVER_CW_CC 4.0

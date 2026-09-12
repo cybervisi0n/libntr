@@ -8,6 +8,9 @@ extern "C" {
 #include <nitro/os/common/system.h>
 #include <nitro/os/common/interrupt.h>
 #include <nitro/os/common/thread.h>
+#if SDK_VERSION_MAJOR == 5
+#include <nitro/os/common/event.h>
+#endif
 #include <nitro/os/common/context.h>
 #include <nitro/os/common/spinLock.h>
 #include <nitro/os/common/timer.h>
@@ -28,6 +31,9 @@ extern "C" {
 #include <nitro/os/common/ownerInfo.h>
 #include <nitro/os/common/entropy.h>
 #include <nitro/os/common/systemWork.h>
+#if SDK_VERSION_MAJOR == 5
+#include <nitro/os/common/resource.h>
+#endif
 #include <nitro/os/common/profile.h>
 #include <nitro/os/common/callTrace.h>
 #include <nitro/os/common/functionCost.h>

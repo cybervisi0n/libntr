@@ -231,10 +231,12 @@ static inline BOOL FS_IsDir (volatile const FSFile * p_file)
 	return (p_file->stat & FS_FILE_STATUS_IS_DIR) ? TRUE : FALSE;
 }
 
+#if SDK_VERSION_MAJOR == 4
 static inline BOOL FS_IsFileSyncMode (const volatile FSFile * p)
 {
 	return (p->stat & FS_FILE_STATUS_SYNC) ? TRUE : FALSE;
 }
+#endif
 
 static inline FSResult FS_GetResultCode (volatile const FSFile * p_file)
 {
@@ -334,6 +336,7 @@ static inline FSArchive * FS_GetAttachedArchive (const FSFile * p_file)
 	return p_file->arc;
 }
 
+#if SDK_VERSION_MAJOR == 4
 static inline u32 FS_GetFileImageTop (const FSFile * p_file)
 {
 	return p_file->prop.file.top;
@@ -343,6 +346,7 @@ static inline u32 FS_GetFileImageBottom (const FSFile * p_file)
 {
 	return p_file->prop.file.bottom;
 }
+#endif
 
 BOOL FS_CreateFileFromRom(FSFile * p_file, u32 offset, u32 size);
 BOOL FS_CreateFileFromMemory(FSFile * p_file, void * buf, u32 size);

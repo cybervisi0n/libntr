@@ -74,6 +74,34 @@ nitrosdk_args = [
     '-DNNS_FINALROM'
 ]
 
+# Add major version number
+nitrosdk_args += [
+    '-DSDK_VERSION_MAJOR=' + sdk_version_major.to_string() + 'UL'
+]
+
+# SDK 5 (TWL) args
+if(sdk_version_major == 5)
+    if(hardware_type == 'ntr')
+        nitrosdk_args += [
+            '-DSDK_NITRO'
+        ]
+    endif
+
+    if(hardware_type == 'twl_hyb')
+        nitrosdk_args += [
+            '-DSDK_TWL',
+            '-DSDK_TWLHYB'
+        ]
+    endif
+
+    if(hardware_type == 'twl_ltd')
+        nitrosdk_args += [
+            '-DSDK_TWL',
+            '-DSDK_TWLLTD'
+        ]
+    endif
+endif
+
 if (build_target == 'arm')
     nitrosdk_args += [
         '-DSDK_ARM9',
@@ -116,34 +144,6 @@ if (build_target == 'nx')
         '-I/opt/devkitpro/portlibs/switch/include',
         '-I/opt/devkitpro/libnx/include'
     ]
-endif
-
-# Add major version number
-nitrosdk_args += [
-    '-DSDK_VERSION_MAJOR=' + sdk_version_major.to_string()
-]
-
-# SDK 5 (TWL) args
-if(sdk_version_major == 5)
-    if(hardware_type == 'ntr')
-        nitrosdk_args += [
-            '-DSDK_NITRO'
-        ]
-    endif
-
-    if(hardware_type == 'twl_hyb')
-        nitrosdk_args += [
-            '-DSDK_TWL',
-            '-DSDK_TWLHYB'
-        ]
-    endif
-
-    if(hardware_type == 'twl_ltd')
-        nitrosdk_args += [
-            '-DSDK_TWL',
-            '-DSDK_TWLLTD'
-        ]
-    endif
 endif
 
 nitrosdk_arm7_args = []

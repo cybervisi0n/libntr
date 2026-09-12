@@ -3,7 +3,7 @@
 
 #define SDK_VERSION_DATE        20080118
 #define SDK_VERSION_TIME        1051
-#define SDK_VERSION_MAJOR       4
+//#define SDK_VERSION_MAJOR       4 /* This now gets defined through meson build commands */
 #define SDK_VERSION_MINOR       2
 #define SDK_VERSION_RELSTEP     30001
 #define SDK_BUILDVER_CW_CC      3.0
