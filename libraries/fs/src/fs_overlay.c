@@ -1,9 +1,17 @@
+#if SDK_VERSION_MAJOR == 5
+#include <nitro/misc.h>
+#include <nitro/types.h>
+#endif
 #include <nitro/os.h>
 #include <nitro/mi.h>
 #include <nitro/fs.h>
 #include <nitro/mb.h>
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/dgt/common.h>
 #include <nitro/dgt/dgt.h>
+#elif SDK_VERSION_MAJOR == 5
+#include <nitro/math/dgt.h>
+#endif
 
 #include "../include/util.h"
 #include "../include/rom.h"

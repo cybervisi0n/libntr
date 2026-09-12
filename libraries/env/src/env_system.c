@@ -14,6 +14,10 @@ static void ENVi_SetNextSetForIter(ENVResourceIter *iter);
 static void ENVi_ClearLinkList (void)
 {
 	MI_CpuClear8(&sResourceSetLink[0], sizeof(sResourceSetLink));
+
+	#if SDK_VERSION_MAJOR == 5
+	sResourceSetLinkHead = NULL;
+	#endif
 }
 
 static ENVResourceSetLink *ENVi_SearchBlankLink (void)

@@ -8,9 +8,21 @@ CTRDGWork CTRDGi_Work;
 
 static BOOL CTRDGi_EnableFlag = FALSE;
 
+#if SDK_VERSION_MAJOR == 5
+static BOOL CTRDG_IsExistedAtInit(void) {
+#ifdef SDK_TWLLTD
+  return FALSE;
+#else
+  CTRDGModuleInfo *cip = CTRDGi_GetModuleInfoAddr();
+
+  return cip->moduleID.raw != 0xffff ? TRUE : FALSE;
+#endif
+}
+#endif
+
 void CTRDGi_InitCommon (void)
 {
-    #if 0
+    #if SDK_VERSION_MAJOR == 5
 	SVC_CpuClear(0, &CTRDGi_Work, sizeof(CTRDGi_Work), 32);
     #endif
 	CTRDGi_Work.lockID = (u16)OS_GetLockID();
@@ -125,6 +137,16 @@ BOOL CTRDG_IsPulledOut (void)
 {
 	CTRDGModuleInfo *cip = CTRDGi_GetModuleInfoAddr();
 
+#if SDK_VERSION_MAJOR == 5
+	#ifndef SDK_TWLLTD
+	  SDK_ASSERT(CTRDGi_IsInitialized());
+	#endif
+
+	  if (!CTRDG_IsExistedAtInit()) {
+	    return FALSE;
+	  }
+#endif
+
 	if (cip->moduleID.raw == 0xffff) {
 		return FALSE;
 	}
@@ -148,6 +170,9 @@ BOOL CTRDG_IsOptionCartridgePulledOut (void)
 
 BOOL CTRDG_IsExisting (void)
 {
+	#if (SDK_VERSION_MAJOR == 5) && defined(SDK_TWLLTD)
+	return FALSE;
+	#endif
 	BOOL retval = TRUE;
 	CTRDGLockByProc lockInfo;
 
@@ -414,11 +439,36 @@ void CTRDG_Enable (BOOL enable)
 	OSIntrMode bak_cpsr = OS_DisableInterrupts();
 	CTRDGi_EnableFlag = enable;
 
+#if SDK_VERSION_MAJOR == 4
 #if (defined(SDK_ARM9) || defined(SDK_PORT))
 	if (!CTRDG_IsOptionCartridge()) {
 		u32 acc = (u32)(enable ? OS_PR3_ACCESS_RW : OS_PR3_ACCESS_RO);
 		(void)OS_SetDPermissionsForProtectionRegion(OS_PR3_ACCESS_MASK, acc);
 	}
+#endif
+#elif SDK_VERSION_MAJOR == 5
+	#if defined(SDK_ARM9)
+	#ifndef SDK_TWLLTD
+	  SDK_ASSERT(CTRDGi_IsInitialized());
+	#endif
+	  if (CTRDG_IsExistedAtInit()) {
+	    u32 dacc = (u32)(enable ? OS_PR3_ACCESS_RW : OS_PR3_ACCESS_RO);
+	    (void)OS_SetDPermissionsForProtectionRegion(OS_PR3_ACCESS_MASK, dacc);
+	    if (enable) {
+		
+	      DC_FlushAll();
+	      DC_WaitWriteBufferEmpty();
+	      OS_DisableICacheForProtectionRegion(1 << 3);
+	      OS_DisableDCacheForProtectionRegion(1 << 3);
+	      OS_DisableWriteBufferForProtectionRegion(1 << 3);
+	    } else {
+		
+	      OS_EnableICacheForProtectionRegion(1 << 3);
+	      OS_EnableDCacheForProtectionRegion(1 << 3);
+	      OS_EnableWriteBufferForProtectionRegion(1 << 3);
+	    }
+	  }
+	#endif /* defined(SDK_ARM9) */
 #endif
 
 	(void)OS_RestoreInterrupts(bak_cpsr);

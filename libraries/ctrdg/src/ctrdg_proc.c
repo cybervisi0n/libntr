@@ -162,6 +162,35 @@ static void CTRDGi_CallbackForInitModuleInfo (PXIFifoTag tag, u32 data, BOOL err
 	}
 }
 
+#if SDK_VERSION_MAJOR == 5
+#ifndef SDK_TWLLTD
+
+#ifdef SDK_PORT
+static void CTRDGi_DummyCallback(PXIFifoTag tag, u64 data, BOOL err);
+#else
+static void CTRDGi_DummyCallback(PXIFifoTag tag, u32 data, BOOL err);
+#endif
+void CTRDG_DummyInit(void) {
+  CTRDGi_InitCommon();
+
+  PXI_SetFifoRecvCallback(PXI_FIFO_TAG_CTRDG,
+                          NULL); // to avoid warning by overriding
+  PXI_SetFifoRecvCallback(PXI_FIFO_TAG_CTRDG, CTRDGi_DummyCallback);
+
+  CTRDGi_SendtoPxi(CTRDG_PXI_COMMAND_INIT_MODULE_INFO);
+}
+
+#ifdef SDK_PORT
+static void CTRDGi_DummyCallback(PXIFifoTag tag, u64 data, BOOL err)
+#else
+static void CTRDGi_DummyCallback(PXIFifoTag tag, u32 data, BOOL err)
+#endif
+{
+#pragma unused(tag, data, err)
+}
+#endif // ifndef SDK_TWLLTD
+#endif
+
 #ifdef SDK_PORT
 static void CTRDGi_PulledOutCallback (PXIFifoTag tag, u64 data, BOOL err)
 #else

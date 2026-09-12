@@ -1,4 +1,12 @@
+#if SDK_VERSION_MAJOR == 4
 #include <nitro.h>
+#elif SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+#include <twl.h>
+#else
+#include <nitro.h>
+#endif
+#endif
 #include <nitro/demo/DEMOInit.h>
 #include <nitro/demo/DEMOKey.h>
 
@@ -124,3 +132,11 @@ void DEMOStartDisplay(void) {
   GX_DispOn();
   GXS_DispOn();
 }
+
+#if (SDK_VERSION_MAJOR == 5) && defined(SDK_TWL)
+void DEMOCheckRunOnTWL(void) {
+  if (!OS_IsRunOnTwl()) {
+    OS_TPanic("demo is executable only on TWL");
+  }
+}
+#endif
