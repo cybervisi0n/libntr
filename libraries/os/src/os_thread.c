@@ -1480,10 +1480,18 @@ OSThread * OS_GetThread (u32 id)
         return thread->userParameter;
     }
 
+    #ifdef SDK_PORT
+    void OSi_SetSystemErrno(OSThread *thread, int myErrno)
+    #else
     void OSi_SetSystemErrno (OSThread * thread, int errno)
+    #endif
     {
         SDK_ASSERT(thread);
+        #ifdef SDK_PORT
+        thread->systemErrno = myErrno;
+        #else
         thread->systemErrno = errno;
+        #endif
     }
 
     int OSi_GetSystemErrno (const OSThread * thread)
