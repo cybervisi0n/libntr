@@ -19,6 +19,11 @@
 #define MCCNT0_MASTER_ON       0x8000
 #define MCCNT0_MASTER_OFF      0x0000
 
+#if SDK_VERSION_MAJOR == 5
+#define CARD_BACKUP_TYPE_VENDER_IRC (0xFF)
+#define IRC_BACKUP_WAIT 50
+#endif
+
 typedef struct {
 	u32 rest_comm;
 	u32 src;
@@ -114,8 +119,19 @@ static BOOL CARDi_WaitPrevCommand (void)
 	return TRUE;
 }
 
+#if SDK_VERSION_MAJOR == 5
+SDK_INLINE void CARDi_WaitBusyforIRC(void) {
+  u16 tick = OS_GetTickLo();
+  while (OS_TicksToMicroSeconds(OS_GetTickLo() - tick) < IRC_BACKUP_WAIT) {
+  }
+}
+
+static BOOL need_command = TRUE;
+#endif
+
 void CARDi_CommArray (const void *src, void *dst, u32 len, void (*func)(CARDiParam *))
 {
+#if SDK_VERSION_MAJOR == 4
 	CARDiParam *const p = &cardi_param;
 	p->src = (u32)src;
 	p->dst = (u32)dst;
@@ -130,6 +146,52 @@ void CARDi_CommArray (const void *src, void *dst, u32 len, void (*func)(CARDiPar
 	if (!p->rest_comm) {
 		reg_MI_MCCNT0 = (u16)(MCCNT0_MASTER_OFF | MCCNT0_INT_OFF);
 	}
+#elif SDK_VERSION_MAJOR == 5
+  CARDiParam *const p = &cardi_param;
+  CARDiCommandArg *const arg = cardi_common.cmd;
+
+  BOOL isIRC =
+      ((u8)((arg->type >> CARD_BACKUP_TYPE_VENDER_SHIFT) &
+            CARD_BACKUP_TYPE_VENDER_MASK) == CARD_BACKUP_TYPE_VENDER_IRC)
+          ? TRUE
+          : FALSE;
+  p->src = (u32)src;
+  p->dst = (u32)dst;
+
+  CARDi_EnableSpi(CSPI_CONTINUOUS_ON | MCCNT0_SPI_CLK_4M);
+
+  for (; len > 0; --len) {
+    if (need_command) {
+      if (isIRC) {
+        vu16 dummy_read;
+
+        CARDi_WaitBusyforIRC(); // This wait is characteristic of the IRC's
+                                // built-in CPU
+        CARDi_EnableSpi(
+            CSPI_CONTINUOUS_ON |
+            MCCNT0_SPI_CLK_1M); // Set to 1 MHz when sending commands to SPI
+        CARDi_WaitBusy();
+        reg_MI_MCD0 = 0x00; // Swap SSU and backup device
+        CARDi_WaitBusy();
+        dummy_read = reg_MI_MCD0;
+        need_command = FALSE;
+        CARDi_WaitBusyforIRC(); // This wait is characteristic of the IRC's
+                                // built-in CPU
+        CARDi_EnableSpi(CSPI_CONTINUOUS_ON | MCCNT0_SPI_CLK_4M);
+      }
+    }
+    if (!--p->rest_comm) {
+      CARDi_EnableSpi(CSPI_CONTINUOUS_OFF | MCCNT0_SPI_CLK_4M);
+      need_command = TRUE;
+    }
+    CARDi_WaitBusy();
+    (*func)(p);
+  }
+  if (!p->rest_comm) {
+    reg_MI_MCCNT0 =
+        (u16)(MCCNT0_MASTER_OFF | MCCNT0_INT_OFF | MCCNT0_SPI_CLK_4M);
+  }
+#endif
 }
 
 void CARDi_CommReadCore (CARDiParam *p)
@@ -209,6 +271,7 @@ void CARDi_InitStatusRegister (void)
 	}
 }
 
+#if SDK_VERSION_MAJOR == 4
 void CARDi_IdentifyBackupCore (CARDBackupType type)
 {
 	{
@@ -348,6 +411,7 @@ invalid_type:
 		}
 	}
 }
+#endif
 
 void CARDi_ReadBackupCore (u32 src, void *dst, u32 len)
 {

@@ -1,9 +1,17 @@
+#if SDK_VERSION_MAJOR == 4
 #include <nitro.h>
+#elif SDK_VERSION_MAJOR == 5
+#include <nitro/card/rom.h>
+#include <nitro/card/pullOut.h>
+#endif
 
 #include <card_rom.h>
 
 static CARDPulledOutCallback CARD_UserCallback;
 
+#if SDK_VERSION_MAJOR == 5
+static u32 CARDiSlotResetCount;
+#endif
 static BOOL CARDi_IsPulledOutFlag = FALSE;
 
 #ifdef SDK_PORT
@@ -16,6 +24,12 @@ static void CARDi_SendtoPxi(u32 data, u32 wait);
 void CARD_InitPulledOutCallback (void)
 {
 	PXI_Init();
+	
+	#if SDK_VERSION_MAJOR == 5
+	CARDiSlotResetCount = 0;
+	CARDi_IsPulledOutFlag = FALSE;
+	#endif
+
 	PXI_SetFifoRecvCallback(PXI_FIFO_TAG_CARD, CARDi_PulledOutCallback);
 
 	CARD_UserCallback = NULL;
@@ -44,7 +58,15 @@ static void CARDi_PulledOutCallback (PXIFifoTag tag, u32 data, BOOL err)
 				CARD_TerminateForPulledOut();
 			}
 		}
-	} else {
+	} 
+#if SDK_VERSION_MAJOR == 5
+	else if (command == CARD_PXI_COMMAND_RESET_SLOT) {
+    	CARDiSlotResetCount += 1;
+    	CARDi_IsPulledOutFlag = FALSE;
+    	CARDi_NotifyEvent(CARD_EVENT_SLOTRESET, NULL);
+	}
+#endif
+	else {
 #ifndef SDK_FINALROM
 		OS_Panic("illegal card pxi command.");
 #else
@@ -65,6 +87,7 @@ BOOL CARD_IsPulledOut (void)
 
 void CARD_TerminateForPulledOut (void)
 {
+#if SDK_VERSION_MAJOR == 4
 #ifndef SDK_TEG
 	BOOL should_be_halt = TRUE;
 
@@ -87,14 +110,40 @@ void CARD_TerminateForPulledOut (void)
 		CARDi_SendtoPxi(CARD_PXI_COMMAND_TERMINATE, 1);
 	}
 #endif
+#endif
+#if SDK_VERSION_MAJOR == 5
+  if (PAD_DetectFold()) {
+    (void)PM_ForceToPowerOff();
+  }
+
+#ifdef SDK_TWL
+  if (OS_IsRunOnTwl()) {
+
+    PMi_ExecutePostExitCallbackList();
+  }
+#endif // SDK_TWL
+
+  CARDi_SendtoPxi(CARD_PXI_COMMAND_TERMINATE, 1);
+
+  MI_StopAllDma();
+#ifdef SDK_TWL
+  if (OS_IsRunOnTwl()) {
+    MI_StopAllNDma();
+  }
+#endif
+#endif
 
 	OS_Terminate();
 }
 
 void CARDi_CheckPulledOutCore (u32 id)
 {
+	#if SDK_VERSION_MAJOR == 4
 	vu32 iplCardID = *(vu32 *)((*(u16 *)HW_CHECK_DEBUGGER_SW ==
 	                            0) ? HW_RED_RESERVED : HW_BOOT_CHECK_INFO_BUF);
+	#elif SDK_VERSION_MAJOR == 5
+	vu32 iplCardID = *(vu32 *)(HW_BOOT_CHECK_INFO_BUF);
+	#endif
 
 	if (id != (u32)iplCardID) {
 		OSIntrMode bak_cpsr = OS_DisableInterrupts();
@@ -114,3 +163,17 @@ static void CARDi_SendtoPxi (u32 data, u32 wait)
 		SVC_WaitByLoop((s32)wait);
 	}
 }
+
+#if SDK_VERSION_MAJOR == 5
+u32 CARDi_GetSlotResetCount(void) { return CARDiSlotResetCount; }
+
+BOOL CARDi_IsPulledOutEx(u32 count) {
+  BOOL result = FALSE;
+  OSIntrMode bak = OS_DisableInterrupts();
+  {
+    result = ((count == CARDi_GetSlotResetCount()) && !CARD_IsPulledOut());
+  }
+  (void)OS_RestoreInterrupts(bak);
+  return result;
+}
+#endif

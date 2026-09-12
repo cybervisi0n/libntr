@@ -1,12 +1,19 @@
 #include <nitro.h>
 #include <nitro/mb.h>
+#if SDK_VERSION_MAJOR == 5
+#include <nitro/card/rom.h>
+#endif
 
 #include "../include/card_common.h"
+#if SDK_VERSION_MAJOR == 5
+#include "../include/card_event.h"
+#endif
 #include "../include/card_spi.h"
 
 CARDiCommon cardi_common ATTRIBUTE_ALIGN(32);
 static CARDiCommandArg cardi_arg ATTRIBUTE_ALIGN(32);
 
+#if SDK_VERSION_MAJOR == 4
 static u8 cardi_thread_stack[0x400] ATTRIBUTE_ALIGN(4);
 
 static void CARDi_LockResource(CARDiOwner owner, CARDTargetMode target);
@@ -25,7 +32,9 @@ void CARDi_SetTask (void (*task)(CARDiCommon *))
 	OS_WakeupThreadDirect(p->thread);
 }
 
-static void CARDi_LockResource (CARDiOwner owner, CARDTargetMode target)
+static 
+#endif
+void CARDi_LockResource (CARDiOwner owner, CARDTargetMode target)
 {
 	CARDiCommon *const p = &cardi_common;
 	OSIntrMode bak_psr = OS_DisableInterrupts();
@@ -44,7 +53,9 @@ static void CARDi_LockResource (CARDiOwner owner, CARDTargetMode target)
 	}
 
 	++p->lock_ref;
+	#if SDK_VERSION_MAJOR == 4
 	p->cmd->result = CARD_RESULT_SUCCESS;
+	#endif
 	(void)OS_RestoreInterrupts(bak_psr);
 }
 
@@ -65,10 +76,45 @@ static void CARDi_UnlockResource (CARDiOwner owner, CARDTargetMode target)
 			OS_WakeupThread(p->lock_queue);
 		}
 	}
+	#if SDK_VERSION_MAJOR == 4
 	p->cmd->result = CARD_RESULT_SUCCESS;
+	#endif
 	(void)OS_RestoreInterrupts(bak_psr);
 }
 
+#if SDK_VERSION_MAJOR == 5
+CARDAccessLevel CARDi_GetAccessLevel(void) {
+  CARDAccessLevel level = CARD_ACCESS_LEVEL_NONE;
+  if (OS_GetBootType() == OS_BOOTTYPE_ROM) {
+    level = CARD_ACCESS_LEVEL_FULL;
+  } else if (!OS_IsRunOnTwl()) {
+    level = CARD_ACCESS_LEVEL_BACKUP;
+  }
+#ifdef SDK_TWL
+  else {
+    const CARDRomHeaderTWL *header = CARD_GetOwnRomHeaderTWL();
+    BOOL backupPowerOn = FALSE;
+    if (header->access_control.game_card_nitro_mode) {
+      level |= CARD_ACCESS_LEVEL_ROM;
+      backupPowerOn = TRUE;
+    } else if (header->access_control.game_card_on) {
+      backupPowerOn = TRUE;
+    }
+    if (backupPowerOn) {
+      if (header->access_control.backup_access_read) {
+        level |= CARD_ACCESS_LEVEL_BACKUP_R;
+      }
+      if (header->access_control.backup_access_write) {
+        level |= CARD_ACCESS_LEVEL_BACKUP_W;
+      }
+    }
+  }
+#endif
+  return level;
+}
+#endif
+
+#if SDK_VERSION_MAJOR == 4
 void CARDi_InitCommon (void)
 {
 	CARDiCommon *p = &cardi_common;
@@ -134,9 +180,11 @@ void CARD_Enable (BOOL enable)
 {
 	CARDi_EnableFlag = enable;
 }
+#endif
 
 BOOL CARDi_WaitAsync (void)
 {
+#if SDK_VERSION_MAJOR == 4
 	CARDiCommon *const p = &cardi_common;
 	SDK_ASSERT(CARD_IsAvailable());
 
@@ -151,6 +199,10 @@ BOOL CARDi_WaitAsync (void)
 	}
 
 	return (p->cmd->result == CARD_RESULT_SUCCESS);
+#elif SDK_VERSION_MAJOR == 5
+  	SDK_ASSERT(CARD_IsAvailable());
+  	return CARDi_WaitForTask(&cardi_common, FALSE, NULL, NULL);
+#endif
 }
 
 BOOL CARDi_TryWaitAsync (void)
@@ -161,6 +213,7 @@ BOOL CARDi_TryWaitAsync (void)
 	return !(p->flag & CARD_STAT_BUSY);
 }
 
+#if SDK_VERSION_MAJOR == 4
 BOOL CARD_IsAvailable (void)
 {
 	CARDiCommon *const p = &cardi_common;
@@ -295,4 +348,29 @@ const u8 *CARD_GetRomHeader (void)
 	return (const u8 *)HW_CARD_ROM_HEADER;
 }
 
+#endif
+#endif /* SDK_VERSION_MAJOR */
+
+#if SDK_VERSION_MAJOR == 5
+void CARDi_InitResourceLock(void) {
+  CARDiCommon *p = &cardi_common;
+  p->lock_owner = OS_LOCK_ID_ERROR;
+  p->lock_ref = 0;
+  p->lock_target = CARD_TARGET_NONE;
+  OS_InitThreadQueue(p->lock_queue);
+}
+
+void CARDi_InitCommand(void) {
+  CARDiCommon *p = &cardi_common;
+
+#if defined(SDK_ARM9) || defined(SDK_PORT)
+  p->cmd = &cardi_arg;
+  MI_CpuFillFast(&cardi_arg, 0x00, sizeof(cardi_arg));
+  DC_FlushRange(&cardi_arg, sizeof(cardi_arg));
+#else
+  p->cmd = CARD_UNSYNCHRONIZED_BUFFER;
+#endif
+
+  PXI_SetFifoRecvCallback(PXI_FIFO_TAG_FS, CARDi_OnFifoRecv);
+}
 #endif
