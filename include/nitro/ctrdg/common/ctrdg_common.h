@@ -97,7 +97,45 @@ typedef struct {
 typedef BOOL (*CTRDGPulledOutCallback) (void);
 #endif
 
+#if SDK_VERSION_MAJOR == 4
 void CTRDG_Init(void);
+#elif SDK_VERSION_MAJOR == 5
+#ifndef SDK_TWLLTD
+BOOL CTRDGi_IsInitialized(void);
+#endif
+
+#ifndef SDK_TWLLTD
+void CTRDG_Init(void);
+#else // SDK_TWLLTD
+SDK_INLINE void CTRDG_Init(void) {
+#ifdef SDK_ARM9
+  static BOOL isInitialized;
+
+  if (isInitialized) {
+    return;
+  }
+  isInitialized = TRUE;
+
+  {
+    CTRDGModuleInfo *cip = (CTRDGModuleInfo *)HW_CTRDG_MODULE_INFO_BUF;
+
+    cip->moduleID.raw = 0xFFFF;
+    cip->exLsiID[0] = 0xFF;
+    cip->exLsiID[1] = 0xFF;
+    cip->exLsiID[2] = 0xFF;
+    cip->isAgbCartridge = FALSE;
+    cip->detectPullOut = FALSE;
+    cip->makerCode = 0xFFFF;
+    cip->gameCode = 0xFFFFFFFF;
+  }
+#endif // SDK_ARM9
+}
+#endif // SDK_TWLLTD
+
+#if defined(SDK_ARM9) && !defined(SDK_TWLLTD)
+void CTRDG_DummyInit(void);
+#endif
+#endif
 
 BOOL CTRDG_IsPulledOut(void);
 BOOL CTRDG_IsExisting(void);

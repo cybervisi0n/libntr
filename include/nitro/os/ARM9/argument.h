@@ -116,6 +116,65 @@ static inline int OS_GetOptOpt (void)
     }
 #endif
 
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+
+typedef struct {
+  u64 titleId;
+  u8 reserved1;
+  u8 flag;
+  u16 makerCode;
+  u16 argBufferSize;
+  u16 binarySize;
+  u16 crc;
+  u16 sysParam;
+} OSDeliverArgHeader;
+
+#define OS_DELIVER_ARG_BUFFER_SIZE                                             \
+  (HW_PARAM_DELIVER_ARG_SIZE - sizeof(OSDeliverArgHeader))
+
+typedef struct {
+  OSDeliverArgHeader header;
+  u8 buf[OS_DELIVER_ARG_BUFFER_SIZE];
+
+} OSDeliverArgInfo;
+
+#define OS_DELIVER_ARG_BUF_INVALID 0
+#define OS_DELIVER_ARG_BUF_ACCESSIBLE 1
+#define OS_DELIVER_ARG_BUF_WRITABLE 2
+
+#define OS_DELIVER_ARG_SUCCESS 0
+#define OS_DELIVER_ARG_NOT_READY -1
+#define OS_DELIVER_ARG_OVER_SIZE -2
+
+#define OS_DELIVER_ARG_ENCODE_FLAG 1
+#define OS_DELIVER_ARG_VALID_FLAG 2
+
+void OS_InitDeliverArgInfo(OSDeliverArgInfo *info, int binSize);
+int OS_SetStringToDeliverArg(const char *str);
+int OS_SetBinaryToDeliverArg(const void *bin, int size);
+int OS_ConvertStringToDeliverArg(const char *str, char cs);
+int OS_EncodeDeliverArg(void);
+int OS_DecodeDeliverArg(void);
+u32 OS_GetDeliverArgState(void);
+void OS_SetDeliverArgStateInvalid(void);
+int OS_GetBinarySizeFromDeliverArg(void);
+int OS_GetBinaryFromDeliverArg(void *buffer, int *size, int maxSize);
+OSTitleId OS_GetTitleIdFromDeliverArg(void);
+u32 OS_GetGameCodeFromDeliverArg(void);
+u16 OS_GetMakerCodeFromDeliverArg(void);
+BOOL OS_IsValidDeliverArg(void);
+BOOL OS_IsDeliverArgEncoded(void);
+OSTitleId OS_GetTitleIdLastEncoded(void);
+int OS_SetSysParamToDeliverArg(u16 param);
+u16 OS_GetSysParamFromDeliverArg(void);
+int OS_GetDeliverArgc(void);
+const char *OS_GetDeliverArgv(int n);
+void OSi_SetDeliverArgState(u32 state);
+
+#endif // ifdef SDK_TWL
+#endif
+
 #ifdef __cplusplus
 }
 #endif

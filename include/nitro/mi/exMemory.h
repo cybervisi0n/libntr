@@ -5,7 +5,18 @@
 extern "C" {
 #endif
 
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/ioreg.h>
+#elif SDK_VERSION_MAJOR == 5
+#ifndef SDK_TWL
+#include <nitro/ioreg.h>
+#else
+#include <twl/ioreg.h>
+#endif
+
+#include <nitro/types.h>
+#include <nitro/misc.h>
+#endif
 
 #ifdef SDK_ARM7
     #define reg_MI_EXMEMCNT              reg_MI_EXMEMCNT_L

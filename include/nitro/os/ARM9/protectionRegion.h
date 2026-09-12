@@ -93,6 +93,34 @@ typedef enum {
 	OSi_PR_BASE_MASK_4GB      = 0x00000000
 } OSiProtectionRegionBaseMask;
 
+#if SDK_VERSION_MAJOR == 5
+#define OS_PR_SIZE_4KB HW_C6_PR_4KB
+#define OS_PR_SIZE_8KB HW_C6_PR_8KB
+#define OS_PR_SIZE_16KB HW_C6_PR_16KB
+#define OS_PR_SIZE_32KB HW_C6_PR_32KB
+#define OS_PR_SIZE_64KB HW_C6_PR_64KB
+#define OS_PR_SIZE_128KB HW_C6_PR_128KB
+#define OS_PR_SIZE_256KB HW_C6_PR_256KB
+#define OS_PR_SIZE_512KB HW_C6_PR_512KB
+#define OS_PR_SIZE_1MB HW_C6_PR_1MB
+#define OS_PR_SIZE_2MB HW_C6_PR_2MB
+#define OS_PR_SIZE_4MB HW_C6_PR_4MB
+#define OS_PR_SIZE_8MB HW_C6_PR_8MB
+#define OS_PR_SIZE_16MB HW_C6_PR_16MB
+#define OS_PR_SIZE_32MB HW_C6_PR_32MB
+#define OS_PR_SIZE_64MB HW_C6_PR_64MB
+#define OS_PR_SIZE_128MB HW_C6_PR_128MB
+#define OS_PR_SIZE_256MB HW_C6_PR_256MB
+#define OS_PR_SIZE_512MB HW_C6_PR_512MB
+#define OS_PR_SIZE_1GB HW_C6_PR_1GB
+#define OS_PR_SIZE_2GB HW_C6_PR_2GB
+#define OS_PR_SIZE_4GB HW_C6_PR_4GB
+
+#define OSi_PRDEF_TO_VAL(prDef) (((prDef) - 0x16) >> 1)
+
+#define OSi_VAL_TO_PRDEF(val) (((val) << 1) + 0x16)
+#endif
+
 static inline u32 OSi_CalcPRParam (u32 address, u32 size, OSiProtectionRegionBaseMask mask)
 {
 #ifdef SDK_DEBUG

@@ -1,12 +1,17 @@
 #if !defined(NITRO_CARD_COMMON_H_)
 #define NITRO_CARD_COMMON_H_
 
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/misc.h>
 #include <nitro/types.h>
+#elif SDK_VERSION_MAJOR == 5
+#include <nitro/card/types.h>
+#endif
 #include <nitro/memorymap.h>
 #include <nitro/mi/dma.h>
 #include <nitro/os.h>
 
+#if SDK_VERSION_MAJOR == 4
 typedef enum {
 	CARD_RESULT_SUCCESS = 0,
 	CARD_RESULT_FAILURE,
@@ -86,10 +91,15 @@ typedef enum {
 
 #define CARD_PXI_COMMAND_TERMINATE         0x0001
 #define CARD_PXI_COMMAND_PULLED_OUT        0x0011
+#endif
 
 #if defined(__cplusplus)
 extern  "C"
 {
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+#define CARD_THREAD_PRIORITY_DEFAULT 4
 #endif
 
 void CARD_Init(void);
@@ -105,6 +115,7 @@ u32 CARD_SetThreadPriority(u32 prior);
 
 CARDResult CARD_GetResultCode(void);
 
+#if SDK_VERSION_MAJOR == 4
 const u8 * CARD_GetRomHeader(void);
 
 void CARD_GetCacheFlushThreshold(u32 * icache, u32 * dcache);
@@ -117,6 +128,26 @@ u32 CARD_GetBackupSectorSize(void);
 u32 CARD_GetBackupPageSize(void);
 
 CARDBackupType CARD_GetCurrentBackupType(void);
+#elif SDK_VERSION_MAJOR == 5
+typedef u32 CARDEvent;
+#define CARD_EVENT_PULLEDOUT 0x00000001
+#define CARD_EVENT_SLOTRESET 0x00000002
+
+typedef void (*CARDHookFunction)(void *, CARDEvent, void *);
+
+typedef struct CARDHookContext {
+  struct CARDHookContext *next;
+  void *userdata;
+  CARDHookFunction callback;
+} CARDHookContext;
+
+void CARDi_RegisterHook(CARDHookContext *hook, CARDHookFunction callback,
+                        void *arg);
+
+void CARDi_UnregisterHook(CARDHookContext *hook);
+
+void CARDi_NotifyEvent(CARDEvent event, void *arg);
+#endif
 
 #if defined(__cplusplus)
 }

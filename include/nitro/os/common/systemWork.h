@@ -6,10 +6,19 @@
 #ifndef SDK_ASM
 #include <nitro/types.h>
 
+
 #ifdef SDK_PORT
 #include <nitro/hw/X86/mmap_shared.h>
 #else
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/hw/common/mmap_shared.h>
+#elif SDK_VERSION_MAJOR == 5
+#ifndef SDK_TWL
+#include <nitro/hw/common/mmap_shared.h>
+#else // SDK_TWL
+#include <twl/hw/common/mmap_shared.h>
+#endif
+#endif
 #endif
 
 #include <nitro/os/common/thread.h>
@@ -24,16 +33,40 @@ typedef union {
 typedef struct {
 	u8 bootCheckInfo[0x20];
 	u32 resetParameter;
+	#if (SDK_VERSION_MAJOR == 5) && defined(SDK_TWL)
+	u8 bootSync[0x8];
+	#else
 	u8 padding5[0x8];
+	#endif
 	u32 romBaseOffset;
 	u8 cartridgeModuleInfo[12];
 	u32 vblankCount;
 	u8 wmBootBuf[0x40];
+	#if (SDK_VERSION_MAJOR == 5) && defined(SDK_TWL)
+  	u8 nvramUserInfo[0xe8];
+  	u8 HW_secure_info[0x18];
+	#else
 	u8 nvramUserInfo[0x100];
+	#endif
 	u8 isd_reserved1[0x20];
 	u8 arenaInfo[0x48];
 	u8 real_time_clock[8];
+	#if (SDK_VERSION_MAJOR == 5)
+	u8 sys_conf[6];
+	u8 printWindowArm9;
+	u8 printWindowArm7;
+	u8 printWindowArm9Err;
+	u8 printWindowArm7Err;
+	#ifdef SDK_TWL
+	u8 nandFirmHotStartFlag;
+	u8 REDLauncherVersion;
+	u32 preloadParameterAddr;
+	#else
+	u8 padding1[6];
+	#endif
+	#else
 	u32 dmaClearBuf[4];
+	#endif
 	u8 rom_header[0x160];
 	u8 isd_reserved2[32];
 	u32 pxiSignalParam[2];

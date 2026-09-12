@@ -24,9 +24,17 @@ typedef enum {
 typedef struct {
 	void * lo[OS_ARENA_MAX];
 	void * hi[OS_ARENA_MAX];
+	#if SDK_VERSION_MAJOR == 4
 	u16 initialized;
 	u8 padding[2];
+	#endif
 } OSArenaInfo;
+
+#if SDK_VERSION_MAJOR == 5
+typedef struct OSArenaResource {
+  OSArenaInfo info;
+} OSArenaResource;
+#endif
 
 void OS_InitArena(void);
 #if defined( SDK_PORT )
@@ -340,6 +348,22 @@ static inline void OS_InitArenaHiAndLo (OSArenaId id)
 #ifdef SDK_ARM9
     void OS_EnableMainExArena(void);
     void OS_DisableMainExArena(void);
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+#ifndef SDK_FINALROM
+void OS_DumpArenaInfo(OSArenaId id, BOOL isInfoLine);
+#else
+#define OS_DumpArenaInfo(id, isInfoLine) ((void)0)
+#endif
+
+#ifndef SDK_FINALROM
+void OS_DumpAllArenaInfo(void);
+#else
+#define OS_DumpAllArenaInfo() ((void)0)
+#endif
+
+BOOL OS_GetArenaResource(OSArenaResource *resource);
 #endif
 
 #ifdef __cplusplus

@@ -5,7 +5,15 @@
 extern "C" {
 #endif
 
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/ioreg.h>
+#elif SDK_VERSION_MAJOR == 5
+#ifndef SDK_TWL
+#include <nitro/ioreg.h>
+#else
+#include <twl/ioreg.h>
+#endif
+#endif
 
 #if (defined(SDK_ARM9) || defined(SDK_PORT))
     typedef enum {

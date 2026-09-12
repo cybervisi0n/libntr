@@ -3,14 +3,98 @@
 
 #include <nitro/types.h>
 
+#if SDK_VERSION_MAJOR == 5
+#include <nitro/card/types.h>
+#endif
+
 #ifdef SDK_PORT
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #endif
 
 #ifdef __cplusplus
 extern  "C"
 {
-  #endif
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+#define CARD_BACKUP_TYPE_DEVICE_SHIFT 0
+#define CARD_BACKUP_TYPE_DEVICE_MASK 0xFF
+#define CARD_BACKUP_TYPE_DEVICE_EEPROM 1
+#define CARD_BACKUP_TYPE_DEVICE_FLASH 2
+#define CARD_BACKUP_TYPE_DEVICE_FRAM 3
+#define CARD_BACKUP_TYPE_SIZEBIT_SHIFT 8
+#define CARD_BACKUP_TYPE_SIZEBIT_MASK 0xFF
+#define CARD_BACKUP_TYPE_VENDER_SHIFT 16
+#define CARD_BACKUP_TYPE_VENDER_MASK 0xFF
+#define CARD_BACKUP_TYPE_DEFINE(type, size, vender)                            \
+  (((CARD_BACKUP_TYPE_DEVICE_##type) << CARD_BACKUP_TYPE_DEVICE_SHIFT) |       \
+   ((size) << CARD_BACKUP_TYPE_SIZEBIT_SHIFT) |                                \
+   ((vender) << CARD_BACKUP_TYPE_VENDER_SHIFT))
+
+typedef enum CARDBackupType {
+  CARD_BACKUP_TYPE_EEPROM_4KBITS = CARD_BACKUP_TYPE_DEFINE(EEPROM, 9, 0),
+  CARD_BACKUP_TYPE_EEPROM_64KBITS = CARD_BACKUP_TYPE_DEFINE(EEPROM, 13, 0),
+  CARD_BACKUP_TYPE_EEPROM_512KBITS = CARD_BACKUP_TYPE_DEFINE(EEPROM, 16, 0),
+  CARD_BACKUP_TYPE_EEPROM_1MBITS = CARD_BACKUP_TYPE_DEFINE(EEPROM, 17, 0),
+  CARD_BACKUP_TYPE_FLASH_2MBITS = CARD_BACKUP_TYPE_DEFINE(FLASH, 18, 0),
+  CARD_BACKUP_TYPE_FLASH_4MBITS = CARD_BACKUP_TYPE_DEFINE(FLASH, 19, 0),
+  CARD_BACKUP_TYPE_FLASH_8MBITS = CARD_BACKUP_TYPE_DEFINE(FLASH, 20, 0),
+  CARD_BACKUP_TYPE_FLASH_16MBITS = CARD_BACKUP_TYPE_DEFINE(FLASH, 21, 0),
+  CARD_BACKUP_TYPE_FLASH_64MBITS = CARD_BACKUP_TYPE_DEFINE(FLASH, 23, 0),
+  CARD_BACKUP_TYPE_FRAM_256KBITS = CARD_BACKUP_TYPE_DEFINE(FRAM, 15, 0),
+  CARD_BACKUP_TYPE_NOT_USE = 0
+} CARDBackupType;
+
+#define CARD_BACKUP_TYPE_FLASH_64MBITS_EX                                      \
+  (CARDBackupType) CARD_BACKUP_TYPE_DEFINE(FLASH, 23, 1)
+
+typedef enum CARDRequest {
+  CARD_REQ_INIT = 0,               /* initialize (setting from ARM9) */
+  CARD_REQ_ACK,                    /* request done (acknowledge from ARM7) */
+  CARD_REQ_IDENTIFY,               /* CARD_IdentifyBackup */
+  CARD_REQ_READ_ID,                /* CARD_ReadRomID (TEG && ARM9) */
+  CARD_REQ_READ_ROM,               /* CARD_ReadRom (TEG && ARM9) */
+  CARD_REQ_WRITE_ROM,              /* (reserved) */
+  CARD_REQ_READ_BACKUP,            /* CARD_ReadBackup */
+  CARD_REQ_WRITE_BACKUP,           /* CARD_WriteBackup */
+  CARD_REQ_PROGRAM_BACKUP,         /* CARD_ProgramBackup */
+  CARD_REQ_VERIFY_BACKUP,          /* CARD_VerifyBackup */
+  CARD_REQ_ERASE_PAGE_BACKUP,      /* CARD_EraseBackupPage */
+  CARD_REQ_ERASE_SECTOR_BACKUP,    /* CARD_EraseBackupSector */
+  CARD_REQ_ERASE_CHIP_BACKUP,      /* CARD_EraseBackupChip */
+  CARD_REQ_READ_STATUS,            /* CARD_ReadStatus */
+  CARD_REQ_WRITE_STATUS,           /* CARD_WriteStatus */
+  CARD_REQ_ERASE_SUBSECTOR_BACKUP, /* CARD_EraseBackupSubSector */
+  CARD_REQ_MAX
+} CARDRequest;
+
+typedef enum CARDRequestMode {
+  CARD_REQUEST_MODE_RECV,        /* Receive data */
+  CARD_REQUEST_MODE_SEND,        /* Send data (including single verify) */
+  CARD_REQUEST_MODE_SEND_VERIFY, /* Send data + verify */
+  CARD_REQUEST_MODE_SPECIAL      /* Special operations like sector deletion */
+} CARDRequestMode;
+
+#define CARD_RETRY_COUNT_MAX 10
+
+#define CARD_PXI_COMMAND_MASK 0x0000003f // command part
+#define CARD_PXI_COMMAND_SHIFT 0
+#define CARD_PXI_COMMAND_PARAM_MASK 0x01ffffc0 // parameter part
+#define CARD_PXI_COMMAND_PARAM_SHIFT 6
+
+#define CARD_PXI_COMMAND_TERMINATE 0x0001  // arm9->arm7 terminate command
+#define CARD_PXI_COMMAND_PULLED_OUT 0x0011 // arm7->arm9 pulled out message
+#define CARD_PXI_COMMAND_RESET_SLOT 0x0002 // arm7->arm9 reset-slot message
+
+BOOL CARD_IdentifyBackup(CARDBackupType type);
+CARDBackupType CARD_GetCurrentBackupType(void);
+u32 CARD_GetBackupTotalSize(void);
+u32 CARD_GetBackupSectorSize(void);
+u32 CARD_GetBackupPageSize(void);
+#endif
+
 
   void CARD_LockBackup(u16 lock_id);
   void CARD_UnlockBackup(u16 lock_id);

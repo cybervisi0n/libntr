@@ -5,7 +5,15 @@
 extern "C" {
 #endif
 
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/ioreg.h>
+#elif SDK_VERSION_MAJOR == 5
+#ifndef SDK_TWL
+#include <nitro/types.h>
+#else
+#include <twl/types.h>
+#endif
+#endif
 
 #ifdef  SDK_TEG
     u8 MI_ReadByte(const void * address);

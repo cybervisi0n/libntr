@@ -25,6 +25,12 @@ struct OSiVAlarm {
 	BOOL canceled;
 };
 
+#if SDK_VERSION_MAJOR == 5
+typedef struct OSVAlarmResource {
+  int num;
+} OSVAlarmResource;
+#endif
+
 void OS_InitVAlarm(void);
 void OS_EndVAlarm(void);
 BOOL OS_IsVAlarmAvailable(void);
@@ -47,6 +53,12 @@ void OS_SetVAlarmTag(OSVAlarm * alarm, u32 tag);
 void OS_CancelVAlarm(OSVAlarm * alarm);
 void OS_CancelVAlarms(u32 tag);
 void OS_CancelAllVAlarms(void);
+
+#if SDK_VERSION_MAJOR == 5
+void OS_DumpVAlarm(void);
+int OS_GetNumberOfVAlarm(void);
+BOOL OS_GetVAlarmResource(OSVAlarmResource *resource);
+#endif
 
 #ifdef __cplusplus
 }

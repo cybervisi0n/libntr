@@ -8,10 +8,22 @@ extern "C" {
 #include <nitro/types.h>
 #include <nitro/spec.h>
 #include <nitro/spi/common/config.h>
+#if SDK_VERSION_MAJOR == 4
 #if defined( SDK_PORT )
 #include <nitro/hw/X86/mmap_shared.h>
 #else
 #include <nitro/hw/common/mmap_shared.h>
+#endif
+#else
+#ifndef SDK_TWL
+#ifdef SDK_PORT
+#include <nitro/hw/X86/mmap_shared.h>
+#else
+#include <nitro/hw/common/mmap_shared.h>
+#endif
+#else
+#include <twl/hw/common/mmap_shared.h>
+#endif
 #endif
 #include <nitro/mi/memory.h>
 

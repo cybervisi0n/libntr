@@ -3,6 +3,9 @@
 
 #include <nitro/misc.h>
 #include <nitro/types.h>
+#if SDK_VERSION_MAJOR == 5
+#include <nitro/os/common/arena.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,6 +21,20 @@ extern void OS_ClearAlloc(OSArenaId id);
 
 extern OSHeapHandle OS_CreateHeap(OSArenaId id, void * start, void * end);
 extern void OS_DestroyHeap(OSArenaId id, OSHeapHandle heap);
+
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+extern OSHeapHandle OS_CreateExtraHeap(OSArenaId id);
+#endif
+
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+void OS_AddExtraAreaToHeap(OSArenaId id, OSHeapHandle heap);
+#endif
+
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+extern void OS_ClearExtraHeap(OSArenaId id, OSHeapHandle heap);
+#endif
+#endif
 
 extern void OS_AddToHeap(OSArenaId id, OSHeapHandle heap, void * start, void * end);
 extern OSHeapHandle OS_SetCurrentHeap(OSArenaId id, OSHeapHandle heap);
@@ -207,6 +224,22 @@ static inline void OS_FreeAllToSubPrivWram (void)
     #define OS_FreeAll()     OS_FreeAllToMain()
 #else
     #define OS_FreeAll()     OS_FreeAllToSubPriv()
+#endif
+
+
+#if SDK_VERSION_MAJOR == 5
+BOOL OS_IsOnMainMemory(void *ptr);
+BOOL OS_IsOnExtendedMainMemory(void *ptr);
+BOOL OS_IsOnWramB(void *ptr);
+BOOL OS_IsOnWramC(void *ptr);
+BOOL OS_IsOnWram0(void *ptr);
+BOOL OS_IsOnWram1(void *ptr);
+BOOL OS_IsOnWram(void *ptr);
+BOOL OS_IsOnVram(void *ptr);
+BOOL OS_IsOnItcm(void *ptr);
+BOOL OS_IsOnDtcm(void *ptr);
+BOOL OS_IsOnWramA(void *ptr);
+BOOL OS_IsOnArm7PrvWram(void *ptr);
 #endif
 
 #ifdef __cplusplus

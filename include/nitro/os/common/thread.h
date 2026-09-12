@@ -183,6 +183,12 @@ typedef enum {
 
 typedef void (*OSSwitchThreadCallback) (OSThread * from, OSThread * to);
 
+#if SDK_VERSION_MAJOR == 5
+typedef struct OSThreadResource {
+  int num;
+} OSThreadResource;
+#endif
+
 void OSi_CheckStack(const char * file, int line, const OSThread * thread);
 
 u32 OSi_GetSystemStackPointer(void);
@@ -211,6 +217,9 @@ void OS_DestroyThread(OSThread * thread);
 
 void OS_JoinThread(OSThread * thread);
 BOOL OS_IsThreadTerminated(const OSThread * thread);
+#if SDK_VERSION_MAJOR == 5
+OSThreadState OS_GetThreadStatus(const OSThread *thread);
+#endif
 OSThread * OS_SelectThread(void);
 void OS_RescheduleThread(void);
 extern void OS_YieldThread(void);
@@ -337,7 +346,11 @@ void OS_SetThreadDestructorStack(void * stack);
 #ifdef SDK_THREAD_INFINITY
     extern OSMutex * OSi_RemoveMutexLinkFromQueue(OSMutexQueue * queue);
 
-    void OSi_SetSystemErrno(OSThread * thread, int errno);
+    #ifdef SDK_PORT
+    void OSi_SetSystemErrno(OSThread *thread, int myErrno);
+    #else
+    void OSi_SetSystemErrno(OSThread *thread, int errno);
+    #endif
     int OSi_GetSystemErrno(const OSThread * thread);
 
     #define OSi_SPECIFIC_CPS   0
@@ -365,6 +378,10 @@ static inline OSThread * OS_GetNextThread (const OSThread * thread)
     SDK_ASSERT(thread);
     return thread->next;
 }
+
+#if SDK_VERSION_MAJOR == 5
+BOOL OS_GetThreadResource(OSThreadResource *resource);
+#endif
 
 #ifdef __cplusplus
 }

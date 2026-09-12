@@ -1,6 +1,14 @@
 #ifndef DEMO_UTILITY_H_
 #define DEMO_UTILITY_H_
+#if SDK_VERSION_MAJOR == 4
 #include <nitro.h>
+#elif SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+#include <twl.h>
+#else
+#include <nitro.h>
+#endif
+#endif
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,8 +1,10 @@
 #if !defined(NITRO_CARD_EEPROM_H_)
 #define NITRO_CARD_EEPROM_H_
 
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/types.h>
 #include <nitro/card/common.h>
+#endif
 #include <nitro/card/backup.h>
 
 #if defined(__cplusplus)

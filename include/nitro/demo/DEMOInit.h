@@ -20,6 +20,10 @@ void DEMOInit(void);
 
 void DEMOStartDisplay(void);
 
+#if (SDK_VERSION_MAJOR == 5) && defined(SDK_TWL)
+void DEMOCheckRunOnTWL(void);
+#endif
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

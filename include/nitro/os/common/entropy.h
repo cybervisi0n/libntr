@@ -7,7 +7,15 @@ extern "C" {
 
 #include <nitro/misc.h>
 #include <nitro/types.h>
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/ioreg.h>
+#elif SDK_VERSION_MAJOR == 5
+#ifndef SDK_TWL
+#include <nitro/ioreg.h>
+#else
+#include <twl/ioreg.h>
+#endif
+#endif
 
 #define OS_LOW_ENTROPY_DATA_SIZE 32
 

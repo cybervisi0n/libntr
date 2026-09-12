@@ -50,6 +50,12 @@ BOOL CARD_CompareCardID(void);
     void CARD_CheckPullOut_Polling(void);
 #endif
 
+#if SDK_VERSION_MAJOR == 5
+void CARDi_ResetSlotStatus(void);
+u32 CARDi_GetSlotResetCount(void);
+BOOL CARDi_IsPulledOutEx(u32 count);
+#endif
+
 #if defined(__cplusplus)
 }
 #endif

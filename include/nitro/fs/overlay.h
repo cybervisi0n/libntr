@@ -1,8 +1,13 @@
 #if !defined(NITRO_FS_OVERLAY_H_)
 #define NITRO_FS_OVERLAY_H_
 
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/misc.h>
 #include <nitro/types.h>
+#elif SDK_VERSION_MAJOR == 5
+#include <nitro/fs/file.h>
+#include <nitro/card/rom.h>
+#endif
 #include <nitro/mi.h>
 
 #ifdef __cplusplus
@@ -17,6 +22,11 @@ typedef u32 FSOverlayID;
 #else
 #define FS_EXTERN_OVERLAY(name) extern u32 SDK_OVERLAY_ ## name ## _ID[1]
 #define FS_OVERLAY_ID(name) ((u32) & (SDK_OVERLAY_ ## name ## _ID))
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+#define FS_EXTERN_LTDOVERLAY(name) extern u32 SDK_LTDOVERLAY_##name##_ID[1]
+#define FS_LTDOVERLAY_ID(name) ((u32) & (SDK_LTDOVERLAY_##name##_ID))
 #endif
 
 typedef void (*FSOverlayInitFunc) (void);
@@ -38,6 +48,10 @@ typedef struct {
 	MIProcessor target;
 	CARDRomRegion file_pos;
 } FSOverlayInfo;
+
+#if SDK_VERSION_MAJOR == 5
+void FSi_InitOverlay(void);
+#endif
 
 BOOL FS_LoadOverlayInfo(FSOverlayInfo * p_ovi, MIProcessor target, FSOverlayID id);
 

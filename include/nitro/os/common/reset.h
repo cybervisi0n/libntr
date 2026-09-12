@@ -7,6 +7,17 @@ extern "C" {
 
 #include <nitro/misc.h>
 #include <nitro/types.h>
+#if SDK_VERSION_MAJOR == 5
+#include <nitro/os/common/pxi.h>
+
+#define OS_PXI_COMMAND_RESET 0x10
+#define OS_PXI_COMMAND_TERMINATE 0x20
+
+#define OS_PXI_COMMAND_MASK 0x00007f00
+#define OS_PXI_COMMAND_SHIFT 8
+#define OS_PXI_DATA_MASK 0x000000ff
+#define OS_PXI_DATA_SHIFT 0
+#endif
 
 void OS_InitReset(void);
 

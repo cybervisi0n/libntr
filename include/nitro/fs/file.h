@@ -1,11 +1,13 @@
 #if !defined(NITRO_FS_FILE_H_)
 #define NITRO_FS_FILE_H_
 
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/misc.h>
 #include <nitro/types.h>
 #include <nitro/mi.h>
-#include <nitro/fs/archive.h>
 #include <nitro/card.h>
+#endif
+#include <nitro/fs/archive.h>
 
 #ifdef SDK_PORT
 #include <stdio.h>
@@ -16,6 +18,7 @@
 extern "C" {
 #endif
 
+#if SDK_VERSION_MAJOR == 4
 #define FS_FILE_NAME_MAX    127
 
 #define FS_DMA_NOT_USE      ((u32) ~0)
@@ -113,8 +116,10 @@ typedef struct {
 	u32 len_org;
 	u32 len;
 } FSWriteFileInfo;
+#endif
 
 typedef struct FSFile {
+#if SDK_VERSION_MAJOR == 4
 	FSFileLink link;
 	struct FSArchive * arc;
 	u32 stat;
@@ -150,12 +155,31 @@ typedef struct FSFile {
 		FSOpenFileDirectInfo openfiledirect;
 		FSCloseFileInfo closefile;
 	} arg;
+#elif SDK_VERSION_MAJOR == 5
+  	struct FSFile *next;
+  	void *userdata;
+  	struct FSArchive *arc;
+  	u32 stat;
+  	void *argument;
+  	FSResult error;
+  	OSThreadQueue queue[1];
+
+  	union {
+  	  u8 reserved1[16];
+  	  FSROMFATProperty prop;
+  	};
+  	union {
+  	  u8 reserved2[24];
+  	  FSROMFATCommandInfo arg;
+  	};
+#endif
 
 	#ifdef SDK_PORT
 	FILE* pcFilePtr;
 	#endif
 } FSFile;
 
+#if SDK_VERSION_MAJOR == 4
 void FS_Init(u32 default_dma_no);
 BOOL FS_IsAvailable(void);
 void FS_End(void);
@@ -163,6 +187,7 @@ void FS_End(void);
 u32 FS_GetDefaultDMA(void);
 u32 FS_SetDefaultDMA(u32 dma_no);
 u32 FS_TryLoadTable(void * p_mem, u32 size);
+
 
 static inline u32 FS_GetTableSize (void)
 {
@@ -179,6 +204,7 @@ static inline void * FS_UnloadTable (void)
 	FSArchive * const p_arc = FS_FindArchive("rom", 3);
 	return FS_UnloadArchiveTables(p_arc);
 }
+#endif
 
 static inline BOOL FS_IsBusy (volatile const FSFile * p_file)
 {
@@ -224,6 +250,42 @@ BOOL FS_CloseFile(FSFile * p_file);
 BOOL FS_GetPathName(FSFile * p_file, char * buf, u32 len);
 
 s32 FS_GetPathLength(FSFile * p_file);
+
+#if SDK_VERSION_MAJOR == 5
+BOOL FS_CreateFile(const char *path, u32 permit);
+BOOL FS_DeleteFile(const char *path);
+BOOL FS_RenameFile(const char *src, const char *dst);
+BOOL FS_GetPathInfo(const char *path, FSPathInfo *info);
+BOOL FS_SetPathInfo(const char *path, const FSPathInfo *info);
+BOOL FS_CreateDirectory(const char *path, u32 permit);
+BOOL FS_DeleteDirectory(const char *path);
+BOOL FS_RenameDirectory(const char *src, const char *dst);
+BOOL FS_CreateFileAuto(const char *path, u32 permit);
+BOOL FS_DeleteFileAuto(const char *path);
+BOOL FS_RenameFileAuto(const char *src, const char *dst);
+BOOL FS_CreateDirectoryAuto(const char *path, u32 permit);
+BOOL FS_DeleteDirectoryAuto(const char *path);
+BOOL FS_RenameDirectoryAuto(const char *src, const char *dst);
+BOOL FS_GetArchiveResource(const char *path, FSArchiveResource *resource);
+u32 FSi_GetSpaceToCreateDirectoryEntries(const char *path,
+                                         const u32 bytesPerCluster);
+BOOL FS_HasEnoughSpaceToCreateFile(FSArchiveResource *resource,
+                                   const char *path, u32 size);
+BOOL FS_IsArchiveReady(const char *path);
+BOOL FS_OpenFileEx(FSFile *file, const char *path, u32 mode);
+u32 FS_GetFileLength(FSFile *file);
+FSResult FS_SetFileLength(FSFile *file, u32 length);
+u32 FS_GetFilePosition(FSFile *file);
+u32 FS_GetSeekCacheSize(const char *path);
+BOOL FS_SetSeekCache(FSFile *file, void *buf, u32 buf_size);
+FSResult FS_FlushFile(FSFile *file);
+BOOL FS_OpenDirectory(FSFile *file, const char *path, u32 mode);
+BOOL FS_CloseDirectory(FSFile *file);
+BOOL FS_ReadDirectory(FSFile *file, FSDirectoryEntryInfo *info);
+BOOL FS_OpenFileExW(FSFile *file, const u16 *path, u32 mode);
+BOOL FS_OpenDirectoryW(FSFile *file, const u16 *path, u32 mode);
+BOOL FS_ReadDirectoryW(FSFile *file, FSDirectoryEntryInfoW *info);
+#endif
 
 static inline u32 FS_GetLength (const FSFile * p_file)
 {

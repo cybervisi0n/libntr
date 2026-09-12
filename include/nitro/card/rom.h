@@ -6,15 +6,22 @@ extern "C"
 {
 #endif
 
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/misc.h>
 #include <nitro/types.h>
 #include <nitro/memorymap.h>
+#elif SDK_VERSION_MAJOR == 5
+#include <nitro/card/types.h>
+#endif
 #include <nitro/mi/dma.h>
 #include <nitro/mi/exMemory.h>
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/os.h>
 
 #include <nitro/card/common.h>
+#endif
 
+#if SDK_VERSION_MAJOR == 4
 typedef struct {
 	u32 offset;
 	u32 length;
@@ -69,7 +76,9 @@ typedef struct {
 } CARDRomHeader;
 
 #define CARD_ROM_PAGE_SIZE    512
+#endif
 
+#if SDK_VERSION_MAJOR == 4
 static inline const CARDRomRegion * CARD_GetRomRegionFNT (void)
 {
 	return (const CARDRomRegion *)((const u8 *)HW_ROM_HEADER_BUF + 0x40);
@@ -86,6 +95,32 @@ static inline const CARDRomRegion * CARD_GetRomRegionOVT (MIProcessor target)
 	       (const CARDRomRegion *)((const u8 *)HW_ROM_HEADER_BUF + 0x50) :
 	       (const CARDRomRegion *)((const u8 *)HW_ROM_HEADER_BUF + 0x58);
 }
+#elif SDK_VERSION_MAJOR == 5
+const u8 *CARD_GetRomHeader(void);
+
+const CARDRomHeader *CARD_GetOwnRomHeader(void);
+
+#ifdef SDK_TWL
+
+const CARDRomHeaderTWL *CARD_GetOwnRomHeaderTWL(void);
+
+#endif // SDK_TWL
+
+SDK_INLINE const CARDRomRegion *CARD_GetRomRegionFNT(void) {
+  const CARDRomHeader *header = CARD_GetOwnRomHeader();
+  return &header->fnt;
+}
+
+SDK_INLINE const CARDRomRegion *CARD_GetRomRegionFAT(void) {
+  const CARDRomHeader *header = CARD_GetOwnRomHeader();
+  return &header->fat;
+}
+
+SDK_INLINE const CARDRomRegion *CARD_GetRomRegionOVT(MIProcessor target) {
+  const CARDRomHeader *header = CARD_GetOwnRomHeader();
+  return (target == MI_PROCESSOR_ARM9) ? &header->main_ovt : &header->sub_ovt;
+}
+#endif
 
 #if defined(SDK_TEG)
     static inline BOOL CARDi_IsTrueRom (void)
@@ -120,6 +155,17 @@ u32 CARDi_ReadRomID(void);
 
 #if defined(SDK_TEG) && defined(SDK_ARM7)
     void CARDi_CreatePxiRecvThread(u32 priority);
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+void CARD_GetCacheFlushThreshold(u32 *icache, u32 *dcache);
+void CARD_SetCacheFlushThreshold(u32 icache, u32 dcache);
+void CARD_GetCacheFlushFlag(BOOL *icache, BOOL *dcache);
+void CARD_SetCacheFlushFlag(BOOL icache, BOOL dcache);
+void CARDi_RefreshRom(u32 warn_mask);
+BOOL CARDi_IsTwlRom(void);
+const u8 *CARDi_GetOwnSignature(void);
+void CARDi_SetOwnSignature(const void *signature);
 #endif
 
 #ifdef __cplusplus

@@ -10,6 +10,15 @@ extern "C" {
 
 typedef void (*OSExceptionHandler) (u32, void *);
 
+#if SDK_VERSION_MAJOR == 5
+typedef struct {
+  OSContext context;
+  u32 cp15;
+  u32 spsr;
+  u32 exinfo;
+} OSExcpContext;
+#endif
+
 void OS_SetExceptionVectorUpper(void);
 void OS_SetExceptionVectorLower(void);
 void OS_InitException(void);
