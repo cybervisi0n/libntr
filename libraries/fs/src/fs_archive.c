@@ -372,16 +372,16 @@ FSFile *FSi_NextCommand (
 
   {
     OSIntrMode bak_psr = OS_DisableInterrupts();
-    if ((arc->flag & FS_ARCHIVE_FLAG_CANCELING) != 0) {
-      FSFile *p = arc->list;
-      arc->flag &= ~FS_ARCHIVE_FLAG_CANCELING;
+    if ((p_arc->flag & FS_ARCHIVE_FLAG_CANCELING) != 0) {
+      FSFile *p = p_arc->list;
+      p_arc->flag &= ~FS_ARCHIVE_FLAG_CANCELING;
       while (p != NULL) {
         FSFile *q = p->next;
 
         if (FS_IsCanceling(p) && ((p->stat & FS_FILE_STATUS_OPERATING) == 0)) {
           FSi_EndCommand(p, FS_RESULT_CANCELED);
           if (!q) {
-            q = arc->list;
+            q = p_arc->list;
           }
         }
         p = q;
@@ -392,22 +392,22 @@ FSFile *FSi_NextCommand (
 
   {
     OSIntrMode bak_psr = OS_DisableInterrupts();
-    if (((arc->flag & FS_ARCHIVE_FLAG_SUSPENDING) == 0) &&
-        ((arc->flag & FS_ARCHIVE_FLAG_SUSPEND) == 0) && arc->list) {
+    if (((p_arc->flag & FS_ARCHIVE_FLAG_SUSPENDING) == 0) &&
+        ((p_arc->flag & FS_ARCHIVE_FLAG_SUSPEND) == 0) && p_arc->list) {
 
       const BOOL is_started =
-          owner && ((arc->flag & FS_ARCHIVE_FLAG_RUNNING) == 0);
+          owner && ((p_arc->flag & FS_ARCHIVE_FLAG_RUNNING) == 0);
       if (is_started) {
-        arc->flag |= FS_ARCHIVE_FLAG_RUNNING;
+        p_arc->flag |= FS_ARCHIVE_FLAG_RUNNING;
       }
       (void)OS_RestoreInterrupts(bak_psr);
       if (is_started) {
-        (void)FSi_InvokeCommand(arc->list, FS_COMMAND_ACTIVATE);
+        (void)FSi_InvokeCommand(p_arc->list, FS_COMMAND_ACTIVATE);
       }
       bak_psr = OS_DisableInterrupts();
 
       if (owner || is_started) {
-        next = arc->list;
+        next = p_arc->list;
         next->stat |= FS_FILE_STATUS_OPERATING;
       }
 
@@ -424,15 +424,15 @@ FSFile *FSi_NextCommand (
         if ((arc->flag & FS_ARCHIVE_FLAG_RUNNING) != 0) {
           FSFile tmp;
           FS_InitFile(&tmp);
-          tmp.arc = arc;
-          arc->flag &= ~FS_ARCHIVE_FLAG_RUNNING;
+          tmp.arc = p_arc;
+          p_arc->flag &= ~FS_ARCHIVE_FLAG_RUNNING;
           (void)FSi_InvokeCommand(&tmp, FS_COMMAND_IDLE);
         }
 
-        if ((arc->flag & FS_ARCHIVE_FLAG_SUSPENDING) != 0) {
-          arc->flag &= ~FS_ARCHIVE_FLAG_SUSPENDING;
-          arc->flag |= FS_ARCHIVE_FLAG_SUSPEND;
-          OS_WakeupThread(&arc->queue);
+        if ((p_arc->flag & FS_ARCHIVE_FLAG_SUSPENDING) != 0) {
+          p_arc->flag &= ~FS_ARCHIVE_FLAG_SUSPENDING;
+          p_arc->flag |= FS_ARCHIVE_FLAG_SUSPEND;
+          OS_WakeupThread(&p_arc->queue);
         }
       }
       (void)OS_RestoreInterrupts(bak_psr);

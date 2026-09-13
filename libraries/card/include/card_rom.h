@@ -106,6 +106,7 @@ void CARDi_CheckPulledOutCore(u32 id);
     u32 CARDi_ReadRomIDCore(void);
 #endif
 
+#if SDK_VERSION_MAJOR == 4
 static inline void CARDi_ReadEnd (void)
 {
 	CARDiCommon * const p = &cardi_common;
@@ -115,15 +116,17 @@ static inline void CARDi_ReadEnd (void)
 	p->cmd->result = CARD_RESULT_SUCCESS;
 	CARDi_EndTask(p, TRUE);
 }
+#endif
 
 #if defined(SDK_ARM7)
     void CARDi_ReadRomCore(const void * src, void * dst, u32 len);
 #endif
 
+#if SDK_VERSION_MAJOR == 4
 void (*CARDi_GetRomAccessor(void))(CARDRomStat *);
-
 void CARDi_ReadCard(CARDRomStat * p);
 BOOL CARDi_TryReadCardDma(CARDRomStat * p);
+#endif
 
 #if SDK_VERSION_MAJOR == 5
 u32 CARDi_ReadRomStatusCore(void);

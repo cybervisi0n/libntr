@@ -25,7 +25,11 @@ extern int STD_GetStringLength(const char * str);
 extern char * STD_ConcatenateString(char * str1, const char * str2);
 extern int STD_CompareString(const char * str1, const char * str2);
 extern int STD_CompareNString(const char * str1, const char * str2, int len);
+#if SDK_VERSION_MAJOR == 4
 extern int STD_CompareLString(const char * str1, const char * str2);
+#elif SDK_VERSION_MAJOR == 5
+extern int STD_CompareLString(const char *str1, const char *str2, int len);
+#endif
 extern int STD_TSScanf(const char * src, const char * fmt, ...);
 extern int STD_TVSScanf(const char * src, const char * fmt, va_list vlist);
 extern int STD_TSPrintf(char * dst, const char * fmt, ...);

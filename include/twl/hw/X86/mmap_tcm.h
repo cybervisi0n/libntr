@@ -33,7 +33,7 @@ typedef volatile struct {
   u32 intr_check;                      // 3ff8-3ffb intr_check for svc
   void *intr_vector;                   // 3ffc-3fff intr handler
 
-} OS_DTCM;
+} TWLOS_DTCM;
 #endif
 
 #define HW_DTCM_SYS_STACK_DEFAULT HW_DTCM

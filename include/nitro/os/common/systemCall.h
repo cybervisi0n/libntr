@@ -3,7 +3,14 @@
 
 #include <nitro/mi/stream.h>
 #include <nitro/mi/uncompress.h>
+
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/os/common/system.h>
+#elif SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+#include <twl/os/common/systemCall.h>
+#endif
+#endif
 
 #ifdef __cplusplus
 extern "C" {

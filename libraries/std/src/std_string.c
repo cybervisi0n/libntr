@@ -120,10 +120,27 @@ int STD_CompareNString (const char * str1, const char * str2, int len)
     return 0;
 }
 
+#if SDK_VERSION_MAJOR == 4
 int STD_CompareLString (const char * str1, const char * str2)
 {
     return STD_CompareNString(str1, str2, STD_GetStringLength(str2));
 }
+#elif SDK_VERSION_MAJOR == 5
+int STD_CompareLString(const char *str1, const char *str2, int len) {
+  int c, d;
+
+  while (len-- && *str2 != '\0') {
+    c = (int)(MI_ReadByte(str1));
+    d = (int)(MI_ReadByte(str2));
+    if (c != d) {
+      return c - d;
+    }
+    str1++;
+    str2++;
+  }
+  return (int)(MI_ReadByte(str1));
+}
+#endif
 
 SDK_WEAK_SYMBOL int STD_TSScanf (const char * src, const char * fmt, ...)
 {

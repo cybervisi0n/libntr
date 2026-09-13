@@ -150,7 +150,9 @@ typedef struct CARDiCommon {
 	MIDmaCallback callback;
 	void * callback_arg;
 	void (*task_func) (struct CARDiCommon *);
+	#if SDK_VERSION_MAJOR == 4
 	OSThread thread[1];
+	#endif
 	OSThread * cur_th;
 	u32 priority;
 #ifndef SDK_THREAD_INFINITY

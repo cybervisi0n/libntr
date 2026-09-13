@@ -59,7 +59,10 @@ void CARDi_LockResource (CARDiOwner owner, CARDTargetMode target)
 	(void)OS_RestoreInterrupts(bak_psr);
 }
 
-static void CARDi_UnlockResource (CARDiOwner owner, CARDTargetMode target)
+#if SDK_VERSION_MAJOR == 4
+static 
+#endif
+void CARDi_UnlockResource (CARDiOwner owner, CARDTargetMode target)
 {
 	CARDiCommon *p = &cardi_common;
 	OSIntrMode bak_psr = OS_DisableInterrupts();

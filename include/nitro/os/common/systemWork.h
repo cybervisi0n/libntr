@@ -109,6 +109,59 @@ typedef struct {
 } OSSystemWork;
 
 #define OS_GetSystemWork()      ((OSSystemWork *)HW_MAIN_MEM_SYSTEM)
+
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+typedef struct {
+  #ifdef SDK_BUILD_ARM
+  struct 
+  #endif
+  OSLockWord
+      lock_WRAM_ex;  // 000-003:   4 bytes: Lock buffer for WRAM-A, B, and C
+  u32 reset_flag;    // 004-007:   4 bytes: Reset flags (hardware reset)
+  u8 padding[0x178]; // 008-17f:  (376 bytes)
+} OSSystemWork2;
+
+#define OS_GetSystemWork2() ((OSSystemWork2 *)HW_PSEG1_RESERVED_0)
+#endif // SDK_TWL
+
+#ifndef SDK_TWL
+#define OS_IsCodecTwlMode() (FALSE)
+#endif
+
+typedef u16 OSBootType;
+#define OS_BOOTTYPE_ILLEGAL 0     // Illegal status
+#define OS_BOOTTYPE_ROM 1         // Boot from ROM
+#define OS_BOOTTYPE_DOWNLOAD_MB 2 // Start a downloaded application
+#define OS_BOOTTYPE_NAND 3        // Start an application in NAND memory
+#define OS_BOOTTYPE_MEMORY 4      //
+
+typedef struct OSBootInfo {
+  OSBootType boot_type; // 2
+
+  u16 length;     // 4
+  u16 rssi;       // 6
+  u16 bssid[3];   // 12
+  u16 ssidLength; // 14
+  u8 ssid[32];    // 46
+  u16 capaInfo;   // 48
+  struct {
+    u16 basic;   // 50
+    u16 support; // 52
+  } rateSet;
+  u16 beaconPeriod;   // 54
+  u16 dtimPeriod;     // 56
+  u16 channel;        // 58
+  u16 cfpPeriod;      // 60
+  u16 cfpMaxDuration; // 62
+  u16 rsv1;           // 64
+} OSBootInfo;
+
+OSBootType OS_GetBootType(void);
+
+const OSBootInfo *OS_GetBootInfo(void);
+#endif
+
 #endif
 
 #endif
