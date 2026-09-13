@@ -19,6 +19,15 @@ libmi_srcs = files(
     'mi_cache.c'
 )
 
+if(sdk_version_major == 5)
+    libmi_srcs += files(
+        'mi_ndma.c',
+        'mi_ndma_gxcommand.c',
+        'mi_secureuncompress.c',
+        'mi_sharedWram.c'
+    )
+endif
+
 libmi_arm7_srcs = files(
     'mi_wram.c',
     'mi_dma.c',

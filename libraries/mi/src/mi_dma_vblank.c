@@ -26,7 +26,11 @@ void MI_VBlankDmaCopy32 (u32 dmaNo, const void * src, void * dest, u32 size)
     #else
 
 	MIi_Wait_BeforeDMA(dmaCntp, dmaNo);
+	#if SDK_VERSION_MAJOR == 4
 	MIi_DmaSetParams(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY32(size));
+	#elif SDK_VERSION_MAJOR == 5
+	MIi_DmaSetParameters(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY32(size), 0);
+	#endif
 	MIi_Wait_AfterDMA(dmaCntp);
     #endif
 }
@@ -55,7 +59,12 @@ void MI_VBlankDmaCopy16 (u32 dmaNo, const void * src, void * dest, u32 size)
     #else
 
 	MIi_Wait_BeforeDMA(dmaCntp, dmaNo);
+	#if SDK_VERSION_MAJOR == 4
 	MIi_DmaSetParams_wait(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY16(size));
+	#elif SDK_VERSION_MAJOR == 5
+	MIi_DmaSetParameters(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY16(size),
+                     MIi_DMA_MODE_WAIT);
+	#endif
 	MIi_Wait_AfterDMA(dmaCntp);
     #endif
 }
@@ -88,9 +97,19 @@ void MI_VBlankDmaCopy32Async (u32 dmaNo, const void * src, void * dest, u32 size
 		MI_WaitDma(dmaNo);
 		if (callback) {
 			OSi_EnterDmaCallback(dmaNo, callback, arg);
+			#if SDK_VERSION_MAJOR == 4
 			MIi_DmaSetParams(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY32_IF(size));
+			#elif SDK_VERSION_MAJOR == 5
+      		MIi_DmaSetParameters(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY32_IF(size),
+      		                     0);
+			#endif
 		} else {
+			#if SDK_VERSION_MAJOR == 4
 			MIi_DmaSetParams(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY32(size));
+			#elif SDK_VERSION_MAJOR == 5
+      		MIi_DmaSetParameters(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY32(size),
+      		                     0);
+			#endif
 		}
         #endif
 	}
@@ -124,9 +143,19 @@ void MI_VBlankDmaCopy16Async (u32 dmaNo, const void * src, void * dest, u32 size
 		MI_WaitDma(dmaNo);
 		if (callback) {
 			OSi_EnterDmaCallback(dmaNo, callback, arg);
+			#if SDK_VERSION_MAJOR == 4
 			MIi_DmaSetParams(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY16_IF(size));
+			#elif SDK_VERSION_MAJOR == 5
+      		MIi_DmaSetParameters(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY16_IF(size),
+      		                     0);
+			#endif
 		} else {
+			#if SDK_VERSION_MAJOR == 4
 			MIi_DmaSetParams(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY16(size));
+			#elif SDK_VERSION_MAJOR == 5
+      		MIi_DmaSetParameters(dmaNo, (u32)src, (u32)dest, MI_CNT_VBCOPY16(size),
+      		                     0);
+			#endif
 		}
         #endif
 	}
