@@ -676,6 +676,55 @@ OSHeapHandle OS_CreateHeap (OSArenaId id, void * start, void * end)
     return -1;
 }
 
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+OSHeapHandle OS_CreateExtraHeap(OSArenaId id) {
+  OSHeapInfo *heapInfo;
+  OSHeapHandle heap;
+  HeapDesc *hd;
+  Cell *cell;
+
+  OSIntrMode enabled = OS_DisableInterrupts();
+  SDK_TASSERTMSG(id < OS_ARENA_MAX, OS_ERR_CREATEHEAP_INVID);
+
+  heapInfo = OSiHeapInfo[id];
+  SDK_TASSERTMSG(heapInfo, OS_ERR_CREATEHEAP_NOINFO);
+  SDK_TASSERTMSG(heapInfo->heapArray, OS_ERR_CREATEHEAP_NOHEAP);
+
+  if (!OS_IsRunOnTwl() && OSi_ExtraHeapHandle < 0) {
+
+    for (heap = 0; heap < heapInfo->numHeaps; heap++) {
+      hd = &heapInfo->heapArray[heap];
+      if (hd->size < 0) {
+        hd->size = HW_MAIN_MEM_PARAMETER_BUF_SIZE;
+
+        cell = (Cell *)HW_MAIN_MEM_PARAMETER_BUF;
+        cell->prev = NULL;
+        cell->next = NULL;
+        cell->size = HW_MAIN_MEM_PARAMETER_BUF_SIZE;
+#ifdef SDK_DEBUG
+        cell->hd = NULL;
+#endif
+        hd->free = cell;
+        hd->allocated = 0;
+#ifdef SDK_DEBUG
+        hd->paddingBytes = hd->headerBytes = hd->payloadBytes = 0;
+#endif
+        OSi_ExtraHeapArenaId = id;
+        OSi_ExtraHeapHandle = heap;
+
+        (void)OS_RestoreInterrupts(enabled);
+        return heap;
+      }
+    }
+  }
+
+  (void)OS_RestoreInterrupts(enabled);
+  return -1;
+}
+#endif // defined(SDK_TWL) && !defined(SDK_TWLLTD)
+#endif
+
 void OS_DestroyHeap (OSArenaId id, OSHeapHandle heap)
 {
     OSHeapInfo * heapInfo;
@@ -701,6 +750,16 @@ void OS_DestroyHeap (OSArenaId id, OSHeapHandle heap)
         OS_Printf("OS_DestroyHeap(%d): Warning - free list size %d, heap size %d\n", heap, size,
                   hd->size);
     }
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+
+  if (OSi_ExtraHeapArenaId == id && OSi_ExtraHeapHandle == heap) {
+    OSi_ExtraHeapArenaId = (OSArenaId)-1;
+    OSi_ExtraHeapHandle = -1;
+  }
+#endif // defined(SDK_TWL) && !defined(SDK_TWLLTD)
 #endif
 
     hd->size = -1;
@@ -743,6 +802,22 @@ void OS_AddToHeap (OSArenaId id, OSHeapHandle heap, void * start, void * end)
     SDK_ASSERTMSG(MINOBJSIZE <= (char *)end - (char *)start, OS_ERR_ADDTOHEAP_INSRANGE);
     SDK_ASSERTMSG(RangeSubset(start, end, heapInfo->arenaStart, heapInfo->arenaEnd), OS_ERR_ADDTOHEAP_INVRANGE);
 
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_DEBUG
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+  if ((u32)start != (u32)HW_MAIN_MEM_PARAMETER_BUF &&
+      (u32)end !=
+          (u32)(HW_MAIN_MEM_PARAMETER_BUF + HW_MAIN_MEM_PARAMETER_BUF_SIZE)) {
+#endif
+    SDK_TASSERTMSG(
+        RangeSubset(start, end, heapInfo->arenaStart, heapInfo->arenaEnd),
+        OS_ERR_ADDTOHEAP_INVRANGE);
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+  }
+#endif
+#endif
+#endif
+
 #ifdef SDK_DEBUG
     for (i = 0; i < heapInfo->numHeaps; i++) {
         if (heapInfo->heapArray[i].size < 0) {
@@ -765,6 +840,20 @@ void OS_AddToHeap (OSArenaId id, OSHeapHandle heap, void * start, void * end)
 
     (void)OS_RestoreInterrupts(enabled);
 }
+
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+void OS_AddExtraAreaToHeap(OSArenaId id, OSHeapHandle heap) {
+  if (!OS_IsRunOnTwl()) {
+    OS_AddToHeap(
+        id, heap, (void *)HW_MAIN_MEM_PARAMETER_BUF,
+        (void *)(HW_MAIN_MEM_PARAMETER_BUF + HW_MAIN_MEM_PARAMETER_BUF_SIZE));
+    OSi_ExtraHeapArenaId = id;
+    OSi_ExtraHeapHandle = heap;
+  }
+}
+#endif
+#endif
 
 #ifndef SDK_NO_MESSAGE
     #define OSi_CHECK(exp)                                                       \
@@ -816,6 +905,17 @@ s32 OS_CheckHeap (OSArenaId id, OSHeapHandle heap)
 
     OSi_CHECK(hd->allocated == NULL || hd->allocated->prev == NULL);
     for (cell = hd->allocated; cell; cell = cell->next) {
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_DEBUG
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+    if (OSi_ExtraHeapArenaId != id || OSi_ExtraHeapHandle != heap) {
+#endif
+      OSi_CHECK(InRange(cell, heapInfo->arenaStart, heapInfo->arenaEnd));
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+    }
+#endif
+#endif
+#endif
         OSi_CHECK(InRange(cell, heapInfo->arenaStart, heapInfo->arenaEnd));
         OSi_CHECK(OFFSET(cell, ALIGNMENT) == 0);
         OSi_CHECK(cell->next == NULL || cell->next->prev == cell);
@@ -834,6 +934,17 @@ s32 OS_CheckHeap (OSArenaId id, OSHeapHandle heap)
     OSi_CHECK(hd->free == NULL || hd->free->prev == NULL);
 
     for (cell = hd->free; cell; cell = cell->next) {
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_DEBUG
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+    if (OSi_ExtraHeapArenaId != id || OSi_ExtraHeapHandle != heap) {
+#endif
+      OSi_CHECK(InRange(cell, heapInfo->arenaStart, heapInfo->arenaEnd));
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+    }
+#endif
+#endif
+#endif
         OSi_CHECK(InRange(cell, heapInfo->arenaStart, heapInfo->arenaEnd));
         OSi_CHECK(OFFSET(cell, ALIGNMENT) == 0);
         OSi_CHECK(cell->next == NULL || cell->next->prev == cell);
@@ -873,6 +984,19 @@ u32 OS_ReferentSize (OSArenaId id, void * ptr)
     SDK_ASSERTMSG(InRange
                       (ptr, (char *)heapInfo->arenaStart + HEADERSIZE, (char *)heapInfo->arenaEnd),
                   OS_ERR_REFERENT_INVPTR);
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_DEBUG
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+  if (OSi_ExtraHeapArenaId != id) {
+#endif
+    SDK_TASSERTMSG(InRange(ptr, (char *)heapInfo->arenaStart + HEADERSIZE,
+                           (char *)heapInfo->arenaEnd),
+                   OS_ERR_REFERENT_INVPTR);
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+  }
+#endif
+#endif
+#endif
     SDK_ASSERTMSG(OFFSET(ptr, ALIGNMENT) == 0, OS_ERR_REFERENT_INVPTR);
 
     cell = (Cell *)((char *)ptr - HEADERSIZE);
@@ -1073,6 +1197,19 @@ void OS_ClearHeap (OSArenaId id, OSHeapHandle heap, void * start, void * end)
     end = (void *)TRUNC(end, ALIGNMENT);
 
     SDK_ASSERTMSG(start < end, "invalid range");
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_DEBUG
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+  if (OSi_ExtraHeapArenaId != id || OSi_ExtraHeapHandle != heap) {
+#endif
+    SDK_TASSERTMSG(
+        RangeSubset(start, end, heapInfo->arenaStart, heapInfo->arenaEnd),
+        "invalid range");
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+  }
+#endif
+#endif
+#endif
     SDK_ASSERTMSG(RangeSubset(start, end, heapInfo->arenaStart, heapInfo->arenaEnd), "invalid range");
     SDK_ASSERTMSG(MINOBJSIZE <= (char *)end - (char *)start, "too small range");
 
@@ -1099,3 +1236,260 @@ void OS_ClearHeap (OSArenaId id, OSHeapHandle heap, void * start, void * end)
 
     (void)OS_RestoreInterrupts(enabled);
 }
+
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+void OS_ClearExtraHeap(OSArenaId id, OSHeapHandle heap) {
+  if (!OS_IsRunOnTwl()) {
+    if (OSi_ExtraHeapArenaId == id || OSi_ExtraHeapHandle == heap) {
+      OS_ClearHeap(
+          id, heap, (void *)HW_MAIN_MEM_PARAMETER_BUF,
+          (void *)(HW_MAIN_MEM_PARAMETER_BUF + HW_MAIN_MEM_PARAMETER_BUF_SIZE));
+    }
+  }
+}
+#endif
+
+BOOL OS_IsOnMainMemory(void *ptr) {
+#ifdef SDK_TWL
+  if (OS_IsRunOnTwl()) {
+
+    if ((u32)ptr >= HW_TWL_MAIN_MEM && (u32)ptr < HW_TWL_MAIN_MEM_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+  } else
+#endif // SDK_TWL
+  {
+
+    if ((u32)ptr >= HW_MAIN_MEM && (u32)ptr < HW_MAIN_MEM_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+  }
+  return FALSE; /* Do Not Return HERE */
+}
+
+BOOL OS_IsOnExtendedMainMemory(void *ptr) {
+#ifdef SDK_TWL
+  if (OS_IsRunOnTwl()) {
+
+    if ((u32)ptr >= HW_TWL_MAIN_MEM_EX && (u32)ptr < HW_TWL_MAIN_MEM_EX_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+  } else
+#endif // SDK_TWL
+  {
+
+    if ((u32)ptr >= HW_MAIN_MEM_END && (u32)ptr < HW_MAIN_MEM_EX_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+  }
+  return FALSE; /* Do Not Return HERE */
+}
+
+BOOL OS_IsOnWramB(void *ptr) {
+#ifdef SDK_TWL
+  if (OS_IsRunOnTwl()) {
+
+    if ((u32)ptr >= HW_WRAM_B && (u32)ptr < HW_WRAM_B_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+  }
+#else
+#pragma unused(ptr)
+#endif // SDK_TWL
+  return FALSE;
+}
+
+BOOL OS_IsOnWramC(void *ptr) {
+#ifdef SDK_TWL
+  if (OS_IsRunOnTwl()) {
+
+    if ((u32)ptr >= HW_WRAM_C && (u32)ptr < HW_WRAM_C_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+  }
+#else
+#pragma unused(ptr)
+#endif // SDK_TWL
+  return FALSE;
+}
+
+BOOL OS_IsOnWram0(void *ptr) {
+#ifdef SDK_TWL
+#ifdef SDK_ARM7
+  if (OS_IsRunOnTwl()) {
+#ifdef SDK_TWLLTD
+    if ((u32)ptr >= HW_WRAM_0_LTD && (u32)ptr < HW_WRAM_0_LTD_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+#else
+
+    if ((u32)ptr >= HW_WRAM_0_HYB && (u32)ptr < HW_WRAM_0_HYB_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+#endif // SDK_TWLLTD
+  }
+#else
+
+#pragma unused(ptr)
+#endif // SDK_ARM7
+#else
+
+  {
+    if ((u32)ptr >= HW_WRAM_0 && (u32)ptr < HW_WRAM_0_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+  }
+#endif // SDK_ARM7
+
+  return FALSE;
+}
+
+BOOL OS_IsOnWram1(void *ptr) {
+#ifdef SDK_TWL
+#ifdef SDK_ARM7
+  if (OS_IsRunOnTwl()) {
+#ifdef SDK_TWLLTD
+    if ((u32)ptr >= HW_WRAM_1_LTD && (u32)ptr < HW_WRAM_1_LTD_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+#else
+
+    if ((u32)ptr >= HW_WRAM_1_HYB && (u32)ptr < HW_WRAM_1_HYB_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+#endif // SDK_TWLLTD
+  }
+#else
+
+#pragma unused(ptr)
+#endif // SDK_ARM7
+#else
+
+  {
+    if ((u32)ptr >= HW_WRAM_1 && (u32)ptr < HW_WRAM_1_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+  }
+#endif // SDK_ARM7
+
+  return FALSE;
+}
+
+BOOL OS_IsOnWram(void *ptr) {
+  return (OS_IsOnWramA(ptr) || OS_IsOnWramB(ptr) || OS_IsOnWramC(ptr) ||
+          OS_IsOnWram0(ptr) || OS_IsOnWram1(ptr));
+}
+
+BOOL OS_IsOnVram(void *ptr) {
+#ifdef SDK_ARM9
+  if ((u32)ptr >= HW_PLTT && (u32)ptr < HW_DB_OAM_END) {
+    return TRUE;
+  }
+#else
+#pragma unused(ptr)
+#endif
+  return FALSE;
+}
+
+BOOL OS_IsOnDtcm(void *ptr) {
+#ifdef SDK_ARM9
+  u32 dtcm;
+  u32 dtcm_end;
+
+  dtcm = OS_GetDTCMAddress();
+  dtcm_end = dtcm + HW_DTCM_SIZE;
+
+  if ((u32)ptr >= dtcm && (u32)ptr < dtcm_end) {
+    return TRUE;
+  }
+#else
+#pragma unused(ptr)
+#endif
+  return FALSE;
+}
+
+BOOL OS_IsOnItcm(void *ptr) {
+#ifdef SDK_ARM9
+  u32 itcm;
+  u32 itcm_end;
+
+  itcm = OS_GetITCMAddress();
+  itcm_end = itcm + HW_ITCM_SIZE;
+
+  if ((u32)ptr >= itcm && (u32)ptr < itcm_end) {
+    return TRUE;
+  }
+#else
+#pragma unused(ptr)
+#endif
+  return FALSE;
+}
+
+BOOL OS_IsOnWramA(void *ptr) {
+#ifdef SDK_TWL
+#ifdef SDK_ARM7
+  if (OS_IsRunOnTwl()) {
+#ifdef SDK_TWLLTD
+
+    if ((u32)ptr >= HW_WRAM_A_LTD && (u32)ptr < HW_WRAM_A_LTD_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+#else
+
+    if ((u32)ptr >= HW_WRAM_A_HYB && (u32)ptr < HW_WRAM_A_HYB_END) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+#endif // SDK_TWLLTD
+  }
+#else
+
+#pragma unused(ptr)
+#endif // SDK_ARM7
+
+#else
+
+#pragma unused(ptr)
+#endif // SDK_TWL
+  return FALSE;
+}
+
+BOOL OS_IsOnArm7PrvWram(void *ptr) {
+#ifdef SDK_ARM7
+  if ((u32)ptr >= HW_PRV_WRAM && (u32)ptr < HW_PRV_WRAM_END) {
+    return TRUE;
+  }
+#else
+#pragma unused(ptr)
+#endif // SDK_ARM7
+  return FALSE;
+}
+#endif

@@ -32,6 +32,22 @@ libos_srcs = files(
     'os_terminate_proc.c'
 )
 
+if(sdk_version_major == 5)
+    libos_srcs += files(
+        'os_application_jump.c',
+        'os_attention.c',
+        'os_event.c',
+        'os_irqHandler_inTCM.c',
+        'os_msJump.c',
+        'os_ownerInfoEx.c',
+        'os_pxi.c',
+        'os_resource.c',
+        'os_stub.c',
+        'os_systemCall.c',
+        'os_systemWork.c'
+    )
+endif
+
 libos_arm7_srcs = files(
     'os_irqHandler.c',
     'os_irqTable.c',

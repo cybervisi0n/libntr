@@ -398,3 +398,25 @@ void OS_CancelAllAlarms (void)
 struct OSiAlarmQueue * OSi_GetAlarmQueue (void){
     return &OSi_AlarmQueue;
 }
+
+#if SDK_VERSION_MAJOR == 5
+int OS_GetNumberOfAlarm(void) {
+  OSIntrMode enabled = OS_DisableInterrupts();
+  OSAlarm *p = OSi_AlarmQueue.head;
+  int num = 0;
+
+  while (p) {
+    num++;
+    p = p->next;
+  }
+
+  (void)OS_RestoreInterrupts(enabled);
+  return num;
+}
+
+BOOL OS_GetAlarmResource(OSAlarmResource *resource) {
+  resource->num = OS_GetNumberOfAlarm();
+
+  return TRUE;
+}
+#endif

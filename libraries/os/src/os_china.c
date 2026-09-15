@@ -8,6 +8,12 @@
 static char checkString[] = OS_BURY_STRING_FORCHINA;
 #include <nitro/version_end.h>
 
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_ARM9) && defined(SDK_TWLLTD)
+#include <os_attention.h>
+#endif
+#endif
+
 #ifdef SDK_PORT
 #define ATTRIBUTE_ALIGN(x) __attribute__((aligned(x)))
 #endif
@@ -22,7 +28,9 @@ typedef enum {
     IMAGE_LOGO_CHR,
     IMAGE_LOGO_SCR,
     IMAGE_LOGO_PAL,
+    #if SDK_VERSION_MAJOR == 4
     IMAGE_LOGO_VOICE,
+    #endif
     IMAGE_MAX
 } ImageIndex;
 
@@ -51,6 +59,10 @@ static u8 only_forChina_charData[OSi_ONLY_FORCHINA_CHAR_SIZE] ATTRIBUTE_ALIGN(4)
     0xf1, 0x00, 0x00, 0x00, 0xc3, 0xc0, 0xc0, 0xc3, 0xc3, 0x00, 0x00, 0x00, 0x18, 0x18,
     0x1c, 0xcf, 0xc7, 0x00, 0x00, 0x00, 0x0c, 0x0c, 0x0c, 0x0f, 0x07, 0x00, 0x00, 0x00
 };
+
+#if SDK_VERSION_MAJOR == 5
+extern void OSi_InitCommon(void);
+#endif
 
 static u8 * LoadImage(ImageIndex index, u32 * p_size);
 static void WaitForNextFrame(void);
@@ -183,6 +195,7 @@ static void SetISBNString (const char ** isbn)
 
     GXOamAttr * dst = (GXOamAttr *)HW_DB_OAM;
 
+    #if SDK_VERSION_MAJOR == 4
     for (i = 0; i < count; i++) {
         for (j = 0; j < pos[i].length; ++j) {
             dst->attr01 = (u32)(((pos[i].x + j * 8) << 16) | (pos[i].y << 0));
@@ -196,15 +209,56 @@ static void SetISBNString (const char ** isbn)
             ++dst;
         }
     }
+    #elif SDK_VERSION_MAJOR == 5
+    u16 pos_x;
+    u16 pos_y;
+    u16 index;
+    u16 width;
+    for (i = 0; i < count; i++) {
+      pos_x = pos[i].x;
+      pos_y = pos[i].y;
+
+      for (j = 0; j < pos[i].length; ++j) {
+        if (isbn[i][j] == '-') {
+          index = 10;
+          width = 5;
+        } else if ((isbn[i][j] >= '0') && (isbn[i][j] <= '9')) {
+          index = (u16)(isbn[i][j] - '0');
+          width = 7;
+        } else {
+          index = 11;
+          width = 7;
+        }
+
+        dst[0].attr01 = (u32)((pos_x << 16) | (pos_y << 0));
+        dst[0].attr2 = index;
+        dst[1].attr01 = (u32)((pos_x << 16) | (pos_y + 8 << 0));
+        dst[1].attr2 = (u16)(index + digit_num);
+
+        pos_x += width;
+        dst += 2;
+      }
+    }
+    #endif
 }
 
-void OS_InitChina (const char ** isbn)
+void OS_InitChina (
+    const char ** isbn
+#if SDK_VERSION_MAJOR == 5
+    , OSChinaIsbn param
+#endif
+)
 {
     SDK_REFER_SYMBOL(checkString);
 
+    #if SDK_VERSION_MAJOR == 4
     OS_Init();
     CheckLanguageCode();
     OS_ShowAttentionChina(isbn);
+    #elif SDK_VERSION_MAJOR == 5
+    OSi_InitCommon();
+    OS_ShowAttentionChina(isbn, param);
+    #endif
 }
 
 static void CheckLanguageCode (void)
