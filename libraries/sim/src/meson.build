@@ -14,6 +14,7 @@ libsim_srcs = files(
     'sim_audio.cpp',
     'sim_crc32.c',
     'sim_debug.cpp',
+    'sim_ErrorHandler.cpp',
     'sim_g2.cpp',
     'sim_main.cpp',
     'sim_net.cpp',

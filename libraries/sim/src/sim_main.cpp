@@ -17,6 +17,7 @@ extern "C" int NitroSpMain(void *arg);
 #include <simulator/sim_audio.h>
 #include <simulator/sim_net.h>
 #include <simulator/sim_shaders.hpp>
+#include <simulator/sim_ErrorHandler.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2103,6 +2104,7 @@ int main(int argc, char *argv[]) {
 
   // Start up debug system
   SIM_Dbg_Init();
+  SIM::ErrorHandler::Init();
 
   // Load default config
   SIM_Config_LoadDefaults(&s_SIM_config);
