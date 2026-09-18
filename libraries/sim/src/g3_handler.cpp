@@ -1314,10 +1314,10 @@ void G3SIM_MtxTranslate(fx32* trans)
         currentPositionMatrix.nums[3][2] += (FX_Mul(s[0],currentPositionMatrix.nums[0][2]) + FX_Mul(s[1],currentPositionMatrix.nums[1][2]) + FX_Mul(s[2],currentPositionMatrix.nums[2][2]));
         currentPositionMatrix.nums[3][3] += (FX_Mul(s[0],currentPositionMatrix.nums[0][3]) + FX_Mul(s[1],currentPositionMatrix.nums[1][3]) + FX_Mul(s[2],currentPositionMatrix.nums[2][3]));
     }
-    matrix->nums[3][1] += (FX_Mul(s[0],matrix->nums[0][0]) + FX_Mul(s[1],matrix->nums[1][0]) + FX_Mul(s[2],matrix->nums[2][0]));
+    matrix->nums[3][0] += (FX_Mul(s[0],matrix->nums[0][0]) + FX_Mul(s[1],matrix->nums[1][0]) + FX_Mul(s[2],matrix->nums[2][0]));
     matrix->nums[3][1] += (FX_Mul(s[0],matrix->nums[0][1]) + FX_Mul(s[1],matrix->nums[1][1]) + FX_Mul(s[2],matrix->nums[2][1]));
-    matrix->nums[3][1] += (FX_Mul(s[0],matrix->nums[0][2]) + FX_Mul(s[1],matrix->nums[1][2]) + FX_Mul(s[2],matrix->nums[2][2]));
-    matrix->nums[3][1] += (FX_Mul(s[0],matrix->nums[0][3]) + FX_Mul(s[1],matrix->nums[1][3]) + FX_Mul(s[2],matrix->nums[2][3]));
+    matrix->nums[3][2] += (FX_Mul(s[0],matrix->nums[0][2]) + FX_Mul(s[1],matrix->nums[1][2]) + FX_Mul(s[2],matrix->nums[2][2]));
+    matrix->nums[3][3] += (FX_Mul(s[0],matrix->nums[0][3]) + FX_Mul(s[1],matrix->nums[1][3]) + FX_Mul(s[2],matrix->nums[2][3]));
 
     if( s_curMtxMode != GX_MTXMODE_TEXTURE )
     {
