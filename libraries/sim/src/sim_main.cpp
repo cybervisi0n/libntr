@@ -1670,6 +1670,8 @@ void *SIM_Render(void *arg) {
   u16 keys;
   u32 i;
 
+  G3SIM_FlushArray();
+
   // Draw the translucent 3D stuff
   G3SIM_DrawItems();
 
