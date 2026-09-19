@@ -123,7 +123,7 @@ static inline int OS_GetOptOpt (void)
     }
 #endif
 
-#if SDK_VERSION_MAJOR == 5
+#if (SDK_VERSION_MAJOR == 5) && !defined(SDK_WIN32)
 #ifdef SDK_TWL
 
 typedef struct {
