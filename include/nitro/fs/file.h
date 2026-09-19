@@ -309,6 +309,32 @@ BOOL FS_WaitAsync(FSFile * p_file);
 
 void FS_CancelFile(FSFile * p_file);
 
+#if SDK_VERSION_MAJOR == 5
+static inline void FS_SetFileHandle(FSFile *file, FSArchive *arc, void *userdata) {
+  file->stat |= FS_FILE_STATUS_IS_FILE;
+  file->stat &= ~FS_FILE_STATUS_IS_DIR;
+  file->arc = arc;
+  file->userdata = userdata;
+}
+
+static inline void FS_SetDirectoryHandle(FSFile *file, FSArchive *arc,
+                                      void *userdata) {
+  file->stat |= FS_FILE_STATUS_IS_DIR;
+  file->stat &= ~FS_FILE_STATUS_IS_FILE;
+  file->arc = arc;
+  file->userdata = userdata;
+}
+
+static inline void FS_DetachHandle(FSFile *file) {
+  file->userdata = NULL;
+  file->stat &= ~(FS_FILE_STATUS_IS_FILE | FS_FILE_STATUS_IS_DIR);
+}
+
+static inline void *FS_GetFileUserData(const FSFile *file) {
+  return file->userdata;
+}
+#endif
+
 BOOL FS_SeekFile(FSFile * p_file, s32 offset, FSSeekFileMode origin);
 
 static inline BOOL FS_SeekFileToBegin (FSFile * p_file)

@@ -13,27 +13,52 @@ extern void SDK_IRQ_STACKSIZE(void);
 #define OS_PXI_DATA_MASK          0x000000ff
 #define OS_PXI_DATA_SHIFT         0
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     #define OSi_HW_DTCM               SDK_AUTOLOAD_DTCM_START
 #endif
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     static void OSi_CpuClear32(register u32 data, register void * destp, register u32 size);
     static void OSi_ReloadRomData(void);
     static void OSi_ReadCardRom32(u32 src, void * dst, int len);
+    #if SDK_VERSION_MAJOR == 5
+    extern u32 OSi_GetOriginalExceptionHandler(void);
+    #endif
 #endif
 
+#if SDK_VERSION_MAJOR == 4
 #ifdef SDK_PORT
 static void OSi_CommonCallback(PXIFifoTag tag, u64 data, BOOL err);
 #else
 static void OSi_CommonCallback(PXIFifoTag tag, u32 data, BOOL err);
 #endif
-static void OSi_DoResetSystem(void);
+#endif
+
+#if SDK_VERSION_MAJOR == 4
+static 
+#endif
+void OSi_DoResetSystem(void);
 static void OSi_DoBoot(void);
+#if SDK_VERSION_MAJOR == 4
 static void OSi_SendToPxi(u16 data);
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+static void OSi_ReloadTwlRomData(void);
+#ifdef SDK_ARM7
+extern void SDK_LTDAUTOLOAD_LTDMAIN_START(void);
+void *const OSi_LtdMainParams[] = {
+    (void *)SDK_LTDAUTOLOAD_LTDMAIN_START,
+};
+#endif
+#endif
+#endif
 
 static u16 OSi_IsInitReset = FALSE;
+#if SDK_VERSION_MAJOR == 4
 static vu16 OSi_IsResetOccurred = FALSE;
+#endif
 
 void OS_InitReset (void)
 {
@@ -51,11 +76,14 @@ void OS_InitReset (void)
     PXI_SetFifoRecvCallback(PXI_FIFO_TAG_OS, OSi_CommonCallback);
 }
 
+#if SDK_VERSION_MAJOR == 4
 BOOL OS_IsResetOccurred (void)
 {
     return OSi_IsResetOccurred;
 }
+#endif
 
+#if SDK_VERSION_MAJOR == 4
 #ifdef SDK_PORT
 static void OSi_CommonCallback (PXIFifoTag tag, u64 data, BOOL err)
 #else
@@ -104,10 +132,23 @@ static void OSi_SendToPxi (u16 data)
 }
 
 #define RESET_HW_DTCM_IRQ_STACK_END SDK_AUTOLOAD_DTCM_START + 0x00003fc0 - HW_SVC_STACK_SIZE
+#endif /* SDK_VERSION_MAJOR */
 
 #if (defined(SDK_ARM9) || defined(SDK_PORT))
     void OS_ResetSystem (u32 parameter)
     {
+#ifdef SDK_TWL
+  if ((MB_IsMultiBootChild() == TRUE) ||
+      ((OS_IsRunOnTwl() == TRUE) &&
+       ((*((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x234)) & 0x00000004) != 0))) {
+#ifndef SDK_FINALROM
+    OS_TPanic("Only card booted application can execute software reset.\nSee "
+              "OS_ResetSystem() reference manual.");
+#else
+    OS_TPanic("");
+#endif
+  }
+#else
         if (MB_IsMultiBootChild()) {
     #ifndef SDK_FINALROM
             OS_Panic("cannot reset from MB child");
@@ -115,24 +156,49 @@ static void OSi_SendToPxi (u16 data)
             OS_Panic("");
     #endif
         }
+#endif /* SDK_TWL */
+
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+  if (OS_IsRunOnTwl()) {
+
+    PMi_ExecutePostExitCallbackList();
+  }
+#endif
+#endif
 
         {
             u16 id = (u16)OS_GetLockID();
             CARD_LockRom(id);
         }
 
+#if SDK_VERSION_MAJOR == 4
         MI_StopDma(0);
         MI_StopDma(1);
         MI_StopDma(2);
         MI_StopDma(3);
+#endif
 
         (void)OS_SetIrqMask(OS_IE_FIFO_RECV);
+#if SDK_VERSION_MAJOR == 4
         (void)OS_ResetRequestIrqMask(0xffffffff);
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+        (void)OS_ResetRequestIrqMask(~OS_IE_FIFO_RECV);
+        MI_StopAllDma();
+#ifdef SDK_TWL
+        if (OS_IsRunOnTwl()) {
+          MI_StopAllNDma();
+        }
+#endif
+#endif
 
         *(u32 *)HW_RESET_PARAMETER_BUF = parameter;
 
         OSi_SendToPxi(OS_PXI_COMMAND_RESET);
 
+        #if SDK_VERSION_MAJOR == 4
         #ifndef SDK_PORT
         asm {
             ldr r0, = RESET_HW_DTCM_IRQ_STACK_END;
@@ -142,12 +208,18 @@ static void OSi_SendToPxi (u16 data)
             bl OSi_DoResetSystem;
         }
         #endif
+        #endif
+        #if SDK_VERSION_MAJOR == 5
+        *(u32 *)HW_COMPONENT_PARAM = OSi_GetOriginalExceptionHandler();
+
+        OSi_DoResetSystem();
+        #endif
 
     }
 #else
     void OS_ResetSystem (void)
     {
-
+        #if SDK_VERSION_MAJOR == 4
         MI_StopDma(0);
         MI_StopDma(1);
         MI_StopDma(2);
@@ -155,6 +227,23 @@ static void OSi_SendToPxi (u16 data)
 
         (void)OS_SetIrqMask(OS_IE_FIFO_RECV);
         (void)OS_ResetRequestIrqMask(0xffffffff);
+        #endif
+        #if SDK_VERSION_MAJOR == 5
+          (void)OS_SetIrqMask(OS_IE_FIFO_RECV);
+          (void)OS_ResetRequestIrqMask(0xffffffff /*All request */);
+            
+          {
+            u32 n;
+            for (n = 0; n < 4; n++) {
+              MI_StopDma(n);
+        #ifdef SDK_TWL
+              if (OS_IsRunOnTwl()) {
+                MI_StopNDma(n);
+              }
+        #endif
+            }
+          }
+        #endif
 
         SND_Shutdown();
 
@@ -163,13 +252,18 @@ static void OSi_SendToPxi (u16 data)
     }
 #endif
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
     #include <nitro/itcm_begin.h>
 
-    static void OSi_DoResetSystem (void)
+    #if SDK_VERISON_MAJOR == 4
+    static 
+    #endif
+    void OSi_DoResetSystem (void)
     {
+        #ifdef SDK_BUILD_ARM
         while (!(vu16)OSi_IsResetOccurred) {
         }
+        #endif
 
         reg_OS_IME = 0;
 
@@ -181,7 +275,10 @@ static void OSi_SendToPxi (u16 data)
 #else
     #include <nitro/wram_begin.h>
 
-    static void OSi_DoResetSystem (void)
+    #if SDK_VERSION_MAJOR == 4
+    static 
+    #endif
+    void OSi_DoResetSystem (void)
     {
         reg_OS_IME = 0;
         OSi_DoBoot();
@@ -290,9 +387,10 @@ asm void OSi_DoBoot (void)
 #include <nitro/wram_end.h>
 #endif
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
 #include <nitro/itcm_begin.h>
 
+#ifdef SDK_BUILD_ARM
 static asm void  OSi_CpuClear32 (register u32 data, register void * destp, register u32 size)
 {
     add r12, r1, r2
@@ -310,6 +408,12 @@ static asm void  OSi_CpuClear32 (register u32 data, register void * destp, regis
     blt @1
     bx lr
 }
+#else
+static void  OSi_CpuClear32 (u32 data, void * destp, u32 size)
+{
+    MI_CpuFill32(destp, data, size);
+}
+#endif
 
 static void OSi_ReloadRomData (void)
 {

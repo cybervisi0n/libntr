@@ -1,6 +1,7 @@
 #ifndef NITRO_H_
 #define NITRO_H_
 
+#if SDK_VERSION_MAJOR == 4
 #ifdef SDK_X86
 #define ATTRIBUTE_ALIGN(x) __attribute__((aligned(x)))
 #endif
@@ -106,6 +107,9 @@
         #include <nitro/env.h>
         #include <nitro/vib.h>
     #endif
+#endif
+#elif SDK_VERSION_MAJOR == 5
+#include <twl_hybrid.h>
 #endif
 
 #endif

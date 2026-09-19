@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#ifndef SDK_TWL
 #include <nitro/misc.h>
 #include <nitro/types.h>
 
@@ -16,6 +17,20 @@ extern "C" {
 #else
     #include <nitro/hw/ARM7/ioreg_PAD.h>
 #endif
+#endif
+#else
+#include <twl/misc.h>
+#include <twl/types.h>
+#if defined(SDK_ARM9) || defined(SDK_PORT)
+#ifdef SDK_PORT
+#include <twl/hw/X86/ioreg_PAD.h>
+#else
+#include <twl/hw/ARM9/ioreg_PAD.h>
+#endif
+#else // SDK_ARM9 || defined(SDK_PORT)
+#include <twl/hw/ARM7/ioreg_PAD.h>
+#endif // SDK_ARM9 || defined(SDK_PORT)
+#include <twl/spi/common/pm_common.h>
 #endif
 
 #define REG_PMIC_CTL_ADDR        0
@@ -67,8 +82,56 @@ enum {
 	PM_UTIL_SOUND_VOL_CTRL_ON,
 	PM_UTIL_SOUND_VOL_CTRL_OFF,
 	PM_UTIL_FORCE_POWER_OFF,
+#if SDK_VERSION_MAJOR == 4
 	PM_UTIL_FORCE_POWER_ON
+#elif SDK_VERSION_MAJOR == 5
+	PM_UTIL_GET_STATUS,
+	PM_UTIL_SET_AMP,
+	PM_UTIL_SET_AMPGAIN,
+	PM_UTIL_SET_BLINK,
+#ifdef SDK_TWL
+	PM_UTIL_FORCE_RESET_HARDWARE,
+	PM_UTIL_FORCE_EXIT,
+	PM_UTIL_WIRELESS_LED,
+	PM_UTIL_SET_AMPGAIN_LEVEL,
+#endif
+#ifdef SDK_TWL
+	PMi_UTIL_SET_BACKLIGHT_BRIGHTNESS,
+#endif
+	PMi_UTIL_READREG,
+	PMi_UTIL_WRITEREG,
+	PMi_UTIL_PMIC_10,
+	PM_UTIL_DUMMYEND
+#endif
 };
+
+#if SDK_VERSION_MAJOR == 5
+enum {
+	PM_UTIL_PARAM_BATTERY,
+	PM_UTIL_PARAM_BATTERY_LEVEL,
+	PM_UTIL_PARAM_AC_ADAPTER,
+	PM_UTIL_PARAM_BACKLIGHT,
+	PM_UTIL_PARAM_SOUND_POWER,
+	PM_UTIL_PARAM_SOUND_VOLUME,
+	PM_UTIL_PARAM_AMP,
+	PM_UTIL_PARAM_AMPGAIN,
+	PM_UTIL_PARAM_BLINK,
+#ifdef SDK_TWL
+	PM_UTIL_PARAM_AMPGAIN_LEVEL,
+	PMi_UTIL_GET_BACKLIGHT_BRIGHTNESS,
+#endif
+	PM_UTIL_PARAM_DUMMYEND
+};
+
+#ifdef SDK_TWL
+#define PM_NOTIFY_POWER_SWITCH 0
+#define PM_NOTIFY_RESET_HARDWARE 1
+#define PM_NOTIFY_SHUTDOWN 2
+#define PM_NOTIFY_BATTERY_CHANGED 3
+#define PM_NOTIFY_BATTERY_LOW 4
+#define PM_NOTIFY_BATTERY_EMPTY 5
+#endif
+#endif /* SDK_VERSION_MAJOR */
 
 #define PM_BAUDRATE_4MHZ             0
 #define PM_BAUDRATE_2MHZ             1
@@ -82,7 +145,18 @@ enum {
 #define PM_TRIGGER_COVER_OPEN       (1 << 2)
 #define PM_TRIGGER_CARD             (1 << 3)
 #define PM_TRIGGER_CARTRIDGE        (1 << 4)
-
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+#define PM_TRIGGER_SDIO (1 << 5)
+#define PM_TRIGGER_MASK                                                        \
+  (PM_TRIGGER_KEY | PM_TRIGGER_RTC_ALARM | PM_TRIGGER_COVER_OPEN |             \
+   PM_TRIGGER_CARD | PM_TRIGGER_CARTRIDGE | PM_TRIGGER_SDIO)
+#else
+#define PM_TRIGGER_MASK                                                        \
+  (PM_TRIGGER_KEY | PM_TRIGGER_RTC_ALARM | PM_TRIGGER_COVER_OPEN |             \
+   PM_TRIGGER_CARD | PM_TRIGGER_CARTRIDGE)
+#endif
+#endif
 typedef u32 PMWakeUpTrigger;
 
 #define PM_PAD_LOGIC_OR    (0 << REG_PAD_KEYCNT_LOGIC_SHIFT)
@@ -90,12 +164,26 @@ typedef u32 PMWakeUpTrigger;
 
 typedef u32 PMLogic;
 
+#if SDK_VERSION_MAJOR == 4
 #define PM_BACKLIGHT_RECOVER_TOP_SHIFT      5
 #define PM_BACKLIGHT_RECOVER_BOTTOM_SHIFT   6
 #define PM_BACKLIGHT_RECOVER_TOP_ON        (1 << PM_BACKLIGHT_RECOVER_TOP_SHIFT)
 #define PM_BACKLIGHT_RECOVER_TOP_OFF       (0 << PM_BACKLIGHT_RECOVER_TOP_SHIFT)
 #define PM_BACKLIGHT_RECOVER_BOTTOM_ON     (1 << PM_BACKLIGHT_RECOVER_BOTTOM_SHIFT)
 #define PM_BACKLIGHT_RECOVER_BOTTOM_OFF    (0 << PM_BACKLIGHT_RECOVER_BOTTOM_SHIFT)
+#elif SDK_VERSION_MAJOR == 5
+#define PM_BACKLIGHT_RECOVER_TOP_SHIFT 6
+#define PM_BACKLIGHT_RECOVER_BOTTOM_SHIFT 7
+#define PM_BACKLIGHT_RECOVER_TOP_MASK (1 << PM_BACKLIGHT_RECOVER_TOP_SHIFT)
+#define PM_BACKLIGHT_RECOVER_TOP_ON PM_BACKLIGHT_RECOVER_TOP_MASK
+#define PM_BACKLIGHT_RECOVER_TOP_OFF 0
+#define PM_BACKLIGHT_RECOVER_BOTTOM_MASK                                       \
+  (1 << PM_BACKLIGHT_RECOVER_BOTTOM_SHIFT)
+#define PM_BACKLIGHT_RECOVER_BOTTOM_ON PM_BACKLIGHT_RECOVER_BOTTOM_MASK
+#define PM_BACKLIGHT_RECOVER_BOTTOM_OFF 0
+#define PM_BACKLIGHT_RECOVER_MASK                                              \
+  (PM_BACKLIGHT_RECOVER_TOP_MASK | PM_BACKLIGHT_RECOVER_BOTTOM_MASK)
+#endif
 
 typedef enum {
 	PM_LED_PATTERN_NONE          = 0,
@@ -125,6 +213,16 @@ typedef enum {
 	PM_LED_BLINK_HIGH = 3
 } PMLEDStatus;
 
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+typedef enum {
+  PM_WIRELESS_LED_OFF = FALSE,
+  PM_WIRELESS_LED_ON = TRUE
+} PMWirelessLEDStatus;
+#endif
+#endif
+
+#if SDK_VERSION_MAJOR == 4
 #define PM_COMMAND_SHIFT        22
 #define PM_COMMAND_MASK         0x3c00000
 
@@ -133,6 +231,26 @@ typedef enum {
 
 #define PM_REG_OP_DATA_SHIFT    0
 #define PM_REG_OP_DATA_MASK     0xffff
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+typedef u16 PMBatteryLevel;
+#define PM_BATTERY_LEVEL_MIN 0
+#define PM_BATTERY_LEVEL_MAX 5
+
+#ifdef SDK_TWL
+#define PM_RESET_FLAG_NONE 0
+#define PM_RESET_FLAG_FORCED 1
+
+#define PM_AMPGAIN_LEVEL_SCALE 120
+#define PM_AMPGAIN_LEVEL_MIN 0
+#define PM_AMPGAIN_LEVEL_MAX (PM_AMPGAIN_LEVEL_SCALE - 1)
+#endif
+#define PM_AMPGAIN_LEVEL_DS0 31
+#define PM_AMPGAIN_LEVEL_DS1 43
+#define PM_AMPGAIN_LEVEL_DS2 55
+#define PM_AMPGAIN_LEVEL_DS3 67
+#endif
 
 #define PM_READING             -1
 

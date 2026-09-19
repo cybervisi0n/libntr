@@ -39,6 +39,12 @@ extern "C" {
 
     typedef u32 OSIntrMode;
 
+    #if SDK_VERSION_MAJOR == 5
+    #if defined(SDK_ARM9) || defined(SDK_PORT)
+    typedef void (*OSTerminateCallback)(void *);
+    #endif
+    #endif
+
     extern OSIntrMode OS_EnableInterrupts(void);
     extern OSIntrMode OS_DisableInterrupts(void);
     extern OSIntrMode OS_RestoreInterrupts(OSIntrMode state);
@@ -51,6 +57,13 @@ extern "C" {
     extern OSProcMode OS_GetProcMode(void);
 
     extern void OS_Terminate(void);
+    #if SDK_VERSION_MAJOR == 5
+    extern void OSi_TerminateCore(void);
+
+    #ifdef SDK_ARM9
+    extern void OSi_SetTerminateCallback(OSTerminateCallback callback, void *arg);
+    #endif
+    #endif
 
     #ifdef SDK_ARM9
         extern void OS_Halt(void);
@@ -64,6 +77,11 @@ extern "C" {
     #endif
 
     extern void OS_Exit(int status);
+    #if SDK_VERSION_MAJOR == 5
+    extern void OS_FExit(int console, int status);
+    extern void OS_SpinWaitCpuCycles(u32 cycle);
+    extern void OS_SpinWaitSysCycles(u32 cycle);
+    #endif
     extern void OS_SpinWait(u32 cycle);
 
     #ifndef OSi_OSIRQMASK_DEFINED

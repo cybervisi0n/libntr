@@ -63,8 +63,29 @@ static const u8 fsi_def_digest_key[64] = {
 	0x87, 0x46, 0x58, 0x24,
 };
 
+#if (!defined(SDK_BUILD_ARM) || (SDK_VERSION_MAJOR == 5))
+MWiDestructorChain *__global_destructor_chain;
+#endif
+
+#if SDK_VERSION_MAJOR == 4
 static const void *fsi_digest_key_ptr = fsi_def_digest_key;
 static int fsi_digest_key_len = sizeof(fsi_def_digest_key);
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+typedef struct FSOverlaySource {
+
+  FSArchive *arc;
+
+  CARDRomRegion ovt9;
+  CARDRomRegion ovt7;
+
+  const void *digest_key_ptr;
+  u32 digest_key_len;
+} FSOverlaySource;
+
+static FSOverlaySource FSiOverlayContext;
+#endif
 
 #if !defined(SDK_TEG) || !defined(SDK_ARM9)
     #define FS_NEED_CARD    1
@@ -94,7 +115,12 @@ void FS_ClearOverlayImage (FSOverlayInfo *p_ovi)
     {
         FSFileID ret;
 
+        #if SDK_VERSION_MAJOR == 4
         ret.arc = &fsi_arc_rom;
+        #endif
+        #if SDK_VERSION_MAJOR == 5
+        ret.arc = FSiOverlayContext.arc;
+        #endif
         ret.file_id = p_ovi->header.file_id;
 
         return ret;
@@ -298,10 +324,6 @@ void FS_StartOverlay (FSOverlayInfo *p_ovi)
 	}
 
 }
-
-#ifndef SDK_BUILD_ARM
-MWiDestructorChain *__global_destructor_chain;
-#endif
 
 void FS_EndOverlay (FSOverlayInfo *p_ovi)
 {

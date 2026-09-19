@@ -128,6 +128,18 @@ static inline void MI_CpuClear8 (void * dest, u32 size)
     #define MI_WriteWord(adrs, val)  do { (*(vu32 *)(adrs)) = (u32)(val); } while (0)
 #endif
 
+#if SDK_VERSION_MAJOR == 5
+void MI_CpuFill(void *dest, u8 data, u32 size);
+
+void MI_CpuCopy(const void *srcp, void *destp, u32 size);
+
+void MI_CpuMove(const void *srcp, void *destp, u32 size);
+
+static inline void MI_CpuClear(void *dest, u32 size) {
+  MI_CpuFill(dest, 0, size);
+}
+#endif
+
 void MI_Copy16B(register const void * pSrc, register void * pDest);
 void MI_Copy32B(register const void * pSrc, register void * pDest);
 void MI_Copy36B(register const void * pSrc, register void * pDest);

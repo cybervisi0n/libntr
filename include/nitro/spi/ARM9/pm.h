@@ -5,19 +5,26 @@
 extern "C" {
 #endif
 
+#ifndef SDK_TWL
 #include <nitro/misc.h>
 #include <nitro/types.h>
+#else
+#include <twl/misc.h>
+#include <twl/types.h>
+#endif
 #include <nitro/spi/common/pm_common.h>
 #include <nitro/spi/common/type.h>
 #include <nitro/pxi/common/fifo.h>
 
 typedef void (*PMCallback) (u32 result, void * arg);
 
+#if SDK_VERSION_MAJOR == 4
 typedef struct {
 	u16 flag;
 	u16 padding;
 	u16 * buffer;
 } PMData16;
+#endif
 
 typedef enum {
 	PM_LCD_TOP = 0,
@@ -55,6 +62,18 @@ typedef enum {
 	PM_LCD_POWER_ON = 1
 } PMLCDPower;
 
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+typedef enum {
+  PM_EXIT_FACTOR_NONE = 0,
+  PM_EXIT_FACTOR_PWSW = 1,
+  PM_EXIT_FACTOR_BATTERY = 2,
+  PM_EXIT_FACTOR_USER = 3
+} PMExitFactor;
+#endif
+#endif
+
+#if SDK_VERSION_MAJOR == 4
 typedef void (*PMSleepCallback) (void *);
 
 typedef struct PMiSleepCallbackInfo PMSleepCallbackInfo;
@@ -63,6 +82,47 @@ struct PMiSleepCallbackInfo {
 	void * arg;
 	PMSleepCallbackInfo * next;
 };
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+typedef void (*PMGenCallback)(void *);
+
+#define PMSleepCallback PMGenCallback
+#ifdef SDK_TWL
+
+#define PMExitCallback PMGenCallback
+
+#define PMBatteryLowCallback PMGenCallback
+#endif
+
+typedef struct PMiGenCallbackInfo PMGenCallbackInfo;
+struct PMiGenCallbackInfo {
+  PMGenCallback callback;
+  void *arg;
+  int priority;
+  PMGenCallbackInfo *next;
+};
+
+#define PMSleepCallbackInfo PMGenCallbackInfo
+#ifdef SDK_TWL
+
+#define PMExitCallbackInfo PMGenCallbackInfo
+
+#define PMBatteryLowCallbackInfo PMGenCallbackInfo
+#endif
+
+#define PM_CALLBACK_PRIORITY_SYSMIN (-65535)
+#define PM_CALLBACK_PRIORITY_MIN (-255)
+#define PM_CALLBACK_PRIORITY_MAX 255
+#define PM_CALLBACK_PRIORITY_SYSMAX 65535
+
+#define PM_CALLBACK_PRIORITY_WM 1000
+#define PM_CALLBACK_PRIORITY_DSP 1010
+#define PM_CALLBACK_PRIORITY_CAMERA 1020
+#define PM_CALLBACK_PRIORITY_NWM PM_CALLBACK_PRIORITY_SYSMAX
+#define PM_CALLBACK_PRIORITY_FS PM_CALLBACK_PRIORITY_SYSMAX - 1
+#define PM_CALLBACK_PRIORITY_SNDEX PM_CALLBACK_PRIORITY_SYSMAX - 2
+#endif
 
 void PM_Init(void);
 
@@ -81,11 +141,43 @@ u32 PM_SetAmp(PMAmpSwitch sw);
 u32 PM_SetAmpGainAsync(PMAmpGain gain, PMCallback callback, void * arg);
 u32 PM_SetAmpGain(PMAmpGain gain);
 
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+u32 PM_SetAmpGainLevelAsync(u8 level, PMCallback callback, void *arg);
+u32 PM_SetAmpGainLevel(u8 level);
+#endif
+#endif
+
 u32 PM_GetBattery(PMBattery * batteryBuf);
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+u32 PM_GetBatteryLevel(PMBatteryLevel *levelBuf);
+#else
+static inline u32 PM_GetBatteryLevel(PMBatteryLevel *levelBuf) {
+#pragma unused(levelBuf)
+  return PM_RESULT_ERROR;
+}
+#endif
+
+#ifdef SDK_TWL
+u32 PM_GetACAdapter(BOOL *isConnectedBuf);
+#else
+static inline u32 PM_GetACAdapter(BOOL *isConnectedBuf) {
+#pragma unused(isConnectedBuf)
+  return PM_RESULT_ERROR;
+}
+#endif
+#endif
 u32 PM_GetBackLight(PMBackLightSwitch * top, PMBackLightSwitch * bottom);
 
 u32 PM_GetAmp(PMAmpSwitch * swBuf);
 u32 PM_GetAmpGain(PMAmpGain * gainBuf);
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+u32 PM_GetAmpGainLevel(u8 *levelBuf);
+u32 PMi_SetWirelessLED(PMWirelessLEDStatus sw);
+#endif
+#endif
 
 void PM_GoSleepMode(PMWakeUpTrigger trigger, PMLogic logic, u16 keyPattern);
 
@@ -103,6 +195,11 @@ void PM_PrependPostSleepCallback(PMSleepCallbackInfo * info);
 
 void PM_DeletePreSleepCallback(PMSleepCallbackInfo * info);
 void PM_DeletePostSleepCallback(PMSleepCallbackInfo * info);
+
+#if SDK_VERSION_MAJOR == 5
+void PM_ClearPreSleepCallback(void);
+void PM_ClearPostSleepCallback(void);
+#endif
 
 BOOL PM_SetLCDPower(PMLCDPower sw);
 PMLCDPower PM_GetLCDPower(void);
@@ -122,6 +219,33 @@ inline u32 PM_SetLEDPattern (PMLEDPattern pattern)
 
 u32 PM_GetLEDPatternAsync(PMLEDPattern * patternBuf, PMCallback callback, void * arg);
 u32 PM_GetLEDPattern(PMLEDPattern * patternBuf);
+
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+static inline void PM_SetExitCallbackInfo(PMExitCallbackInfo *info,
+                                          PMExitCallback callback, void *arg) {
+  info->callback = callback;
+  info->arg = arg;
+}
+
+void PM_ReadyToExit(void);
+PMExitFactor PM_GetExitFactor(void);
+void PM_AppendPreExitCallback(PMExitCallbackInfo *info);
+void PM_AppendPostExitCallback(PMExitCallbackInfo *info);
+void PM_PrependPreExitCallback(PMExitCallbackInfo *info);
+void PM_PrependPostExitCallback(PMExitCallbackInfo *info);
+void PM_InsertPreExitCallback(PMExitCallbackInfo *info, int priority);
+void PM_InsertPostExitCallback(PMExitCallbackInfo *info, int priority);
+void PM_DeletePreExitCallback(PMExitCallbackInfo *info);
+void PM_DeletePostExitCallback(PMExitCallbackInfo *info);
+void PM_ClearPreExitCallback(void);
+void PM_ClearPostExitCallback(void);
+void PM_SetAutoExit(BOOL sw);
+BOOL PM_GetAutoExit(void);
+void PM_SetBatteryLowCallback(PMBatteryLowCallback callback, void *arg);
+void PM_ForceToResetHardware(void);
+#endif
+#endif
 
 typedef enum {
 	PM_SOUND_POWER_OFF = 0,
@@ -165,6 +289,28 @@ u32 PMi_SetLEDAsync(PMLEDStatus status, PMCallback callback, void * arg);
 u32 PMi_SetLED(PMLEDStatus status);
 
 u32 PMi_GetLCDOffCount(void);
+
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+void PMi_ExecuteAllListsOfExitCallback(void);
+void PMi_ExecutePreExitCallbackList(void);
+void PMi_ExecutePostExitCallbackList(void);
+#endif
+
+void PMi_InsertPreSleepCallbackEx(PMSleepCallbackInfo *info, int priority);
+void PMi_InsertPostSleepCallbackEx(PMSleepCallbackInfo *info, int priority);
+
+#ifdef SDK_TWL
+void PMi_InsertPreExitCallbackEx(PMExitCallbackInfo *info, int priority);
+void PMi_InsertPostExitCallbackEx(PMExitCallbackInfo *info, int priority);
+#endif
+
+void PMi_SetDispOffCount(void);
+
+#ifdef SDK_TWL
+BOOL PMi_TryLockForReset(void);
+#endif
+#endif
 
 #ifdef __cplusplus
 }

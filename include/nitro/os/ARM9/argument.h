@@ -11,6 +11,9 @@ extern "C" {
 
 #ifdef SDK_FINALROM
     #define OS_NO_ARGUMENT    TRUE
+    #if SDK_VERSION_MAJOR == 5
+    #define OS_NO_ARGC_AND_ARGV TRUE
+    #endif
 #endif
 
 #ifdef OS_ARGUMENT_FORCE_TO_BE_AVAILABLE

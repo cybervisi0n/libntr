@@ -16,8 +16,14 @@ typedef enum {
 } OSChinaIsbn;
 #endif
 
+#if SDK_VERSION_MAJOR == 4
 void OS_InitChina(const char ** isbn);
 void OS_ShowAttentionChina(const char ** isbn);
+#endif
+#if SDK_VERSION_MAJOR == 5
+void OS_InitChina(const char **isbn, OSChinaIsbn param);
+void OS_ShowAttentionChina(const char **isbn, OSChinaIsbn param);
+#endif
 
 #ifdef  __cplusplus
 }

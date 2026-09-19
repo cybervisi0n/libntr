@@ -18,6 +18,7 @@ static FSArchive *arc_list = NULL;
 
 FSDirPos current_dir_pos;
 #if SDK_VERSION_MAJOR == 5
+#define FS_SUPPORT_LONG_ARCNAME
 static char current_dir_path[FS_ENTRY_LONGNAME_MAX];
 
 
@@ -421,7 +422,7 @@ FSFile *FSi_NextCommand (
     else {
 
       if (owner) {
-        if ((arc->flag & FS_ARCHIVE_FLAG_RUNNING) != 0) {
+        if ((p_arc->flag & FS_ARCHIVE_FLAG_RUNNING) != 0) {
           FSFile tmp;
           FS_InitFile(&tmp);
           tmp.arc = p_arc;
@@ -481,7 +482,7 @@ void FSi_ExecuteAsyncCommand (FSFile *p_file)
     	}
 
     	else {
-    	  p_file = FSi_NextCommand(arc, TRUE);
+    	  p_file = FSi_NextCommand(p_arc, TRUE);
     	}
 		#endif
 	}
@@ -501,18 +502,18 @@ BOOL FSi_ExecuteSyncCommand (FSFile *p_file)
 
 	return FS_IsSucceeded(p_file);
 	#elif SDK_VERSION_MAJOR == 5
-  FSi_WaitConditionChange(&file->stat, FS_FILE_STATUS_OPERATING,
-                          FS_FILE_STATUS_BUSY, file->queue);
+  FSi_WaitConditionChange(&p_file->stat, FS_FILE_STATUS_OPERATING,
+                          FS_FILE_STATUS_BUSY, p_file->queue);
 
-  if ((file->stat & FS_FILE_STATUS_OPERATING) != 0) {
-    FSArchive *const arc = file->arc;
+  if ((p_file->stat & FS_FILE_STATUS_OPERATING) != 0) {
+    FSArchive *const arc = p_file->arc;
     FSResult result;
-    result = FSi_InvokeCommand(file, FSi_GetCurrentCommand(file));
-    FSi_EndCommand(file, result);
+    result = FSi_InvokeCommand(p_file, FSi_GetCurrentCommand(p_file));
+    FSi_EndCommand(p_file, result);
 
-    file = FSi_NextCommand(arc, TRUE);
-    if (file) {
-      FSi_ExecuteAsyncCommand(file);
+    p_file = FSi_NextCommand(arc, TRUE);
+    if (p_file) {
+      FSi_ExecuteAsyncCommand(p_file);
     }
   }
 	#endif
@@ -666,7 +667,9 @@ void FSi_EndArchive (void)
 
 void FS_InitArchive (FSArchive *p_arc)
 {
+  #if SDK_VERSION_MAJOR == 4
 	FS_ASSERT_ARG(p_arc, FALSE);
+  #endif
 	MI_CpuClear8(p_arc, sizeof(FSArchive));
 	#if SDK_VERSION_MAJOR == 4
 #if !defined(SDK_NO_THREAD)
@@ -953,7 +956,6 @@ BOOL FS_RegisterArchiveName (FSArchive *p_arc, const char *name, u32 name_len)
           }
         }
 #endif
-
         else {
           OS_TPanic("too long archive-name(%.*s)!", name_len, name);
         }
@@ -1248,9 +1250,13 @@ void *FS_UnloadArchiveTables (FSArchive *p_arc)
 
 BOOL FS_SuspendArchive (FSArchive *p_arc)
 {
+  #if SDK_VERSION_MAJOR == 4
 	FS_ASSERT_INIT(0);
 	FS_ASSERT_ARG(p_arc, 0);
-
+  #elif SDK_VERSION_MAJOR == 5
+  SDK_ASSERT(FS_IsAvailable());
+  SDK_NULL_ASSERT(p_arc);
+  #endif
 	{
 		OSIntrMode bak_psr = OS_DisableInterrupts();
 		const BOOL bak_stat = !FS_IsArchiveSuspended(p_arc);
@@ -1362,7 +1368,7 @@ void FS_NotifyArchiveAsyncEnd (FSArchive *p_arc, FSResult ret)
 		(void)OS_RestoreInterrupts(bak_psr);
 	}
 	#elif SDK_VERSION_MAJOR == 5
-  FSFile *file = arc->list;
+  FSFile *file = p_arc->list;
   if ((file->stat & FS_FILE_STATUS_BLOCKING) != 0) {
     OSIntrMode bak_psr = OS_DisableInterrupts();
     file->stat |= FS_FILE_STATUS_ASYNC_DONE;
@@ -1371,7 +1377,7 @@ void FS_NotifyArchiveAsyncEnd (FSArchive *p_arc, FSResult ret)
     (void)OS_RestoreInterrupts(bak_psr);
   } else {
     FSi_EndCommand(file, ret);
-    file = FSi_NextCommand(arc, TRUE);
+    file = FSi_NextCommand(p_arc, TRUE);
     if (file) {
       FSi_ExecuteAsyncCommand(file);
     }

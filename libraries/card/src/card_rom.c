@@ -115,7 +115,13 @@ static BOOL CARDi_ReadFromCache (CARDRomStat *p)
 #endif
 
 #if defined(SDK_TS) || defined(SDK_ARM7)
-    static void CARDi_SetRomOp (u32 cmd1, u32 cmd2)
+    static void CARDi_SetRomOp (
+      #if SDK_VERSION_MAJOR == 4
+      u32 cmd1, u32 cmd2
+      #elif SDK_VERSION_MAJOR == 5
+      u32 command, u32 offset
+      #endif
+    )
     {
         #if SDK_VERSION_MAJOR == 4
         while ((*(vu32 *)REG_CARDCNT & CARD_START) != 0);
@@ -549,8 +555,10 @@ static BOOL CARDi_IsRomDmaAvailable(u32 dma, void *dst, u32 src, u32 len) {
 #if defined(SDK_TS)
     u32 CARDi_ReadRomID (void)
     {
+        #if SDK_VERSION_MAJOR == 4
         CARDRomStat *const p = &rom_stat;
         CARDiCommon *const c = &cardi_common;
+        #endif
 
         u32 ret = 0;
 
@@ -625,18 +633,17 @@ void CARDi_ReadRom (u32 dma,
         OS_TPanic("this program cannot access CARD-ROM!");
     }
 #endif
-
-	CARDi_WaitTask(
+    #if SDK_VERSION_MAJOR == 4
+    CARDi_WaitTask(
         c, 
         #if SDK_VERSION_MAJOR == 5
         TRUE,
         #endif
         callback, 
         arg);
-
-    #if SDK_VERSION_MAJOR == 4
 	c->dma = dma;
     #elif SDK_VERSION_MAJOR == 5
+    (void)CARDi_WaitForTask(c, TRUE, callback, arg);
     c->DmaCall = CARDi_GetDmaInterface(dma);
     c->dma = (u32)((c->DmaCall != NULL) ? (dma & MI_DMA_CHANNEL_MASK)
                                         : MI_DMA_NOT_USE);

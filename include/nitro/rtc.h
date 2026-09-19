@@ -15,6 +15,9 @@ extern "C" {
 #else
     #include <nitro/rtc/ARM9/api.h>
     #include <nitro/rtc/ARM9/convert.h>
+    #if SDK_VERSION_MAJOR == 5
+    #include <nitro/rtc/ARM9/swclock.h>
+    #endif
 #endif
 
 #ifdef  __cplusplus

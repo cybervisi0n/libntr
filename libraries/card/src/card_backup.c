@@ -145,7 +145,9 @@ static void CARDi_RequestStreamCommandCore (CARDiCommon *p)
 		p->dst += len;
 		p->len -= len;
 	} while (p->len > 0);
+	#if SDK_VERSION_MAJOR == 4
 	CARDi_EndTask(p, TRUE);
+	#endif
 }
 
 static void CARDi_RequestWriteSectorCommandCore (CARDiCommon *p)

@@ -32,7 +32,9 @@ extern "C" {
 #endif
 
 void CARDi_InitStatusRegister(void);
+#if SDK_VERSION_MAJOR == 4
 void CARDi_IdentifyBackupCore(CARDBackupType type);
+#endif
 
 u8 CARDi_CommandReadStatus(void);
 

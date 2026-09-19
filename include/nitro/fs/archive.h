@@ -300,6 +300,12 @@ static inline BOOL FS_IsArchiveSuspended (volatile const FSArchive * p_arc)
 	return (p_arc->flag & FS_ARCHIVE_FLAG_SUSPEND) ? TRUE : FALSE;
 }
 
+#if SDK_VERSION_MAJOR == 5
+SDK_INLINE void *FS_GetArchiveUserData(const FSArchive *arc) {
+  return arc->userdata;
+}
+#endif
+
 FSArchive * FS_FindArchive(const char * name, int name_len);
 
 BOOL FS_RegisterArchiveName(FSArchive * p_arc, const char * name, u32 name_len);
@@ -313,6 +319,10 @@ BOOL FS_LoadArchive(FSArchive * p_arc, u32 base,
 BOOL FS_UnloadArchive(FSArchive * p_arc);
 u32 FS_LoadArchiveTables(FSArchive * p_arc, void * p_mem, u32 max_size);
 void * FS_UnloadArchiveTables(FSArchive * p_arc);
+#endif
+#if SDK_VERSION_MAJOR == 5
+BOOL FS_MountArchive(FSArchive *arc, void *userdata, const FSArchiveInterface *vtbl, u32 reserved);
+BOOL FS_UnmountArchive(FSArchive *arc);
 #endif
 BOOL FS_SuspendArchive(FSArchive * p_arc);
 BOOL FS_ResumeArchive(FSArchive * p_arc);

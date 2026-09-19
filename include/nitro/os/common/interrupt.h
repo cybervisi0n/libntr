@@ -1,6 +1,11 @@
 #ifndef NITRO_OS_INTERRUPT_H_
 #define NITRO_OS_INTERRUPT_H_
 
+#ifdef SDK_TWL
+#include <twl/os/common/interrupt.h>
+#endif
+
+#ifndef SDK_TWL
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -193,5 +198,6 @@ void OSi_CheckIrqStack(char * file, int line);
 #ifdef __cplusplus
 }
 #endif
+#endif /* SDK_TWL */
 
 #endif

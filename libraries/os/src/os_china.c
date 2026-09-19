@@ -191,11 +191,11 @@ static void SetISBNString (const char ** isbn)
     };
 
     const int count = sizeof(pos) / sizeof(*pos);
-    const int digit_id = 0;
 
     GXOamAttr * dst = (GXOamAttr *)HW_DB_OAM;
 
     #if SDK_VERSION_MAJOR == 4
+    const int digit_id = 0;
     for (i = 0; i < count; i++) {
         for (j = 0; j < pos[i].length; ++j) {
             dst->attr01 = (u32)(((pos[i].x + j * 8) << 16) | (pos[i].y << 0));
@@ -210,6 +210,7 @@ static void SetISBNString (const char ** isbn)
         }
     }
     #elif SDK_VERSION_MAJOR == 5
+    const int digit_num = 12; 
     u16 pos_x;
     u16 pos_y;
     u16 index;
@@ -369,7 +370,13 @@ static void DispExclusiveMessage (void)
     }
 }
 
-SDK_WEAK_SYMBOL void OS_ShowAttentionChina (const char ** isbn)
+SDK_WEAK_SYMBOL void OS_ShowAttentionChina (
+    const char ** isbn
+    #if SDK_VERSION_MAJOR == 5
+    ,
+    OSChinaIsbn param
+    #endif
+)
 {
     struct {
         u32 gx_dispcnt;
@@ -391,6 +398,12 @@ SDK_WEAK_SYMBOL void OS_ShowAttentionChina (const char ** isbn)
         BOOL irq;
         OSIntrMode interrupts;
     } shelter;
+
+    #if SDK_VERSION_MAJOR == 5
+    if (param == OS_CHINA_ISBN_NO_DISP) {
+      return;
+    }
+    #endif
 
     {
         shelter.gx_dispstat = reg_GX_DISPSTAT;

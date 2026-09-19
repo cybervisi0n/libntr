@@ -12,6 +12,12 @@ extern "C" {
 
 #define MATH_MD5_DIGEST_SIZE    DGT_HASH1_DIGEST_SIZE
 #define MATH_SHA1_DIGEST_SIZE   DGT_HASH2_DIGEST_SIZE
+#if SDK_VERSION_MAJOR == 5
+#define MATH_SHA256_DIGEST_SIZE 32
+#define MATH_HASH_DIGEST_SIZE_MAX MATH_SHA1_DIGEST_SIZE
+
+#define MATH_HASH_BLOCK_SIZE (512 / 8)
+#endif
 
 #define MATH_MD5_BLOCK_SIZE     DGT_HASH_BLOCK_SIZE
 #define MATH_SHA1_BLOCK_SIZE    DGT_HASH_BLOCK_SIZE
@@ -71,6 +77,33 @@ static inline void MATH_CalcHMACSHA1 (void * digest, const void * data, u32 data
 {
 	DGT_Hash2CalcHmac(digest, (void *)data, (int)dataLength, (void *)key, (int)keyLength);
 }
+
+#if SDK_VERSION_MAJOR == 5
+#define MATHSHA256_CBLOCK 64
+#define MATHSHA256_LBLOCK 16
+#define MATHSHA256_BLOCK 16
+#define MATHSHA256_LAST_BLOCK 56
+#define MATHSHA256_LENGTH_BLOCK 8
+#define MATHSHA256_DIGEST_LENGTH 32
+
+typedef struct MATHSHA256Context MATHSHA256Context;
+typedef void(MATHSHA256_BLOCK_FUNC)(MATHSHA256Context *c, u32 *W, int num);
+
+struct MATHSHA256Context {
+  u32 h[8];
+  u32 Nl, Nh;
+  u8 data[MATHSHA256_CBLOCK];
+  int num;
+};
+
+void MATH_SHA256Init(MATHSHA256Context *c);
+void MATH_SHA256Update(MATHSHA256Context *c, const void *data, u32 len);
+void MATH_SHA256GetHash(MATHSHA256Context *c, void *digest);
+void MATH_CalcSHA256(void *digest, const void *data, u32 dataLength);
+void MATH_CalcHMACSHA256(void *digest, const void *data, u32 dataLength,
+                         const void *key, u32 keyLength);
+int MATHi_SetOverlayTableMode(int flag);
+#endif
 
 #ifdef __cplusplus
 }

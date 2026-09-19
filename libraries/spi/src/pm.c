@@ -4,6 +4,17 @@
 #include <nitro/spi/common/config.h>
 #include <nitro/ctrdg.h>
 #include <nitro/mb.h>
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+#include "../../os/include/application_jump_private.h"
+#endif
+
+#ifdef SDK_LINK_ISTD
+#pragma warn_extracomma off
+#include <istdbglib.h> // Has extra comma in enum
+#pragma warn_extracomma reset
+#endif
+#endif
 
 typedef struct {
     BOOL lock;
@@ -12,6 +23,7 @@ typedef struct {
     void * work;
 } PMiWork;
 
+#if SDK_VERSION_MAJOR == 4
 #define PMi_LCD_POWER_WAIT_MSEC  150
 #define PMi_LCD_POWER_WAIT_TICK  (OS_MilliSecondsToTicks(PMi_LCD_POWER_WAIT_MSEC) * (64 * 2))
 #define PMi_LCD_SLEEP_WAIT_MSEC  110
@@ -24,6 +36,15 @@ typedef struct {
         PMi_Work.callback = (callback);    \
         PMi_Work.callbackArg = (arg);      \
     } while (0)
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+#define PMi_LCD_WAIT_SYS_CYCLES 0x360000
+#define PMi_PXI_WAIT_TICK 10
+
+#define PMi_COMPARE_GT 0
+#define PMi_COMPARE_GE 1
+#endif
 
 #ifdef SDK_PORT
 static
@@ -41,30 +62,85 @@ inline u32 PMi_MakeData2 (u32 bit, u32 seq, u32 data)
     return (bit) | ((seq) << SPI_PXI_INDEX_SHIFT) | ((data) & 0xffff);
 }
 
+#if SDK_VERSION_MAJOR == 4
 BOOL PMi_Lock(void);
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+static u32 PMi_TryToSendPxiData(u32 *sendData, int num, u16 *retValue,
+                                PMCallback callback, void *arg);
+static void PMi_TryToSendPxiDataTillSuccess(u32 *sendData, int num);
+static u32 PMi_ForceToPowerOff(void);
+static void PMi_CallPostExitCallbackAndReset(BOOL isExit);
+#endif
+
 void PMi_WaitBusy(void);
 void PMi_DummyCallback(u32 result, void * arg);
+#if SDK_VERSION_MAJOR == 4
 void PMi_PrependList(PMSleepCallbackInfo ** listp, PMSleepCallbackInfo * info);
 void PMi_AppendList(PMSleepCallbackInfo ** listp, PMSleepCallbackInfo * info);
+#endif
+#if SDK_VERSION_MAJOR == 5
+static void PMi_InsertList(PMGenCallbackInfo **listp, PMGenCallbackInfo *info,
+                           int priority, int method);
+static void PMi_ClearList(PMGenCallbackInfo **listp);
+#endif
 void PMi_DeleteList(PMSleepCallbackInfo ** listp, PMSleepCallbackInfo * info);
 void PMi_ExecuteList(PMSleepCallbackInfo * listp);
 
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+static void PMi_FinalizeDebugger(void);
+#include <twl/ltdmain_begin.h>
+static void PMi_ProceedToExit(PMExitFactor factor);
+static void PMi_ClearPreExitCallback(void);
+static void PMi_ClearPostExitCallback(void);
+#include <twl/ltdmain_end.h>
+#endif
+
+static void PMi_LCDOnAvoidReset(void);
+static void PMi_WaitVBlank(void);
+#endif
+
+#if SDK_VERSION_MAJOR == 4
 static PMCallback PMi_Callback;
 static u16 PMi_IsInit = FALSE;
+#endif
 static PMiWork PMi_Work;
+#if SDK_VERSION_MAJOR == 4
 static PMData16 PMi_RegisterBuffer[PMIC_REG_NUMS];
 static volatile BOOL PMi_SyncFlag;
+#endif
 static volatile BOOL PMi_SleepEndFlag;
 
+#if SDK_VERSION_MAJOR == 4
 static OSMutex PMi_Mutex;
+#endif
 static u32 PMi_LCDCount;
+#if SDK_VERSION_MAJOR == 5
+static u32 PMi_DispOffCount;
+#endif
 
 static PMSleepCallbackInfo * PMi_PreSleepCallbackList = NULL;
 static PMSleepCallbackInfo * PMi_PostSleepCallbackList = NULL;
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+#include <twl/ltdmain_begin.h>
+static PMExitCallbackInfo *PMi_PreExitCallbackList = NULL;
+static PMExitCallbackInfo *PMi_PostExitCallbackList = NULL;
+#ifdef SDK_PORT
+static PMBatteryLowCallbackInfo PMi_BatteryLowCallbackInfo;
+#else
+static PMBatteryLowCallbackInfo PMi_BatteryLowCallbackInfo = {NULL, NULL, NULL};
+#endif
+#include <twl/ltdmain_end.h>
+#endif
+#endif
 
 static u32 PMi_SetAmp(PMAmpSwitch status);
 static PMAmpSwitch sAmpSwitch = PM_AMP_OFF;
 
+#if SDK_VERSION_MAJOR == 4
 #ifndef SDK_PORT
 static 
 #endif
@@ -82,6 +158,23 @@ BOOL PMi_Lock (void)
 
     return TRUE;
 }
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+static BOOL PMi_AutoExitFlag = TRUE;
+#ifndef SDK_FINALROM
+static BOOL PMi_ExitSequenceFlag = FALSE;
+#endif
+static PMExitFactor PMi_ExitFactor = PM_EXIT_FACTOR_NONE;
+#endif
+static u32 PMi_PreDmaCnt[4];
+
+#define PMi_WAITBUSY_METHOD_CPUMODE (1 << 1)
+#define PMi_WAITBUSY_METHOD_CPSR (1 << 2)
+#define PMi_WAITBUSY_METHOD_IME (1 << 3)
+static BOOL PMi_WaitBusyMethod = PMi_WAITBUSY_METHOD_CPUMODE;
+#endif
 
 extern void PXIi_HandlerRecvFifoNotEmpty(void);
 
@@ -106,7 +199,13 @@ static
 #endif
 void PMi_DummyCallback (u32 result, void * arg)
 {
-    *(u32 *)arg = result;
+    #if SDK_VERSION_MAJOR == 5
+    if (arg) {
+    #endif
+      *(u32 *)arg = result;
+    #if SDK_VERSION_MAJOR == 5
+    }
+    #endif
 }
 
 static void PMi_CallCallbackAndUnlock (u32 result)
@@ -127,9 +226,22 @@ static void PMi_CallCallbackAndUnlock (u32 result)
     }
 }
 
+#if SDK_VERSION_MAJOR == 5
+static void PMi_WaitVBlank(void) {
+  vu32 vcount = OS_GetVBlankCount();
+  while (vcount == OS_GetVBlankCount()) {
+  }
+}
+#endif
+
 void PM_Init (void)
 {
+    #if SDK_VERSION_MAJOR == 4
     int i;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    static u16 PMi_IsInit = FALSE;
+    #endif
 
     if (PMi_IsInit) {
         return;
@@ -139,6 +251,12 @@ void PM_Init (void)
     PMi_Work.lock = FALSE;
     PMi_Work.callback = NULL;
 
+    #if SDK_VERSION_MAJOR == 5
+    #ifdef SDK_TWL
+    *(u32 *)HW_RESET_LOCK_FLAG_BUF = PM_RESET_FLAG_NONE;
+    #endif
+    #endif
+
     PXI_Init();
     #ifndef SDK_PORT
     while (!PXI_IsCallbackReady(PXI_FIFO_TAG_PM, PXI_PROC_ARM7)) {
@@ -147,6 +265,7 @@ void PM_Init (void)
 
     PXI_SetFifoRecvCallback(PXI_FIFO_TAG_PM, PMi_CommonCallback);
 
+    #if SDK_VERSION_MAJOR == 4
     for (i = 0; i < PMIC_REG_NUMS; i++) {
         PMi_RegisterBuffer[i].flag = FALSE;
     }
@@ -154,6 +273,10 @@ void PM_Init (void)
     OS_InitMutex(&PMi_Mutex);
 
     PMi_LCDCount = OS_GetVBlankCount();
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    PMi_LCDCount = PMi_DispOffCount = OS_GetVBlankCount();
+    #endif
 }
 
 #ifdef SDK_PORT
@@ -166,15 +289,21 @@ void PMi_CommonCallback (PXIFifoTag tag, u32 data, BOOL err)
 
     u16 command;
     u16 pxiResult;
+    #if SDK_VERSION_MAJOR == 5
+    BOOL callCallback = TRUE;
+    #endif
 
+    #if SDK_VERSION_MAJOR == 4
     if (err) {
         PMi_CallCallbackAndUnlock(PM_RESULT_ERROR);
         return;
     }
+    #endif
 
     command = (u16)((data & SPI_PXI_RESULT_COMMAND_MASK) >> SPI_PXI_RESULT_COMMAND_SHIFT);
     pxiResult = (u16)((data & SPI_PXI_RESULT_DATA_MASK) >> SPI_PXI_RESULT_DATA_SHIFT);
 
+    #if SDK_VERSION_MAJOR == 4
     if (SPI_PXI_COMMAND_PM_REG0VALUE <= command && command <= SPI_PXI_COMMAND_PM_REG4VALUE) {
         int num = (int)(command - SPI_PXI_COMMAND_PM_REG0VALUE);
         u16 value = (u16)(pxiResult & 0xff);
@@ -197,10 +326,140 @@ void PMi_CommonCallback (PXIFifoTag tag, u32 data, BOOL err)
     }
 
     PMi_CallCallbackAndUnlock(pxiResult);
+    #endif
+
+    #if SDK_VERSION_MAJOR == 5
+  if (err) {
+    switch (command) {
+    case SPI_PXI_COMMAND_PM_SLEEP_START:
+    case SPI_PXI_COMMAND_PM_UTILITY:
+      pxiResult = PM_RESULT_BUSY;
+      break;
+
+    default:
+      pxiResult = PM_RESULT_ERROR;
+    }
+
+    PMi_CallCallbackAndUnlock(pxiResult);
+    return;
+  }
+
+  switch (command) {
+  case SPI_PXI_COMMAND_PM_SLEEP_START:
+
+    break;
+
+  case SPI_PXI_COMMAND_PM_UTILITY:
+    if (PMi_Work.work) {
+      *(u16 *)PMi_Work.work = (u16)pxiResult;
+    }
+    pxiResult = (u16)PM_RESULT_SUCCESS;
+    break;
+
+  case SPI_PXI_COMMAND_PM_SYNC:
+    pxiResult = (u16)PM_RESULT_SUCCESS;
+    break;
+
+  case SPI_PXI_COMMAND_PM_SLEEP_END:
+    PMi_SleepEndFlag = TRUE;
+    break;
+
+#ifdef SDK_TWL
+
+  case SPI_PXI_COMMAND_PM_NOTIFY:
+    switch (pxiResult) {
+    case PM_NOTIFY_POWER_SWITCH:
+      OS_TPrintf("[ARM9] Pushed power button.\n");
+      PMi_ProceedToExit(PM_EXIT_FACTOR_PWSW);
+      *(u32 *)HW_RESET_LOCK_FLAG_BUF = PM_RESET_FLAG_FORCED;
+      break;
+
+    case PM_NOTIFY_SHUTDOWN:
+      OS_TPrintf("[ARM9] Shutdown\n");
+
+      break;
+
+    case PM_NOTIFY_RESET_HARDWARE:
+      OS_TPrintf("[ARM9] Reset Hardware\n");
+
+      break;
+    case PM_NOTIFY_BATTERY_LOW:
+      OS_TPrintf("[ARM9] Battery low\n");
+      if (PMi_BatteryLowCallbackInfo.callback) {
+        (PMi_BatteryLowCallbackInfo.callback)(PMi_BatteryLowCallbackInfo.arg);
+      }
+      break;
+    case PM_NOTIFY_BATTERY_EMPTY:
+      OS_TPrintf("[ARM9] Battery empty\n");
+      PMi_ProceedToExit(PM_EXIT_FACTOR_BATTERY);
+      *(u32 *)HW_RESET_LOCK_FLAG_BUF = PM_RESET_FLAG_FORCED;
+      break;
+    default:
+      OS_TPrintf("[ARM9] unknown %x\n", pxiResult);
+      break;
+    }
+
+    callCallback = FALSE;
+    break;
+
+#endif /* SDK_TWL */
+  }
+
+  if (callCallback) {
+    PMi_CallCallbackAndUnlock(pxiResult);
+  }
+    #endif /* SDK_VERSION_MAJOR */
 }
+
+#if SDK_VERSION_MAJOR == 5
+static u32 PMi_TryToSendPxiData(u32 *sendData, int num, u16 *retValue,
+                                PMCallback callback, void *arg) {
+  int n;
+  OSIntrMode enabled = OS_DisableInterrupts();
+
+  if (PMi_Work.lock) {
+    (void)OS_RestoreInterrupts(enabled);
+    return PM_BUSY;
+  }
+  PMi_Work.lock = TRUE;
+
+  PMi_Work.work = (void *)retValue;
+  PMi_Work.callback = callback;
+  PMi_Work.callbackArg = arg;
+
+  for (n = 0; n < num; n++) {
+    PMi_SendPxiData(sendData[n]);
+  }
+
+  (void)OS_RestoreInterrupts(enabled);
+  return PM_SUCCESS;
+}
+
+#define PMi_UNUSED_RESULT 0xffff0000 // Value that should never be returned
+void PMi_TryToSendPxiDataTillSuccess(u32 *sendData, int num) {
+  volatile u32 result;
+  while (1) {
+    result = PMi_UNUSED_RESULT;
+    while (PMi_TryToSendPxiData(sendData, num, NULL, PMi_DummyCallback,
+                                (void *)&result) != PM_SUCCESS) {
+      OS_SpinWait(HW_CPU_CLOCK_ARM9 / 100);
+    }
+
+    while (result == PMi_UNUSED_RESULT) {
+      OS_SpinWait(HW_CPU_CLOCK_ARM9 / 100);
+    }
+    if (result == SPI_PXI_RESULT_SUCCESS) {
+      break;
+    }
+
+    OS_SpinWait(HW_CPU_CLOCK_ARM9 / 100);
+  }
+}
+#endif
 
 u32 PMi_SendSleepStart (u16 trigger, u16 keyIntrData)
 {
+    #if SDK_VERSION_MAJOR == 4
     u32 pxi_send_data;
 
     if (!PMi_Lock()) {
@@ -224,12 +483,37 @@ u32 PMi_SendSleepStart (u16 trigger, u16 keyIntrData)
 
     pxi_send_data = PMi_MakeData2(SPI_PXI_END_BIT, 1, keyIntrData);
     PMi_SendPxiData(pxi_send_data);
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    u32 sendData[2];
+
+    sendData[0] = PMi_MakeData1(SPI_PXI_START_BIT | SPI_PXI_END_BIT, 0,
+                                SPI_PXI_COMMAND_PM_SYNC, 0);
+    PMi_TryToSendPxiDataTillSuccess(sendData, 1);
+
+    while (PMi_SetLCDPower(PM_LCD_POWER_OFF, PM_LED_BLINK_LOW, FALSE, TRUE) !=
+           TRUE) {
+    }
+
+    sendData[0] = PMi_MakeData1(SPI_PXI_START_BIT, 0,
+                                SPI_PXI_COMMAND_PM_SLEEP_START, trigger);
+    sendData[1] = PMi_MakeData2(SPI_PXI_END_BIT, 1, keyIntrData);
+    PMi_TryToSendPxiDataTillSuccess(sendData, 2);
+    #endif
 
     return PM_SUCCESS;
 }
 
-u32 PM_SendUtilityCommandAsync (u32 number, PMCallback callback, void * arg)
+u32 PM_SendUtilityCommandAsync (
+    u32 number, 
+#if SDK_VERSION_MAJOR == 5
+    u16 parameter,
+    u16 * retValue,
+#endif
+    PMCallback callback, 
+    void * arg)
 {
+    #if SDK_VERSION_MAJOR == 4
     u32 pxi_send_data;
 
     if (!PMi_Lock()) {
@@ -245,12 +529,27 @@ u32 PM_SendUtilityCommandAsync (u32 number, PMCallback callback, void * arg)
     PMi_SendPxiData(pxi_send_data);
 
     return PM_SUCCESS;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    u32 sendData[2];
+
+    sendData[0] =
+        PMi_MakeData1(SPI_PXI_START_BIT, 0, SPI_PXI_COMMAND_PM_UTILITY, number);
+    sendData[1] = PMi_MakeData2(SPI_PXI_END_BIT, 1, parameter);
+
+    return PMi_TryToSendPxiData(sendData, 2, retValue, callback, arg);
+    #endif
 }
 
 u32 PM_SendUtilityCommand (u32 number)
 {
     u32 commandResult;
+    #if SDK_VERSION_MAJOR == 4
     u32 sendResult = PM_SendUtilityCommandAsync(number, PMi_DummyCallback, &commandResult);
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    u32 sendResult = PM_SendUtilityCommandAsync(number, parameter, retValue, PMi_DummyCallback, &commandResult);
+    #endif
 
     if (sendResult == PM_SUCCESS) {
         PMi_WaitBusy();

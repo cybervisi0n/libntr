@@ -1,10 +1,18 @@
 #include <nitro/os.h>
 #include <nitro/rtc.h>
 
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+#include <twl/rtc/ARM9/api_ex.h>
+#include "private.h"
+#endif
+#endif
+
 #ifdef SDK_PORT
 #include <time.h>
 #endif
 
+#if (SDK_VERSION_MAJOR == 4 || (!defined(SDK_TWL)))
 typedef enum RTCLock {
     RTC_LOCK_OFF = 0,
     RTC_LOCK_ON,
@@ -41,6 +49,8 @@ typedef struct RTCWork {
     RTCInterrupt interrupt;
     RTCResult commonResult;
 } RTCWork;
+
+#endif
 
 static u16 rtcInitialized;
 static RTCWork rtcWork;
