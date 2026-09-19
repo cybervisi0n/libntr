@@ -113,6 +113,9 @@ void OSi_SetTerminateCallback(OSTerminateCallback callback, void *arg) {
 }
 
 #ifdef SDK_PORT
+void OS_Halt() {
+
+}
 
 #else
 #include <nitro/code32.h>

@@ -1333,6 +1333,7 @@ BOOL FS_ResumeArchive (FSArchive *p_arc)
 	#endif
 }
 
+#if SDK_VERSION_MAJOR == 4
 void FS_SetArchiveProc (struct FSArchive *p_arc, FS_ARCHIVE_PROC_FUNC proc, u32 flags)
 {
 	if (!flags)
@@ -1344,6 +1345,7 @@ void FS_SetArchiveProc (struct FSArchive *p_arc, FS_ARCHIVE_PROC_FUNC proc, u32 
 	p_arc->proc = proc;
 	p_arc->proc_flag = flags;
 }
+#endif
 
 void FS_NotifyArchiveAsyncEnd (FSArchive *p_arc, FSResult ret)
 {

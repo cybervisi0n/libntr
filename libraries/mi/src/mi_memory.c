@@ -148,6 +148,17 @@ void MI_Copy128B(const void* pSrc, void* pDest)
 {
     memcpy( pDest, pSrc, 128 );
 }
+
+#if SDK_VERSION_MAJOR == 5
+void MI_CpuMove(register const void *srcp, register void *destp,
+                    register u32 size) {
+    memmove(destp, srcp, size);
+}
+
+void MI_CpuFill(void *dest, u8 data, u32 size) {
+    memset(dest, data, size);
+}
+#endif
 #else
 #include <nitro/code32.h>
 

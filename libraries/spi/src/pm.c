@@ -566,9 +566,9 @@ u32 PM_SendUtilityCommand (
     return sendResult;
 }
 
-#if (SDK_VERSION_MAJOR == 4) || ((SDK_VERSION_MAJOR == 5) && !SDK_FINALROM)
 u32 PMi_ReadRegisterAsync (u16 registerAddr, u16 * buffer, PMCallback callback, void * arg)
 {
+    #if SDK_VERSION_MAJOR == 4
     u32 pxi_send_data;
 
     if (!PMi_Lock()) {
@@ -584,10 +584,16 @@ u32 PMi_ReadRegisterAsync (u16 registerAddr, u16 * buffer, PMCallback callback, 
     PMi_SendPxiData(pxi_send_data);
 
     return PM_SUCCESS;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return PM_SendUtilityCommandAsync(PMi_UTIL_READREG, registerAddr, buffer,
+                                  callback, arg);
+    #endif
 }
 
 u32 PMi_ReadRegister (u16 registerAddr, u16 * buffer)
 {
+    #if SDK_VERSION_MAJOR == 4
     u32 commandResult;
     u32 sendResult =
         PMi_ReadRegisterAsync(registerAddr, buffer, PMi_DummyCallback, &commandResult);
@@ -596,10 +602,15 @@ u32 PMi_ReadRegister (u16 registerAddr, u16 * buffer)
         return commandResult;
     }
     return sendResult;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return PM_SendUtilityCommand(PMi_UTIL_READREG, registerAddr, buffer);
+    #endif
 }
 
 u32 PMi_WriteRegisterAsync (u16 registerAddr, u16 data, PMCallback callback, void * arg)
 {
+    #if SDK_VERSION_MAJOR == 4
     u32 pxi_send_data;
 
     if (!PMi_Lock()) {
@@ -615,10 +626,17 @@ u32 PMi_WriteRegisterAsync (u16 registerAddr, u16 data, PMCallback callback, voi
     PMi_SendPxiData(pxi_send_data);
 
     return PM_SUCCESS;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return PM_SendUtilityCommandAsync(PMi_UTIL_WRITEREG,
+                                  (u16)((registerAddr << 8) | (data & 0xff)),
+                                  NULL, callback, arg);
+    #endif
 }
 
 u32 PMi_WriteRegister (u16 registerAddr, u16 data)
 {
+    #if SDK_VERSION_MAJOR == 4
     u32 commandResult;
     u32 sendResult =
         PMi_WriteRegisterAsync(registerAddr, data, PMi_DummyCallback, &commandResult);
@@ -627,8 +645,12 @@ u32 PMi_WriteRegister (u16 registerAddr, u16 data)
         return commandResult;
     }
     return sendResult;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return PM_SendUtilityCommand(
+    PMi_UTIL_WRITEREG, (u16)((registerAddr << 8) | (data & 0xff)), NULL);
+    #endif
 }
-#endif
 
 u32 PMi_SetLEDAsync (PMLEDStatus status, PMCallback callback, void * arg)
 {
@@ -1323,7 +1345,7 @@ u32 PM_GetLEDPattern (PMLEDPattern * patternBuf)
     u16 status;
     u32 result =
         PM_SendUtilityCommand(PM_UTIL_GET_STATUS, PM_UTIL_PARAM_BLINK, &status);
-    
+
     if (result == PM_RESULT_SUCCESS) {
       if (patternBuf) {
         *patternBuf = (PMLEDPattern)status;
@@ -1396,6 +1418,66 @@ void PMi_ExecuteList (PMSleepCallbackInfo * listp)
     }
 }
 
+#if SDK_VERSION_MAJOR == 5
+static void PMi_InsertList(PMGenCallbackInfo **listp, PMGenCallbackInfo *info,
+                           int priority, int method) {
+  OSIntrMode intr;
+  PMGenCallbackInfo *p;
+  PMGenCallbackInfo *pre;
+
+  if (!listp) {
+    return;
+  }
+
+  info->priority = priority;
+
+  intr = OS_DisableInterrupts();
+  p = *listp;
+  pre = NULL;
+
+  while (p) {
+
+    if (method == PMi_COMPARE_GT && p->priority > priority) {
+      break;
+    }
+    if (method == PMi_COMPARE_GE && p->priority >= priority) {
+      break;
+    }
+
+    pre = p;
+    p = p->next;
+  }
+
+  if (p) {
+    info->next = p;
+  } else {
+    info->next = NULL;
+  }
+
+  if (pre) {
+    pre->next = info;
+  } else {
+
+    *listp = info;
+  }
+
+  (void)OS_RestoreInterrupts(intr);
+}
+
+static void PMi_ClearList(PMGenCallbackInfo **listp) { listp = NULL; }
+
+void PMi_InsertPreSleepCallbackEx(PMSleepCallbackInfo *info, int priority) {
+  SDK_ASSERT(PM_CALLBACK_PRIORITY_SYSMIN <= priority &&
+             priority <= PM_CALLBACK_PRIORITY_SYSMAX);
+  PMi_InsertList(&PMi_PreSleepCallbackList, info, priority, PMi_COMPARE_GT);
+}
+void PM_InsertPreSleepCallback(PMSleepCallbackInfo *info, int priority) {
+  SDK_ASSERT(PM_CALLBACK_PRIORITY_MIN <= priority &&
+             priority <= PM_CALLBACK_PRIORITY_MAX);
+  PMi_InsertPreSleepCallbackEx(info, priority);
+}
+#endif
+
 void PM_AppendPreSleepCallback (PMSleepCallbackInfo * info)
 {
     PMi_AppendList(&PMi_PreSleepCallbackList, info);
@@ -1425,3 +1507,316 @@ void PM_DeletePostSleepCallback (PMSleepCallbackInfo * info)
 {
     PMi_DeleteList(&PMi_PostSleepCallbackList, info);
 }
+
+#if SDK_VERSION_MAJOR == 5
+void PM_ClearPreSleepCallback(void) {
+  PMi_ClearList(&PMi_PreSleepCallbackList);
+}
+
+void PM_ClearPostSleepCallback(void) {
+  PMi_ClearList(&PMi_PostSleepCallbackList);
+}
+
+#ifdef SDK_TWL
+#include <twl/ltdmain_begin.h>
+
+static void PMi_ProceedToExit(PMExitFactor factor) {
+
+  if (!PMi_TryLockForReset()) {
+    return;
+  }
+
+  PMi_ExitFactor = factor;
+
+#ifndef SDK_FINALROM
+
+  PMi_ExitSequenceFlag = TRUE;
+#endif
+
+  PMi_ExecuteList(PMi_PreExitCallbackList);
+
+  if (PMi_AutoExitFlag) {
+
+    PM_ReadyToExit();
+  }
+}
+
+void PM_ReadyToExit(void) {
+#ifndef SDK_FINALROM
+  SDK_ASSERT(PMi_ExitSequenceFlag == TRUE);
+#endif
+
+  PMi_CallPostExitCallbackAndReset(TRUE);
+}
+
+static void PMi_FinalizeDebugger(void) {
+
+  OSi_SetSyncValue(OSi_SYNCVAL_NOT_READY);
+  OSi_SyncWithOtherProc(OSi_SYNCTYPE_SENDER, (void *)HW_INIT_LOCK_BUF);
+  OSi_SyncWithOtherProc(OSi_SYNCTYPE_RECVER, (void *)HW_INIT_LOCK_BUF);
+
+  (void)OS_DisableInterrupts();
+
+#ifndef SDK_FINALROM
+
+  if (OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER) {
+    _ISTDbgLib_OnBeforeResetHard();
+  }
+#endif
+
+  OSi_SetSyncValue(OSi_SYNCVAL_READY);
+}
+
+PMExitFactor PM_GetExitFactor(void) { return PMi_ExitFactor; }
+
+void PM_AppendPreExitCallback(PMExitCallbackInfo *info) {
+  PMi_InsertList(&PMi_PreExitCallbackList, info, PM_CALLBACK_PRIORITY_MAX,
+                 PMi_COMPARE_GT);
+}
+
+void PM_AppendPostExitCallback(PMExitCallbackInfo *info) {
+  PMi_InsertList(&PMi_PostExitCallbackList, info, PM_CALLBACK_PRIORITY_MAX,
+                 PMi_COMPARE_GT);
+}
+
+void PM_PrependPreExitCallback(PMExitCallbackInfo *info) {
+  PMi_InsertList(&PMi_PreExitCallbackList, info, PM_CALLBACK_PRIORITY_MIN,
+                 PMi_COMPARE_GE);
+}
+
+void PM_PrependPostExitCallback(PMExitCallbackInfo *info) {
+  PMi_InsertList(&PMi_PostExitCallbackList, info, PM_CALLBACK_PRIORITY_MIN,
+                 PMi_COMPARE_GE);
+}
+
+void PMi_InsertPreExitCallbackEx(PMExitCallbackInfo *info, int priority) {
+  SDK_ASSERT(PM_CALLBACK_PRIORITY_SYSMIN <= priority &&
+             priority <= PM_CALLBACK_PRIORITY_SYSMAX);
+  PMi_InsertList(&PMi_PreExitCallbackList, info, priority, PMi_COMPARE_GT);
+}
+void PM_InsertPreExitCallback(PMExitCallbackInfo *info, int priority) {
+  SDK_ASSERT(PM_CALLBACK_PRIORITY_MIN <= priority &&
+             priority <= PM_CALLBACK_PRIORITY_MAX);
+  PMi_InsertPreExitCallbackEx(info, priority);
+}
+
+void PMi_InsertPostExitCallbackEx(PMExitCallbackInfo *info, int priority) {
+  SDK_ASSERT(PM_CALLBACK_PRIORITY_SYSMIN <= priority &&
+             priority <= PM_CALLBACK_PRIORITY_SYSMAX);
+  PMi_InsertList(&PMi_PostExitCallbackList, info, priority, PMi_COMPARE_GT);
+}
+void PM_InsertPostExitCallback(PMExitCallbackInfo *info, int priority) {
+  SDK_ASSERT(PM_CALLBACK_PRIORITY_MIN <= priority &&
+             priority <= PM_CALLBACK_PRIORITY_MAX);
+  PMi_InsertPostExitCallbackEx(info, priority);
+}
+
+void PM_DeletePreExitCallback(PMExitCallbackInfo *info) {
+  PMi_DeleteList(&PMi_PreExitCallbackList, info);
+}
+
+void PM_DeletePostExitCallback(PMExitCallbackInfo *info) {
+  PMi_DeleteList(&PMi_PostExitCallbackList, info);
+}
+
+static void PMi_ClearPreExitCallback(void) {
+  PMi_ClearList(&PMi_PreExitCallbackList);
+}
+
+static void PMi_ClearPostExitCallback(void) {
+  PMi_ClearList(&PMi_PostExitCallbackList);
+}
+
+void PMi_ExecutePreExitCallbackList(void) {
+  PMi_ExecuteList(PMi_PreExitCallbackList);
+}
+
+void PMi_ExecutePostExitCallbackList(void) {
+  PMi_ExecuteList(PMi_PostExitCallbackList);
+}
+
+void PMi_ExecuteAllListsOfExitCallback(void) {
+  PMi_ExecuteList(PMi_PreExitCallbackList);
+  PMi_ExecuteList(PMi_PostExitCallbackList);
+}
+
+void PM_SetAutoExit(BOOL sw) { PMi_AutoExitFlag = sw; }
+
+BOOL PM_GetAutoExit(void) { return PMi_AutoExitFlag; }
+
+void PM_SetBatteryLowCallback(PMBatteryLowCallback callback, void *arg) {
+  PMi_BatteryLowCallbackInfo.callback = callback;
+  PMi_BatteryLowCallbackInfo.arg = arg;
+}
+
+void PM_ForceToResetHardware(void) {
+
+  PMi_ExitFactor = PM_EXIT_FACTOR_USER;
+
+  PMi_CallPostExitCallbackAndReset(FALSE);
+}
+
+static void PMi_CallPostExitCallbackAndReset(BOOL isExit) {
+
+  PMi_ExecuteList(PMi_PostExitCallbackList);
+
+  GX_DispOff();
+  GXS_DispOff();
+
+  MI_SetMainMemoryPriority(MI_PROCESSOR_ARM7);
+  {
+    int n;
+    for (n = 0; n < 3; n++) {
+      u32 count = OS_GetVBlankCount();
+      while (count == OS_GetVBlankCount()) {
+        OS_SpinWait(100);
+      }
+    }
+  }
+
+  while (1) {
+    u16 result;
+    u32 command = isExit ? PM_UTIL_FORCE_EXIT : PM_UTIL_FORCE_RESET_HARDWARE;
+
+    if (*(u32 *)HW_RESET_LOCK_FLAG_BUF == PM_RESET_FLAG_FORCED) {
+      command = PM_UTIL_FORCE_EXIT;
+
+      ((LauncherParam *)HW_PARAM_LAUNCH_PARAM)->header.magicCode = 0;
+    }
+
+    PMi_WaitBusyMethod = PMi_WAITBUSY_METHOD_CPUMODE |
+                         PMi_WAITBUSY_METHOD_CPSR | PMi_WAITBUSY_METHOD_IME;
+    while (PM_SendUtilityCommand(command, 0, &result) != PM_SUCCESS) {
+
+      OS_SpinWait(HW_CPU_CLOCK_ARM9 / 100);
+      PMi_WaitBusy();
+    }
+    if (result == SPI_PXI_RESULT_SUCCESS) {
+      break;
+    }
+
+    OS_SpinWait(HW_CPU_CLOCK_ARM9 / 100);
+  }
+
+  (void)OS_DisableInterrupts();
+
+  MI_StopAllDma();
+  MI_StopAllNDma();
+
+  PMi_FinalizeDebugger();
+
+  OSi_TerminateCore();
+}
+#include <twl/ltdmain_end.h>
+#endif
+
+static void PMi_LCDOnAvoidReset(void) {
+  BOOL preMethod;
+
+  OS_SpinWaitSysCycles(PMi_LCD_WAIT_SYS_CYCLES);
+
+  preMethod = PMi_WaitBusyMethod;
+  PMi_WaitBusyMethod = PMi_WAITBUSY_METHOD_CPUMODE | PMi_WAITBUSY_METHOD_CPSR |
+                       PMi_WAITBUSY_METHOD_IME;
+  if (PM_GetLCDPower() != PM_LCD_POWER_ON) {
+
+    while (PM_SetBackLight(PM_LCD_ALL, PM_BACKLIGHT_OFF) != PM_RESULT_SUCCESS) {
+      OS_SpinWait(HW_CPU_CLOCK_ARM9 / 100);
+    }
+
+    while (!PM_SetLCDPower(PM_LCD_POWER_ON)) {
+      OS_SpinWait(PMi_PXI_WAIT_TICK);
+    }
+  }
+  PMi_WaitBusyMethod = preMethod;
+}
+
+#ifndef SDK_FINALROM
+
+u32 PMi_ReadRegisterAsync(u16 registerAddr, u16 *buffer, PMCallback callback,
+                          void *arg) {
+  return PM_SendUtilityCommandAsync(PMi_UTIL_READREG, registerAddr, buffer,
+                                    callback, arg);
+}
+u32 PMi_ReadRegister(u16 registerAddr, u16 *buffer) {
+  return PM_SendUtilityCommand(PMi_UTIL_READREG, registerAddr, buffer);
+}
+
+u32 PMi_WriteRegisterAsync(u16 registerAddr, u16 data, PMCallback callback,
+                           void *arg) {
+  return PM_SendUtilityCommandAsync(PMi_UTIL_WRITEREG,
+                                    (u16)((registerAddr << 8) | (data & 0xff)),
+                                    NULL, callback, arg);
+}
+
+u32 PMi_WriteRegister(u16 registerAddr, u16 data) {
+  return PM_SendUtilityCommand(
+      PMi_UTIL_WRITEREG, (u16)((registerAddr << 8) | (data & 0xff)), NULL);
+}
+#endif
+
+void PMi_SetDispOffCount(void) { PMi_DispOffCount = OS_GetVBlankCount(); }
+
+#ifndef SDK_FINALROM
+
+void PM_DumpSleepCallback(void) {
+  PMGenCallbackInfo *p;
+
+  p = PMi_PreSleepCallbackList;
+  OS_TPrintf("----PreSleep Callback\n");
+  while (p) {
+    OS_TPrintf("[%08x] (prio=%d) (arg=%x)\n", p->callback, p->priority, p->arg);
+    p = p->next;
+  }
+
+  p = PMi_PostSleepCallbackList;
+  OS_TPrintf("----PostSleep Callback\n");
+  while (p) {
+    OS_TPrintf("[%08x] (prio=%d) (arg=%x)\n", p->callback, p->priority, p->arg);
+    p = p->next;
+  }
+}
+
+#ifdef SDK_TWL
+#include <twl/ltdmain_begin.h>
+
+void PM_DumpExitCallback(void) {
+  PMGenCallbackInfo *p;
+
+  p = PMi_PreExitCallbackList;
+  OS_TPrintf("----PreExit Callback\n");
+  while (p) {
+    OS_TPrintf("[%08x] (prio=%d) (arg=%x)\n", p->callback, p->priority, p->arg);
+    p = p->next;
+  }
+
+  p = PMi_PostExitCallbackList;
+  OS_TPrintf("----PostExit Callback\n");
+  while (p) {
+    OS_TPrintf("[%08x] (prio=%d) (arg=%x)\n", p->callback, p->priority, p->arg);
+    p = p->next;
+  }
+}
+#include <twl/ltdmain_end.h>
+#endif // ifdef SDK_TWL
+#endif // ifndef SDK_FINALROM
+
+#ifdef SDK_TWL
+#include <twl/ltdmain_begin.h>
+
+static volatile BOOL isLockedReset = FALSE;
+BOOL PMi_TryLockForReset(void) {
+  OSIntrMode e = OS_DisableInterrupts();
+
+  if (isLockedReset) {
+    (void)OS_RestoreInterrupts(e);
+    return FALSE;
+  }
+  isLockedReset = TRUE;
+
+  (void)OS_RestoreInterrupts(e);
+  return TRUE;
+}
+#include <twl/ltdmain_end.h>
+#endif // ifdef SDK_TWL
+#endif /* SDK_VERSION_MAJOR */

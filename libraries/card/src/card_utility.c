@@ -38,7 +38,7 @@ const CARDDmaInterface *CARDi_GetDmaInterface(u32 channel) {
   return retval;
 }
 
-#ifdef SDK_ARM9
+#if defined(SDK_ARM9) || defined(SDK_PORT)
 
 void CARDi_ICInvalidateSmart(void *buffer, u32 length, u32 threshold) {
   if (length >= threshold) {

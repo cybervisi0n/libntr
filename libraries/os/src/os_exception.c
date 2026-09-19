@@ -19,6 +19,10 @@ static asm void OSi_SetExContext(void);
 #endif
 static void OSi_DisplayExContext(void);
 
+#if SDK_VERSION_MAJOR == 5
+u32 OSi_GetOriginalExceptionHandler(void);
+#endif
+
 typedef struct {
     OSContext context;
     u32 cp15;
@@ -31,6 +35,10 @@ static OSiExContext OSi_ExContext;
 static OSExceptionHandler OSi_UserExceptionHandler;
 static void * OSi_UserExceptionHandlerArg;
 static void * OSi_DebuggerHandler = NULL;
+
+#if SDK_VERSION_MAJOR == 5
+static u32 OSi_OriginalHandler;
+#endif
 
 #ifndef SDK_PORT
 #include <nitro/code32.h>
@@ -77,6 +85,10 @@ void OS_InitException (void)
     OSi_UserExceptionHandler = NULL;
     #endif
 }
+
+#if SDK_VERSION_MAJOR == 5
+u32 OSi_GetOriginalExceptionHandler(void) { return OSi_OriginalHandler; }
+#endif
 
 #if defined(SDK_ARM9)
     #include <nitro/code32.h>

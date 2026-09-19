@@ -131,6 +131,42 @@ asm OSProcMode OS_GetProcMode (void)
     }
 #endif
 
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_ARM9
+#include <nitro/code32.h>
+asm void OS_SpinWaitCpuCycles(u32 cycle) {
+_1:
+  subs r0, r0,
+      #4     // 3 cycle
+      bcs _1 // 1 cycle
+          bx lr
+}
+#include <nitro/codereset.h>
+#else
+void OS_SpinWaitCpuCycles(u32 cycle) {
+#ifdef SDK_BUILD_ARM
+  SVC_WaitByLoop((s32)cycle / 4);
+#endif
+}
+#endif
+
+#if defined(SDK_ARM9) || defined(SDK_PORT)
+void OS_SpinWaitSysCycles(u32 cycle) {
+#ifdef SDK_TWL
+  cycle <<= (SCFG_GetCpuSpeed() == SCFG_CPU_SPEED_2X) ? 2 : 1;
+#else
+  cycle <<= 1;
+#endif
+
+  if (cycle > 16) {
+    OS_SpinWaitCpuCycles(cycle - 16);
+  }
+}
+#else
+void OS_SpinWaitSysCycles(u32 cycle) { SVC_WaitByLoop((s32)cycle / 4); }
+#endif
+#endif
+
 void OS_WaitInterrupt (BOOL clear, OSIrqMask irqFlags)
 {
     OSIntrMode cpsrIrq = OS_DisableInterrupts();
