@@ -126,8 +126,15 @@ struct PMiGenCallbackInfo {
 
 void PM_Init(void);
 
+#if SDK_VERSION_MAJOR == 4
 u32 PM_SendUtilityCommandAsync(u32 number, PMCallback callback, void * arg);
 u32 PM_SendUtilityCommand(u32 number);
+#endif
+#if SDK_VERSION_MAJOR == 5
+u32 PM_SendUtilityCommandAsync(u32 number, u16 parameter, u16 *retValue,
+                               PMCallback callback, void *arg);
+u32 PM_SendUtilityCommand(u32 number, u16 parameter, u16 *retValue);
+#endif
 
 u32 PM_SetBackLightAsync(PMLCDTarget target, PMBackLightSwitch sw, PMCallback callback, void * arg);
 u32 PM_SetBackLight(PMLCDTarget target, PMBackLightSwitch status);

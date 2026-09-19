@@ -541,7 +541,14 @@ u32 PM_SendUtilityCommandAsync (
     #endif
 }
 
-u32 PM_SendUtilityCommand (u32 number)
+u32 PM_SendUtilityCommand (
+    u32 number
+    #if SDK_VERSION_MAJOR == 5
+    ,
+    u16 parameter,
+    u16 * retValue
+    #endif
+)
 {
     u32 commandResult;
     #if SDK_VERSION_MAJOR == 4
@@ -559,6 +566,7 @@ u32 PM_SendUtilityCommand (u32 number)
     return sendResult;
 }
 
+#if (SDK_VERSION_MAJOR == 4) || ((SDK_VERSION_MAJOR == 5) && !SDK_FINALROM)
 u32 PMi_ReadRegisterAsync (u16 registerAddr, u16 * buffer, PMCallback callback, void * arg)
 {
     u32 pxi_send_data;
@@ -620,6 +628,7 @@ u32 PMi_WriteRegister (u16 registerAddr, u16 data)
     }
     return sendResult;
 }
+#endif
 
 u32 PMi_SetLEDAsync (PMLEDStatus status, PMCallback callback, void * arg)
 {
@@ -639,7 +648,13 @@ u32 PMi_SetLEDAsync (PMLEDStatus status, PMCallback callback, void * arg)
         command = 0;
     }
 
+    #if SDK_VERSION_MAJOR == 4
     return (command) ? PM_SendUtilityCommandAsync(command, callback, arg) : PM_INVALID_COMMAND;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return (command) ? PM_SendUtilityCommandAsync(command, 0, NULL, callback, arg)
+                     : PM_INVALID_COMMAND;
+    #endif
 }
 
 u32 PMi_SetLED (PMLEDStatus status)
@@ -682,7 +697,13 @@ u32 PM_SetBackLightAsync (PMLCDTarget target, PMBackLightSwitch sw, PMCallback c
         }
     }
 
+    #if SDK_VERSION_MAJOR == 4
     return (command) ? PM_SendUtilityCommandAsync(command, callback, arg) : PM_INVALID_COMMAND;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return (command) ? PM_SendUtilityCommandAsync(command, 0, NULL, callback, arg)
+                     : PM_INVALID_COMMAND;
+    #endif
 }
 
 u32 PM_SetBackLight (PMLCDTarget target, PMBackLightSwitch sw)
@@ -713,7 +734,13 @@ u32 PMi_SetSoundPowerAsync (PMSoundPowerSwitch sw, PMCallback callback, void * a
         command = 0;
     }
 
+    #if SDK_VERSION_MAJOR == 4
     return (command) ? PM_SendUtilityCommandAsync(command, callback, arg) : PM_INVALID_COMMAND;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return (command) ? PM_SendUtilityCommandAsync(command, 0, NULL, callback, arg)
+                     : PM_INVALID_COMMAND;
+    #endif
 }
 
 u32 PMi_SetSoundPower (PMSoundPowerSwitch sw)
@@ -744,7 +771,13 @@ u32 PMi_SetSoundVolumeAsync (PMSoundVolumeSwitch sw, PMCallback callback, void *
         command = 0;
     }
 
+    #if SDK_VERSION_MAJOR == 4
     return (command) ? PM_SendUtilityCommandAsync(command, callback, arg) : PM_INVALID_COMMAND;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return (command) ? PM_SendUtilityCommandAsync(command, 0, NULL, callback, arg)
+                     : PM_INVALID_COMMAND;
+    #endif
 }
 
 u32 PMi_SetSoundVolume (PMSoundVolumeSwitch sw)
@@ -762,6 +795,7 @@ u32 PMi_SetSoundVolume (PMSoundVolumeSwitch sw)
 
 u32 PM_ForceToPowerOffAsync (PMCallback callback, void * arg)
 {
+    #if SDK_VERSION_MAJOR == 4
     PMLCDPower LCDResult;
     PMBackLightSwitch top;
     PMBackLightSwitch bottom;
@@ -782,6 +816,22 @@ u32 PM_ForceToPowerOffAsync (PMCallback callback, void * arg)
     }
 
     return PM_SendUtilityCommandAsync(PM_UTIL_FORCE_POWER_OFF, callback, arg);
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    #ifdef SDK_TWL
+    PMi_ExitFactor = PM_EXIT_FACTOR_USER;
+    #endif
+
+    PMi_LCDOnAvoidReset();
+
+    #ifdef SDK_TWL
+    if (OS_IsRunOnTwl()) {
+      PMi_ExecuteList(PMi_PostExitCallbackList);
+    }
+    #endif
+    return PM_SendUtilityCommandAsync(PM_UTIL_FORCE_POWER_OFF, 0, NULL, callback,
+                                      arg);
+    #endif
 }
 
 u32 PM_ForceToPowerOff (void)
@@ -799,7 +849,13 @@ u32 PM_ForceToPowerOff (void)
 
 u32 PM_SetAmpAsync (PMAmpSwitch status, PMCallback callback, void * arg)
 {
+    #if SDK_VERSION_MAJOR == 4
     return PMi_WriteRegisterAsync(REG_PMIC_OP_CTL_ADDR, (u16)status, callback, arg);
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return PM_SendUtilityCommandAsync(PM_UTIL_SET_AMP, (u16)status, NULL,
+                                      callback, arg);
+    #endif
 }
 
 u32 PM_SetAmp (PMAmpSwitch status)
@@ -811,7 +867,12 @@ u32 PM_SetAmp (PMAmpSwitch status)
 static u32 PMi_SetAmp (PMAmpSwitch status)
 {
     if (PM_GetLCDPower()) {
+        #if SDK_VERSION_MAJOR == 4
         return PMi_WriteRegister(REG_PMIC_OP_CTL_ADDR, (u16)status);
+        #endif
+        #if SDK_VERSION_MAJOR == 5
+        return PM_SendUtilityCommand(PM_UTIL_SET_AMP, (u16)status, NULL);
+        #endif
     } else {
         return PM_RESULT_SUCCESS;
     }
@@ -819,16 +880,43 @@ static u32 PMi_SetAmp (PMAmpSwitch status)
 
 u32 PM_SetAmpGainAsync (PMAmpGain status, PMCallback callback, void * arg)
 {
+    #if SDK_VERSION_MAJOR == 4
     return PMi_WriteRegisterAsync(REG_PMIC_PGA_GAIN_ADDR, (u16)status, callback, arg);
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return PM_SendUtilityCommandAsync(PM_UTIL_SET_AMPGAIN, (u16)status, NULL,
+                                      callback, arg);
+    #endif
 }
 
 u32 PM_SetAmpGain (PMAmpGain status)
 {
+    #if SDK_VERSION_MAJOR == 4
     return PMi_WriteRegister(REG_PMIC_PGA_GAIN_ADDR, (u16)status);
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return PM_SendUtilityCommand(PM_UTIL_SET_AMPGAIN, (u16)status, NULL);
+    #endif
 }
+
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+u32 PM_SetAmpGainLevelAsync(u8 level, PMCallback callback, void *arg) {
+  SDK_ASSERT(level <= PM_AMPGAIN_LEVEL_MAX);
+  return PM_SendUtilityCommandAsync(PM_UTIL_SET_AMPGAIN_LEVEL, (u16)level, NULL,
+                                    callback, arg);
+}
+
+u32 PM_SetAmpGainLevel(u8 level) {
+  SDK_ASSERT(level <= PM_AMPGAIN_LEVEL_MAX);
+  return PM_SendUtilityCommand(PM_UTIL_SET_AMPGAIN_LEVEL, (u16)level, NULL);
+}
+#endif
+#endif
 
 u32 PM_GetBattery (PMBattery * batteryBuf)
 {
+    #if SDK_VERSION_MAJOR == 4
     u16 reg;
     u32 result;
 
@@ -838,9 +926,73 @@ u32 PM_GetBattery (PMBattery * batteryBuf)
                 (PMBattery)(reg & PMi_STAT_BATTERY_MASK) ? PM_BATTERY_LOW : PM_BATTERY_HIGH;
         }
     }
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    u16 status;
+    u32 result =
+        PM_SendUtilityCommand(PM_UTIL_GET_STATUS, PM_UTIL_PARAM_BATTERY, &status);
+
+    if (result == PM_RESULT_SUCCESS) {
+      if (batteryBuf) {
+        *batteryBuf = status ? PM_BATTERY_LOW : PM_BATTERY_HIGH;
+      }
+    }
+    #endif
 
     return result;
 }
+
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+#include <twl/ltdmain_begin.h>
+static u32 PMi_GetBatteryLevelCore(PMBatteryLevel *levelBuf) {
+  u16 status;
+  u32 result = PM_SendUtilityCommand(PM_UTIL_GET_STATUS,
+                                     PM_UTIL_PARAM_BATTERY_LEVEL, &status);
+
+  if (result == PM_RESULT_SUCCESS) {
+    if (levelBuf) {
+      *levelBuf = (PMBatteryLevel)status;
+    }
+  }
+  return result;
+}
+#include <twl/ltdmain_end.h>
+
+u32 PM_GetBatteryLevel(PMBatteryLevel *levelBuf) {
+  if (OS_IsRunOnTwl()) {
+    return PMi_GetBatteryLevelCore(levelBuf);
+  } else {
+    return PM_RESULT_ERROR;
+  }
+}
+#endif
+
+#ifdef SDK_TWL
+#include <twl/ltdmain_begin.h>
+static u32 PMi_GetACAdapterCore(BOOL *isConnectedBuf) {
+  u16 status;
+  u32 result = PM_SendUtilityCommand(PM_UTIL_GET_STATUS,
+                                     PM_UTIL_PARAM_AC_ADAPTER, &status);
+
+  if (result == PM_RESULT_SUCCESS) {
+    if (isConnectedBuf) {
+      *isConnectedBuf = status ? TRUE : FALSE;
+    }
+  }
+  return result;
+}
+#include <twl/ltdmain_end.h>
+
+u32 PM_GetACAdapter(BOOL *isConnectedBuf) {
+  if (OS_IsRunOnTwl()) {
+    return PMi_GetACAdapterCore(isConnectedBuf);
+  } else {
+    return PM_RESULT_ERROR;
+  }
+}
+#endif
+#endif
 
 u32 PM_GetBackLight (PMBackLightSwitch * top, PMBackLightSwitch * bottom)
 {
@@ -1012,7 +1164,12 @@ void PM_GoSleepMode (PMWakeUpTrigger trigger, PMLogic logic, u16 keyPattern)
         reg_GXS_DB_DISPCNT = preGXS;
     }
 
+    #if SDK_VERSION_MAJOR == 4
     OS_SpinWait(PMi_LCD_SLEEP_WAIT_TICK);
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    OS_SpinWaitSysCycles(PMi_LCD_WAIT_SYS_CYCLES);
+    #endif
 
     (void)OS_DisableInterrupts();
     (void)OS_SetIrqMask(prepIntrMask);
@@ -1089,6 +1246,7 @@ u32 PMi_GetLCDOffCount (void)
 
 u32 PMi_SendLEDPatternCommandAsync (PMLEDPattern pattern, PMCallback callback, void * arg)
 {
+    #if SDK_VERSION_MAJOR == 4
     u32 pxi_send_data;
 
     if (!PMi_Lock()) {
@@ -1101,10 +1259,15 @@ u32 PMi_SendLEDPatternCommandAsync (PMLEDPattern pattern, PMCallback callback, v
     PMi_SendPxiData(pxi_send_data);
 
     return PM_SUCCESS;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return PM_SendUtilityCommandAsync(PM_UTIL_SET_BLINK, pattern, NULL, callback, arg);
+    #endif
 }
 
 u32 PMi_SendLEDPatternCommand (PMLEDPattern pattern)
 {
+    #if SDK_VERSION_MAJOR == 4
     u32 commandResult;
     u32 sendResult = PMi_SendLEDPatternCommandAsync(pattern, PMi_DummyCallback, &commandResult);
 
@@ -1114,10 +1277,15 @@ u32 PMi_SendLEDPatternCommand (PMLEDPattern pattern)
     }
 
     return sendResult;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return PM_SendUtilityCommand(PM_UTIL_SET_BLINK, pattern, NULL);
+    #endif
 }
 
 u32 PM_GetLEDPatternAsync (PMLEDPattern * patternBuf, PMCallback callback, void * arg)
 {
+    #if SDK_VERSION_MAJOR == 4
     u32 pxi_send_data;
 
     if (!PMi_Lock()) {
@@ -1131,10 +1299,16 @@ u32 PM_GetLEDPatternAsync (PMLEDPattern * patternBuf, PMCallback callback, void 
     PMi_SendPxiData(pxi_send_data);
 
     return PM_SUCCESS;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    return PM_SendUtilityCommandAsync(PM_UTIL_GET_STATUS, PM_UTIL_PARAM_BLINK,
+                                      (u16 *)&patternBuf, callback, arg);
+    #endif
 }
 
 u32 PM_GetLEDPattern (PMLEDPattern * patternBuf)
 {
+    #if SDK_VERSION_MAJOR == 4
     u32 commandResult;
     u32 sendResult = PM_GetLEDPatternAsync(patternBuf, PMi_DummyCallback, &commandResult);
 
@@ -1144,6 +1318,19 @@ u32 PM_GetLEDPattern (PMLEDPattern * patternBuf)
     }
 
     return sendResult;
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    u16 status;
+    u32 result =
+        PM_SendUtilityCommand(PM_UTIL_GET_STATUS, PM_UTIL_PARAM_BLINK, &status);
+    
+    if (result == PM_RESULT_SUCCESS) {
+      if (patternBuf) {
+        *patternBuf = (PMLEDPattern)status;
+      }
+    }
+    return result;
+    #endif
 }
 
 void PMi_PrependList (PMSleepCallbackInfo ** listp, PMSleepCallbackInfo * info)
