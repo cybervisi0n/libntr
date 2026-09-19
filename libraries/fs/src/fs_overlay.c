@@ -29,6 +29,15 @@ int _ISDbgLib_UnregistOverlayInfo(OVERLAYPROC nProc, u32 nAddrRAM, u32 nSize);
 #define FS_OVERLAY_FLAG_AUTH      0x0002
 #define FS_OVERLAY_DIGEST_SIZE    DGT_HASH2_DIGEST_SIZE
 
+#if SDK_VERSION_MAJOR == 5
+extern u8 SDK_OVERLAYTABLE_DIGEST[];
+#ifdef SDK_TWL
+extern u8 SDK_LTDOVERLAYTABLE_DIGEST[];
+#else
+#define SDK_LTDOVERLAYTABLE_DIGEST NULL
+#endif // SDK_TWL
+#endif
+
 #if defined(SDK_TS)
 #ifdef SDK_BUILD_ARM
     extern u8 SDK_OVERLAYTABLE_DIGEST[];
@@ -39,6 +48,20 @@ int _ISDbgLib_UnregistOverlayInfo(OVERLAYPROC nProc, u32 nAddrRAM, u32 nSize);
     u8 SDK_OVERLAY_DIGEST[2];
     u8 SDK_OVERLAY_DIGEST_END[2];
 #endif
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+extern u8 SDK_OVERLAY_NUMBER[];
+#ifdef SDK_TWL
+extern u8 SDK_LTDOVERLAY_NUMBER[];
+#else
+#define SDK_LTDOVERLAY_NUMBER 0
+#endif // SDK_TWL
+#define FS_OVERLAY_NTR_TOTAL (u32) SDK_OVERLAY_NUMBER
+#define FS_OVERLAY_TWL_TOTAL (u32) SDK_LTDOVERLAY_NUMBER
+
+#define FSi_RegisterOverlayToDebugger(ovi) (void)0
+#define FSi_UnregisterOverlayToDebugger(ovi) (void)0
 #endif
 
 static const u8 fsi_def_digest_key[64] = {
@@ -176,6 +199,7 @@ void FS_ClearOverlayImage (FSOverlayInfo *p_ovi)
 
     BOOL FS_LoadOverlayInfo (FSOverlayInfo *p_ovi, MIProcessor target, FSOverlayID id)
     {
+        #if SDK_VERSION_MAJOR == 4
         CARDRomRegion *const pr = (target == MI_PROCESSOR_ARM9) ? &fsi_ovt9 : &fsi_ovt7;
 
         if (pr->offset) {
@@ -209,6 +233,65 @@ void FS_ClearOverlayImage (FSOverlayInfo *p_ovi)
                                         p_ovt9->offset, p_ovt9->length,
                                         p_ovt7->offset, p_ovt7->length);
         }
+        #elif SDK_VERSION_MAJOR == 5
+  BOOL retval = FALSE;
+  const u32 pos = (u32)id * sizeof(FSOverlayInfoHeader);
+  const CARDRomRegion *pr = (target == MI_PROCESSOR_ARM9)
+                                ? &FSiOverlayContext.ovt9
+                                : &FSiOverlayContext.ovt7;
+#if !defined(SDK_NITRO)
+
+  if ((id >= FS_OVERLAY_NTR_TOTAL) && !OS_IsRunOnTwl()) {
+    OS_TWarning("TWL-overlay is not available on NTR-mode.\n");
+  } else
+#endif // !defined(SDK_NITRO)
+  {
+    if (pr->offset) {
+      if (pos < pr->length) {
+        FSFile file[1];
+        FS_InitFile(file);
+        MI_CpuCopy8((const void *)(pr->offset + pos), p_ovi,
+                    sizeof(FSOverlayInfoHeader));
+        {
+          {
+            p_ovi->target = target;
+            if (FS_OpenFileFast(file, FS_GetOverlayFileID(p_ovi))) {
+              p_ovi->file_pos.offset = FS_GetFileImageTop(file);
+              p_ovi->file_pos.length = FS_GetFileLength(file);
+              (void)FS_CloseFile(file);
+              retval = TRUE;
+            }
+          }
+        }
+      }
+    } else {
+      pr = (target == MI_PROCESSOR_ARM9)
+               ? CARD_GetRomRegionOVT(MI_PROCESSOR_ARM9)
+               : CARD_GetRomRegionOVT(MI_PROCESSOR_ARM7);
+      if (pos < pr->length) {
+        FSFile file[1];
+        FS_InitFile(file);
+        if (FS_CreateFileFromRom(file, pr->offset + pos,
+                                 pr->offset + pr->length)) {
+          if (FS_ReadFile(file, p_ovi, sizeof(FSOverlayInfoHeader)) !=
+              sizeof(FSOverlayInfoHeader)) {
+            (void)FS_CloseFile(file);
+          } else {
+            (void)FS_CloseFile(file);
+            p_ovi->target = target;
+            if (FS_OpenFileFast(file, FS_GetOverlayFileID(p_ovi))) {
+              p_ovi->file_pos.offset = FS_GetFileImageTop(file);
+              p_ovi->file_pos.length = FS_GetFileLength(file);
+              (void)FS_CloseFile(file);
+              retval = TRUE;
+            }
+          }
+        }
+      }
+    }
+  }
+  return retval;
+        #endif
     }
 
     BOOL FS_LoadOverlayImageAsync (FSOverlayInfo *p_ovi, FSFile *p_file)
@@ -251,16 +334,45 @@ void FS_ClearOverlayImage (FSOverlayInfo *p_ovi)
     }
 #endif
 
-static BOOL FSi_CompareDigest (const u8 *spec_digest, void *src, int len)
+static BOOL FSi_CompareDigest (const u8 *spec_digest, void *src, int len
+    #if SDK_VERSION_MAJOR == 5
+    ,
+    BOOL table_mode
+    #endif
+)
 {
 	int i;
 	u8 digest[FS_OVERLAY_DIGEST_SIZE];
 	u8 digest_key[64];
 
 	MI_CpuClear8(digest, sizeof(digest));
+    #if SDK_VERSION_MAJOR == 4
 	MI_CpuCopy8(fsi_digest_key_ptr, digest_key, (u32)fsi_digest_key_len);
     #ifdef SDK_BUILD_ARM
 	DGT_Hash2CalcHmac(digest, src, len, digest_key, fsi_digest_key_len);
+    #endif
+    #elif SDK_VERSION_MAJOR == 5
+    MI_CpuCopy8(FSiOverlayContext.digest_key_ptr, digest_key,
+                FSiOverlayContext.digest_key_len);
+
+    #ifdef SDK_TWL
+    if (!table_mode && OS_IsRunOnTwl()) {
+      SVC_CalcHMACSHA1(digest, src, (u32)len, digest_key,
+                       FSiOverlayContext.digest_key_len);
+    } else
+    #endif
+    {
+
+      int bak_ovt_mode = FALSE;
+      if (table_mode) {
+        bak_ovt_mode = MATHi_SetOverlayTableMode(TRUE);
+      }
+      MATH_CalcHMACSHA1(digest, src, (u32)len, digest_key,
+                        FSiOverlayContext.digest_key_len);
+      if (table_mode) {
+        (void)MATHi_SetOverlayTableMode(bak_ovt_mode);
+      }
+    }
     #endif
 
 	for (i = 0; i < sizeof(digest); i += sizeof(u32)) {
@@ -273,6 +385,7 @@ static BOOL FSi_CompareDigest (const u8 *spec_digest, void *src, int len)
 
 void FS_StartOverlay (FSOverlayInfo *p_ovi)
 {
+    #if SDK_VERSION_MAJOR == 4
 	u32 rare_size = FSi_GetOverlayBinarySize(p_ovi);
 
 #ifndef SDK_TEG
@@ -322,6 +435,68 @@ void FS_StartOverlay (FSOverlayInfo *p_ovi)
 				(**p)();
 		}
 	}
+    #elif SDK_VERSION_MAJOR == 5
+  u32 rare_size = FSi_GetOverlayBinarySize(p_ovi);
+
+#ifdef SDK_TWL
+
+  {
+    extern const u8 SDK_LTDAUTOLOAD_LTDMAIN_START[];
+    extern const u8 SDK_LTDAUTOLOAD_LTDMAIN_END[];
+    extern const u8 SDK_LTDAUTOLOAD_LTDMAIN_BSS_END[];
+    if ((p_ovi->header.ram_address >= SDK_LTDAUTOLOAD_LTDMAIN_START) &&
+        (p_ovi->header.ram_address < SDK_LTDAUTOLOAD_LTDMAIN_BSS_END) &&
+        OS_IsRunOnTwl()) {
+      static BOOL once = FALSE;
+      if (!once) {
+        OS_TWarning(
+            "specified overlay(%d) might have destroyed LTDMAIN segment!\n"
+            "(please move LTDMAIN after overlay(%d))",
+            p_ovi->header.id, p_ovi->header.id);
+        once = TRUE;
+      }
+    }
+  }
+#endif
+
+  if (OS_GetBootType() != OS_BOOTTYPE_ROM) {
+    BOOL ret = FALSE;
+
+    if ((p_ovi->header.flag & FS_OVERLAY_FLAG_AUTH) != 0) {
+      const u32 odt_max = (u32)((SDK_OVERLAY_DIGEST_END - SDK_OVERLAY_DIGEST) /
+                                FS_OVERLAY_DIGEST_SIZE);
+      if (p_ovi->header.id < odt_max) {
+        const u8 *spec_digest =
+            (SDK_OVERLAY_DIGEST + FS_OVERLAY_DIGEST_SIZE * p_ovi->header.id);
+        ret = FSi_CompareDigest(spec_digest, p_ovi->header.ram_address,
+                                (int)rare_size, FALSE);
+      }
+    }
+    if (!ret) {
+      MI_CpuClear8(p_ovi->header.ram_address, rare_size);
+      OS_TPanic("FS_StartOverlay() failed! (invalid overlay-segment data)");
+      return;
+    }
+  }
+
+  if ((p_ovi->header.flag & FS_OVERLAY_FLAG_COMP) != 0) {
+    MIi_UncompressBackward(p_ovi->header.ram_address + rare_size);
+  }
+#if defined(SDK_ARM9)
+  DC_FlushRange(FS_GetOverlayAddress(p_ovi), FS_GetOverlayImageSize(p_ovi));
+#endif
+  FSi_RegisterOverlayToDebugger(p_ovi);
+
+  {
+    FSOverlayInitFunc *p = p_ovi->header.sinit_init;
+    FSOverlayInitFunc *q = p_ovi->header.sinit_init_end;
+    for (; p < q; ++p) {
+      if (*p) {
+        (**p)();
+      }
+    }
+  }
+    #endif
 
 }
 
@@ -400,6 +575,7 @@ BOOL FS_UnloadOverlayImage (FSOverlayInfo *p_ovi)
 #if defined(FS_IMPLEMENT)
     BOOL FS_LoadOverlay (MIProcessor target, FSOverlayID id)
     {
+        #if SDK_VERSION_MAJOR == 4
         FS_ASSERT_INIT(FALSE);
 
         {
@@ -409,10 +585,26 @@ BOOL FS_UnloadOverlayImage (FSOverlayInfo *p_ovi)
             FS_StartOverlay(&ovi);
         }
         return TRUE;
+        #endif
+        #if SDK_VESRION_MAJOR == 5
+        BOOL retval = FALSE;
+        SDK_ASSERT(FS_IsAvailable());
+        {
+          FSOverlayInfo ovi;
+          if (FS_LoadOverlayInfo(&ovi, target, id)) {
+            if (FS_LoadOverlayImage(&ovi)) {
+              FS_StartOverlay(&ovi);
+              retval = TRUE;
+            }
+          }
+        }
+        return retval;
+        #endif
     }
 
     BOOL FS_UnloadOverlay (MIProcessor target, FSOverlayID id)
     {
+        #if SDK_VERSION_MAJOR == 4
         FS_ASSERT_INIT(FALSE);
 
         {
@@ -421,6 +613,19 @@ BOOL FS_UnloadOverlayImage (FSOverlayInfo *p_ovi)
                 return FALSE;
         }
         return TRUE;
+        #elif SDK_VERSION_MAJOR == 5
+        BOOL retval = FALSE;
+        SDK_ASSERT(FS_IsAvailable());
+        {
+          FSOverlayInfo ovi;
+          if (FS_LoadOverlayInfo(&ovi, target, id)) {
+            if (FS_UnloadOverlayImage(&ovi)) {
+              retval = TRUE;
+            }
+          }
+        }
+        return retval;
+        #endif
     }
 #else
     static void FSi_ReadRomDirect (const void *src, void *dst, u32 len)
@@ -500,6 +705,7 @@ BOOL FS_UnloadOverlayImage (FSOverlayInfo *p_ovi)
 
 void FS_AttachOverlayTable (MIProcessor target, const void *ptr, u32 len)
 {
+#if SDK_VERSION_MAJOR == 4
 #ifdef  SDK_TS
 	if ((ptr != NULL) && (target == MI_PROCESSOR_ARM9)) {
         #ifdef SDK_BUILD_ARM
@@ -521,4 +727,42 @@ void FS_AttachOverlayTable (MIProcessor target, const void *ptr, u32 len)
 
 		(void)OS_RestoreInterrupts(bak_psr);
 	}
+#elif SDK_VERSION_MAJOR == 5
+  if ((ptr != NULL) && (target == MI_PROCESSOR_ARM9)) {
+
+    const int length_ntr =
+        (int)(FS_OVERLAY_NTR_TOTAL * sizeof(FSOverlayInfoHeader));
+    const int length_twl =
+        (int)(FS_OVERLAY_TWL_TOTAL * sizeof(FSOverlayInfoHeader));
+
+    if ((len != length_ntr) && (len != length_ntr + length_twl)) {
+      OS_TPanic("specified overlay-digest-table is invalid size!");
+    } else {
+
+      u8 *buffer_ntr = (u8 *)ptr;
+      if (!FSi_CompareDigest((const u8 *)SDK_OVERLAYTABLE_DIGEST, buffer_ntr,
+                             length_ntr, TRUE)) {
+        OS_TPanic("specified overlay-digest-table is invalid!");
+      }
+
+      else if (length_twl != 0) {
+        u8 *buffer_twl = buffer_ntr + length_ntr;
+        if (!FSi_CompareDigest((const u8 *)SDK_LTDOVERLAYTABLE_DIGEST,
+                               buffer_twl, length_twl, TRUE)) {
+          OS_TPanic("specified overlay-digest-table is invalid!");
+        }
+      }
+    }
+  }
+
+  {
+    CARDRomRegion *const pr = (target == MI_PROCESSOR_ARM9)
+                                  ? &FSiOverlayContext.ovt9
+                                  : &FSiOverlayContext.ovt7;
+    OSIntrMode bak_psr = OS_DisableInterrupts();
+    pr->offset = (u32)ptr;
+    pr->length = len;
+    (void)OS_RestoreInterrupts(bak_psr);
+  }
+#endif
 }
