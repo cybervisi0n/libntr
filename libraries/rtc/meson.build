@@ -1,9 +1,15 @@
 subdir('src')
 
+librtc_includes = []
+
+if(sdk_version_major == 5)
+    librtc_includes += include_directories('include')
+endif
+
 if (build_target == 'arm')
 librtc = library('rtc',
     c_pch: nitro_pch,
-    include_directories: nitrosdk_includes,
+    include_directories: [librtc_includes, nitrosdk_includes],
     pic: false,
     sources: [librtc_srcs, fx_const_h]
 )
@@ -18,7 +24,7 @@ librtc_arm7 = library('rtc_arm7',
 else
 librtc = library('rtc',
     c_pch: nitro_pch,
-    include_directories: nitrosdk_includes,
+    include_directories: [librtc_includes, nitrosdk_includes],
     pic: build_target == 'nx',
     sources: [librtc_srcs, fx_const_h],
     native: (build_target == 'linux' or build_target == 'win64')

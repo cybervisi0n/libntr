@@ -54,6 +54,14 @@ static void OSi_CountUpTick (void)
     OSi_EnterTimerCallback(OSi_TICK_TIMER, (void (*)(void *)) OSi_CountUpTick, 0);
 }
 
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_ARM7
+#ifdef SDK_TWL
+extern u32 MIC_GetDelayIF(void);
+#endif
+#endif
+#endif
+
 OSTick OS_GetTick (void)
 {
     vu16 countL;
@@ -69,7 +77,21 @@ OSTick OS_GetTick (void)
     countL = *(REGType16 *)((u32)REG_TM0CNT_L_ADDR + OSi_TICK_TIMER * 4);
     countH = OSi_TickCounter & 0xffffffffffffULL;
 
-    if (reg_OS_IF & OSi_TICK_IE_TIMER && !(countL & 0x8000)) {
+    #if SDK_VERSION_MAJOR == 4
+    if (reg_OS_IF & OSi_TICK_IE_TIMER && !(countL & 0x8000)) 
+    #elif SDK_VERSION_MAJOR == 5
+#ifdef SDK_ARM7
+#ifdef SDK_TWL
+  if (((reg_OS_IF | MIC_GetDelayIF()) & OSi_TICK_IE_TIMER) &&
+      !(countL & 0x8000))
+#else
+  if (reg_OS_IF & OSi_TICK_IE_TIMER && !(countL & 0x8000))
+#endif
+#else
+  if (reg_OS_IF & OSi_TICK_IE_TIMER && !(countL & 0x8000))
+#endif
+#endif /* SDK_VERSION_MAJOR */
+    {
         countH++;
     }
 

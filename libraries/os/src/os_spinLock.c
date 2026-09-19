@@ -3,6 +3,11 @@
 void _ISDbgLib_Initialize(void);
 void _ISDbgLib_AllocateEmualtor(void);
 void _ISDbgLib_FreeEmulator(void);
+#if SDK_VERSION_MAJOR == 5
+void _ISTDbgLib_Initialize(void);
+void _ISTDbgLib_AllocateEmualtor(void);
+void _ISTDbgLib_FreeEmulator(void);
+#endif
 
 #ifdef SDK_PORT
 void    _ISDbgLib_Initialize(void)
@@ -57,6 +62,47 @@ static void OSi_WaitByLoop(void);
 void SVC_WaitByLoop(s32 count){
     return;
 }
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+
+void OSi_SyncWithOtherProc(int type, void *syncBuf) {
+  vu8 *ptr1 = (vu8 *)syncBuf;
+  vu8 *ptr2 = (vu8 *)syncBuf + 1;
+  vu8 *pfinish = (vu8 *)syncBuf + 2;
+  vu8 *pconf = (vu8 *)syncBuf + 3;
+
+  if (type == OSi_SYNCTYPE_SENDER) {
+    int n = 0;
+    *pfinish = FALSE;
+    do {
+      *ptr1 = (u8)(0x80 | (n & 0xf));
+      while (*ptr1 != *ptr2 && *pfinish == FALSE) {
+        OSi_WaitByLoop();
+      }
+      n++;
+    } while (*pfinish == FALSE);
+    *pconf = TRUE;
+  } else {
+    int sum = 0;
+    *ptr2 = 0;
+    while (sum < 0x300) {
+      if (*ptr2 != *ptr1) {
+        *ptr2 = *ptr1;
+        sum += *ptr2;
+      } else {
+        OSi_WaitByLoop();
+      }
+    }
+    *pconf = FALSE;
+    *pfinish = TRUE;
+    while (*pconf == FALSE) {
+      OSi_WaitByLoop();
+    }
+  }
+}
+#endif
 #endif
 
 static inline void OSi_WaitByLoop (void)

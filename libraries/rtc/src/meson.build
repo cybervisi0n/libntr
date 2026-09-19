@@ -9,3 +9,9 @@ librtc_arm7_srcs = files(
     'instruction.c',
     'gpio.c',
 )
+
+if(sdk_version_major == 5)
+    librtc_srcs += files(
+        'swclock.c'
+    )
+endif

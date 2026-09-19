@@ -433,3 +433,26 @@ void OS_DumpVAlarm (void)
 
     (void)OS_RestoreInterrupts(enabled);
 }
+
+
+#if SDK_VERSION_MAJOR == 5
+int OS_GetNumberOfVAlarm(void) {
+  OSIntrMode enabled = OS_DisableInterrupts();
+  OSVAlarm *p = OSi_VAlarmQueue.head;
+  int num = 0;
+
+  while (p) {
+    num++;
+    p = p->next;
+  }
+
+  (void)OS_RestoreInterrupts(enabled);
+  return num;
+}
+
+BOOL OS_GetVAlarmResource(OSVAlarmResource *resource) {
+  resource->num = OS_GetNumberOfVAlarm();
+
+  return TRUE;
+}
+#endif

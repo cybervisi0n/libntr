@@ -137,6 +137,224 @@ BOOL OS_TryLockMutex (OSMutex * mutex)
     return locked;
 }
 
+#if SDK_VERSION_MAJOR == 5
+void OS_LockMutexR(OSMutex *mutex) {
+  OSIntrMode e = OS_DisableInterrupts();
+  OSThread *currentThread = OS_GetCurrentThread();
+
+  while (1) {
+
+    if (OS_TryLockMutexR(mutex)) {
+      break;
+    }
+
+    currentThread->mutex = mutex;
+    OS_SleepThread(&mutex->queue);
+    currentThread->mutex = NULL;
+  }
+
+  (void)OS_RestoreInterrupts(e);
+}
+
+void OS_LockMutexW(OSMutex *mutex) {
+  OSIntrMode e = OS_DisableInterrupts();
+  OSThread *currentThread = OS_GetCurrentThread();
+
+  while (1) {
+
+    if (OS_TryLockMutexW(mutex)) {
+      break;
+    }
+
+    currentThread->mutex = mutex;
+    OS_SleepThread(&mutex->queue);
+    currentThread->mutex = NULL;
+  }
+
+  (void)OS_RestoreInterrupts(e);
+}
+
+BOOL OS_TryLockMutexR(OSMutex *mutex) {
+  OSIntrMode e = OS_DisableInterrupts();
+  BOOL locked = FALSE;
+  OSThread *currentThread = OS_GetCurrentThread();
+
+  switch (OS_GetMutexType(mutex)) {
+  case OS_MUTEX_TYPE_NONE:
+    mutex->thread = currentThread;
+    OS_SetMutexType(mutex, OS_MUTEX_TYPE_R);
+    OS_SetMutexCount(mutex, 1);
+    OSi_EnqueueTail(currentThread, mutex);
+    locked = TRUE;
+    break;
+
+  case OS_MUTEX_TYPE_R:
+    OS_IncreaseMutexCount(mutex);
+    locked = TRUE;
+    break;
+
+  case OS_MUTEX_TYPE_W:
+  default:
+    break;
+  }
+
+  (void)OS_RestoreInterrupts(e);
+  return locked;
+}
+
+BOOL OS_TryLockMutexW(OSMutex *mutex) {
+  OSIntrMode e = OS_DisableInterrupts();
+  BOOL locked = FALSE;
+  OSThread *currentThread = OS_GetCurrentThread();
+
+  switch (OS_GetMutexType(mutex)) {
+  case OS_MUTEX_TYPE_NONE:
+    mutex->thread = currentThread;
+    OS_SetMutexType(mutex, OS_MUTEX_TYPE_W);
+    OS_SetMutexCount(mutex, 1);
+    OSi_EnqueueTail(currentThread, mutex);
+    locked = TRUE;
+    break;
+
+  case OS_MUTEX_TYPE_W:
+    if (mutex->thread == currentThread) {
+      OS_IncreaseMutexCount(mutex);
+      locked = TRUE;
+    }
+    break;
+
+  case OS_MUTEX_TYPE_R:
+  default:
+    break;
+  }
+
+  (void)OS_RestoreInterrupts(e);
+  return locked;
+}
+
+void OSi_UnlockMutexCore(OSMutex *mutex, u32 type) {
+  OSIntrMode e = OS_DisableInterrupts();
+  OSThread *currentThread = OS_GetCurrentThread();
+  BOOL unlocked = FALSE;
+
+  SDK_ASSERT(mutex);
+
+  if (type != OS_MUTEX_TYPE_NONE && type != OS_GetMutexType(mutex)) {
+
+    OS_TWarning("Illegal unlock mutex");
+    (void)OS_RestoreInterrupts(e);
+    return;
+  }
+
+  switch (OS_GetMutexType(mutex)) {
+  case OS_MUTEX_TYPE_STD:
+  case OS_MUTEX_TYPE_W:
+    if (mutex->thread == currentThread) {
+      OS_DecreaseMutexCount(mutex);
+      if (OS_GetMutexCount(mutex) == 0) {
+        unlocked = TRUE;
+      }
+    }
+    break;
+
+  case OS_MUTEX_TYPE_R:
+    OS_DecreaseMutexCount(mutex);
+    if (OS_GetMutexCount(mutex) == 0) {
+      unlocked = TRUE;
+    }
+    break;
+
+  default:
+    OS_TWarning("Illegal unlock mutex");
+    (void)OS_RestoreInterrupts(e);
+    return;
+  }
+
+  if (unlocked) {
+    OSi_DequeueItem(currentThread, mutex);
+    mutex->thread = NULL;
+    OS_SetMutexType(mutex, OS_MUTEX_TYPE_NONE);
+    OS_WakeupThread(&mutex->queue);
+  }
+
+  (void)OS_RestoreInterrupts(e);
+}
+
+void OS_UnlockMutexR(OSMutex *mutex) {
+  OSi_UnlockMutexCore(mutex, OS_MUTEX_TYPE_R);
+}
+
+void OS_UnlockMutexW(OSMutex *mutex) {
+  OSi_UnlockMutexCore(mutex, OS_MUTEX_TYPE_W);
+}
+
+void OS_UnlockMutexRW(OSMutex *mutex) {
+  OSi_UnlockMutexCore(mutex, OS_MUTEX_TYPE_NONE);
+}
+
+void OS_LockMutexFromRToW(OSMutex *mutex) {
+  OSIntrMode e = OS_DisableInterrupts();
+  OSThread *currentThread = OS_GetCurrentThread();
+
+  while (1) {
+    if (OS_TryLockMutexFromRToW(mutex)) {
+      break;
+    }
+
+    currentThread->mutex = mutex;
+    OS_SleepThread(&mutex->queue);
+    currentThread->mutex = NULL;
+  }
+
+  (void)OS_RestoreInterrupts(e);
+}
+
+BOOL OS_TryLockMutexFromRToW(OSMutex *mutex) {
+  OSIntrMode e = OS_DisableInterrupts();
+  BOOL locked = FALSE;
+
+  if (OS_GetMutexCount(mutex) == 1 && mutex->queue.head == NULL &&
+      OS_GetMutexType(mutex) == OS_MUTEX_TYPE_R) {
+    OS_SetMutexType(mutex, OS_MUTEX_TYPE_W);
+    locked = TRUE;
+  }
+
+  (void)OS_RestoreInterrupts(e);
+  return locked;
+}
+
+void OS_LockMutexFromWToR(OSMutex *mutex) {
+  OSIntrMode e = OS_DisableInterrupts();
+  OSThread *currentThread = OS_GetCurrentThread();
+
+  while (1) {
+    if (OS_TryLockMutexFromWToR(mutex)) {
+      break;
+    }
+
+    currentThread->mutex = mutex;
+    OS_SleepThread(&mutex->queue);
+    currentThread->mutex = NULL;
+  }
+
+  (void)OS_RestoreInterrupts(e);
+}
+
+BOOL OS_TryLockMutexFromWToR(OSMutex *mutex) {
+  OSIntrMode e = OS_DisableInterrupts();
+  BOOL locked = FALSE;
+
+  if (OS_GetMutexCount(mutex) == 1 && mutex->queue.head == NULL &&
+      OS_GetMutexType(mutex) == OS_MUTEX_TYPE_W) {
+    OS_SetMutexType(mutex, OS_MUTEX_TYPE_R);
+    locked = TRUE;
+  }
+
+  (void)OS_RestoreInterrupts(e);
+  return locked;
+}
+#endif
+
 void OSi_EnqueueTail (OSThread * thread, OSMutex * mutex)
 {
 #ifndef SDK_THREAD_INFINITY

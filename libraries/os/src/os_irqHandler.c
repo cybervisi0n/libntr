@@ -2,6 +2,7 @@
 #include <nitro/types.h>
 #include <nitro/os/common/interrupt.h>
 #include <nitro/os/common/thread.h>
+#if SDK_VERSION_MAJOR == 4
 #include <nitro/os/common/systemCall.h>
 
 #ifdef SDK_ARM9
@@ -21,6 +22,35 @@
 
 #ifdef SDK_ARM9
     #include <nitro/dtcm_begin.h>
+#endif
+#elif SDK_VERSION_MAJOR == 5
+#ifdef SDK_NITRO
+#ifdef SDK_ARM9
+#include <nitro/hw/ARM9/mmap_global.h>
+#include <nitro/hw/ARM9/ioreg_OS.h>
+#elif defined(SDK_PORT)
+#include <nitro/hw/X86/mmap_global.h>
+#include <nitro/hw/X86/ioreg_OS.h>
+#else // SDK_ARM9
+#include <nitro/hw/ARM7/mmap_global.h>
+#include <nitro/hw/ARM7/ioreg_OS.h>
+#endif // SDK_ARM9
+#else
+#ifdef SDK_ARM9
+#include <twl/hw/ARM9/mmap_global.h>
+#include <twl/hw/ARM9/ioreg_OS.h>
+#elif defined(SDK_PORT)
+#include <twl/hw/X86/mmap_global.h>
+#include <twl/hw/X86/ioreg_OS.h>
+#else // SDK_ARM9
+#include <twl/hw/ARM7/mmap_global.h>
+#include <twl/hw/ARM7/ioreg_OS.h>
+#endif // SDK_ARM9
+#endif
+#endif
+
+#ifdef SDK_PORT
+#include <simulator/sim.h>
 #endif
 
 #ifndef SDK_THREAD_INFINITY
@@ -337,6 +367,24 @@ void OS_WaitIrq (BOOL clear, OSIrqMask irqFlags)
     }
 #endif
 }
+
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_TWL) && defined(SDK_ARM7)
+void OS_WaitIrqEx(BOOL clear, OSIrqMask irqFlags) {
+  OSIntrMode enabled = OS_DisableInterrupts();
+
+  if (clear) {
+    (void)OS_ClearIrqCheckFlagEx(irqFlags);
+  }
+
+  while (!(OS_GetIrqCheckFlagEx() & irqFlags)) {
+    OS_SleepThread(&OSi_IrqThreadQueue);
+  }
+
+  (void)OS_RestoreInterrupts(enabled);
+}
+#endif // defined(SDK_TWL) && defined(SDK_ARM7)
+#endif
 
 void OS_WaitAnyIrq (void)
 {

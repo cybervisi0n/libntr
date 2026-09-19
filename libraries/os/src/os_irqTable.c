@@ -14,8 +14,23 @@ void OSi_IrqDma3(void);
     void OSi_IrqVBlank(void);
 #endif
 
+#if SDK_VERSION_MAJOR == 4
 #ifdef SDK_ARM9
     #include <nitro/dtcm_begin.h>
+#endif
+#elif SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+void OSi_IrqNDma0(void);
+void OSi_IrqNDma1(void);
+void OSi_IrqNDma2(void);
+void OSi_IrqNDma3(void);
+#endif
+
+#ifdef SDK_NITRO
+#if defined(SDK_ARM9) || defined(SDK_PORT)
+#include <nitro/dtcm_begin.h>
+#endif // SDK_ARM9
+#endif
 #endif
 
 #ifdef SDK_PORT
@@ -177,4 +192,14 @@ void OSi_IrqTimer3 (void)
 
         OS_SetIrqCheckFlag(1UL << REG_OS_IE_VB_SHIFT);
     }
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+
+void OSi_IrqNDma0(void) { OSi_IrqCallback(OSi_IRQCALLBACK_NO_NDMA0); }
+void OSi_IrqNDma1(void) { OSi_IrqCallback(OSi_IRQCALLBACK_NO_NDMA1); }
+void OSi_IrqNDma2(void) { OSi_IrqCallback(OSi_IRQCALLBACK_NO_NDMA2); }
+void OSi_IrqNDma3(void) { OSi_IrqCallback(OSi_IRQCALLBACK_NO_NDMA3); }
+#endif
 #endif

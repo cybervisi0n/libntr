@@ -4,6 +4,12 @@ libspi_srcs = files(
     'pm.c'
 )
 
+if(sdk_version_major == 5)
+    libspi_srcs += files(
+        'micex.c'
+    )
+endif
+
 libspi_arm7_srcs = files(
     'spi_arm7.c',
     'tp_arm7.c',

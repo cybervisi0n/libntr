@@ -1,9 +1,14 @@
 subdir('src')
 
+libos_includes = []
+if(sdk_version_major == 5)
+    libos_includes += include_directories('include')
+endif
+
 if (build_target == 'arm')
 libos = library('os',
     c_pch: nitro_pch,
-    include_directories: nitrosdk_includes,
+    include_directories: [libos_includes, nitrosdk_includes],
     pic: false,
     sources: [libos_srcs, fx_const_h]
 )
@@ -18,7 +23,7 @@ libos_arm7 = library('os_arm7',
 else
 libos = library('os',
     c_pch: nitro_pch,
-    include_directories: nitrosdk_includes,
+    include_directories: [libos_includes, nitrosdk_includes],
     pic: false,
     sources: [libos_srcs, fx_const_h],
     native: (build_target == 'linux' or build_target == 'win64')

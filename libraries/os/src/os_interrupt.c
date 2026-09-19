@@ -1,4 +1,16 @@
+#if SDK_VERSION_MAJOR == 4
 #include <nitro.h>
+#elif SDK_VERSION_MAJOR == 5
+#include <nitro/hw/common/armArch.h>
+
+#ifdef SDK_NITRO
+#include <nitro/os/common/interrupt.h>
+#else
+#include <twl/os/common/interrupt.h>
+#endif
+
+#include <nitro/os/common/system.h>
+#endif
 
 extern OSThreadQueue OSi_IrqThreadQueue;
 
@@ -22,7 +34,16 @@ void OS_SetIrqFunction (OSIrqMask intrBit, OSIrqFunction function)
 
             if (REG_OS_IE_D0_SHIFT <= i && i <= REG_OS_IE_D3_SHIFT) {
                 info = &OSi_IrqCallbackInfo[i - REG_OS_IE_D0_SHIFT];
-            } else if (REG_OS_IE_T0_SHIFT <= i && i <= REG_OS_IE_T3_SHIFT)   {
+            } 
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+      else if (REG_OS_IE_ND0_SHIFT <= i && i <= REG_OS_IE_ND3_SHIFT) {
+        info = &OSi_IrqCallbackInfo[i - REG_OS_IE_ND0_SHIFT +
+                                    OSi_IRQCALLBACK_NO_NDMA0];
+      }
+#endif
+#endif
+            else if (REG_OS_IE_T0_SHIFT <= i && i <= REG_OS_IE_T3_SHIFT)   {
                 info = &OSi_IrqCallbackInfo[i - REG_OS_IE_T0_SHIFT + OSi_IRQCALLBACK_NO_TIMER0];
             }
 #ifdef SDK_ARM7
@@ -47,6 +68,29 @@ void OS_SetIrqFunction (OSIrqMask intrBit, OSIrqFunction function)
     }
 }
 
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_TWL) && defined(SDK_ARM7)
+void OS_SetIrqFunctionEx(OSIrqMask intrBit, OSIrqFunction function) {
+  int i;
+  OSIrqCallbackInfo *info = NULL;
+
+  for (i = 0; i < OS_IRQ_TABLE2_MAX; i++) {
+    if (intrBit & 1) {
+      info = NULL;
+      OS_IRQTable2[i] = function;
+
+      if (info) {
+        info->func = (void (*)(void *))function;
+        info->arg = 0;
+        info->enable = TRUE;
+      }
+    }
+    intrBit >>= 1;
+  }
+}
+#endif // defined(SDK_TWL) && defined(SDK_ARM7)
+#endif
+
 OSIrqFunction OS_GetIrqFunction (OSIrqMask intrBit)
 {
     int i;
@@ -57,7 +101,15 @@ OSIrqFunction OS_GetIrqFunction (OSIrqMask intrBit)
 
             if (REG_OS_IE_D0_SHIFT <= i && i <= REG_OS_IE_D3_SHIFT) {
                 return (void (*)(void)) OSi_IrqCallbackInfo[i - REG_OS_IE_D0_SHIFT].func;
-            } else if (REG_OS_IE_T0_SHIFT <= i && i <= REG_OS_IE_T3_SHIFT)   {
+            } 
+#if (SDK_VERSION_MAJOR == 5) && defined(SDK_TWL)
+
+      else if (REG_OS_IE_ND0_SHIFT <= i && i <= REG_OS_IE_ND3_SHIFT) {
+        return (void (*)(void))OSi_IrqCallbackInfo[i - REG_OS_IE_D0_SHIFT +
+                                                   OSi_IRQCALLBACK_NO_NDMA0].func;
+      }
+#endif
+            else if (REG_OS_IE_T0_SHIFT <= i && i <= REG_OS_IE_T3_SHIFT)   {
                 return (void (*)(void)) OSi_IrqCallbackInfo[i - REG_OS_IE_T0_SHIFT +
                                                             OSi_IRQCALLBACK_NO_TIMER0].func;
             }
@@ -77,6 +129,24 @@ OSIrqFunction OS_GetIrqFunction (OSIrqMask intrBit)
     return 0;
 }
 
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_TWL) && defined(SDK_ARM7)
+OSIrqFunction OS_GetIrqFunctionEx(OSIrqMask intrBit) {
+  int i;
+  OSIrqFunction *funcPtr = &OS_IRQTable2[0]; // skip IE part
+
+  for (i = 0; i < OS_IRQ_TABLE2_MAX; i++) {
+    if (intrBit & 1) {
+      return *funcPtr;
+    }
+    intrBit >>= 1;
+    funcPtr++;
+  }
+  return 0;
+}
+#endif // defined(SDK_TWL) && defined(SDK_ARM7)
+#endif
+
 void OSi_EnterDmaCallback (u32 dmaNo, void (*callback)(void *), void * arg)
 {
     OSIrqMask imask = (1UL << (REG_OS_IE_D0_SHIFT + dmaNo));
@@ -85,6 +155,29 @@ void OSi_EnterDmaCallback (u32 dmaNo, void (*callback)(void *), void * arg)
     OSi_IrqCallbackInfo[dmaNo].arg = arg;
     OSi_IrqCallbackInfo[dmaNo].enable = OS_EnableIrqMask(imask) & imask;
 }
+
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+#include <twl/ltdmain_begin.h>
+static void OSi_EnterNDmaCallback_ltdmain(u32 dmaNo, void (*callback)(void *),
+                                          void *arg);
+static void OSi_EnterNDmaCallback_ltdmain(u32 dmaNo, void (*callback)(void *),
+                                          void *arg) {
+  OSIrqMask imask = (1UL << (REG_OS_IE_ND0_SHIFT + dmaNo));
+
+  OSi_IrqCallbackInfo[dmaNo + OSi_IRQCALLBACK_NO_NDMA0].func = callback;
+  OSi_IrqCallbackInfo[dmaNo + OSi_IRQCALLBACK_NO_NDMA0].arg = arg;
+
+  OSi_IrqCallbackInfo[dmaNo + OSi_IRQCALLBACK_NO_NDMA0].enable =
+      OS_EnableIrqMask(imask) & imask;
+}
+#include <twl/ltdmain_end.h>
+
+void OSi_EnterNDmaCallback(u32 dmaNo, void (*callback)(void *), void *arg) {
+  OSi_EnterNDmaCallback_ltdmain(dmaNo, callback, arg);
+}
+#endif
+#endif
 
 void OSi_EnterTimerCallback (u32 timerNo, void (*callback)(void *), void * arg)
 {
@@ -110,6 +203,18 @@ OSIrqMask OS_SetIrqMask (OSIrqMask intr)
     return prep;
 }
 
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_TWL) && defined(SDK_ARM7)
+OSIrqMask OS_SetIrqMaskEx(OSIrqMask intr) {
+  BOOL ime = OS_DisableIrq(); // IME disable
+  OSIrqMask prep = reg_OS_IE2;
+  reg_OS_IE2 = (u16)intr;
+  (void)OS_RestoreIrq(ime);
+  return prep;
+}
+#endif
+#endif
+
 OSIrqMask OS_EnableIrqMask (OSIrqMask intr)
 {
     BOOL ime = OS_DisableIrq();
@@ -118,6 +223,18 @@ OSIrqMask OS_EnableIrqMask (OSIrqMask intr)
     (void)OS_RestoreIrq(ime);
     return prep;
 }
+
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_TWL) && defined(SDK_ARM7)
+OSIrqMask OS_EnableIrqMaskEx(OSIrqMask intr) {
+  BOOL ime = OS_DisableIrq(); // IME disable
+  OSIrqMask prep = reg_OS_IE2;
+  reg_OS_IE2 = (u16)(prep | intr);
+  (void)OS_RestoreIrq(ime);
+  return prep;
+}
+#endif
+#endif
 
 OSIrqMask OS_DisableIrqMask (OSIrqMask intr)
 {
@@ -128,6 +245,18 @@ OSIrqMask OS_DisableIrqMask (OSIrqMask intr)
     return prep;
 }
 
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_TWL) & defined(SDK_ARM7)
+OSIrqMask OS_DisableIrqMaskEx(OSIrqMask intr) {
+  BOOL ime = OS_DisableIrq(); // IME disable
+  OSIrqMask prep = reg_OS_IE2;
+  reg_OS_IE2 = (u16)(prep & ~intr);
+  (void)OS_RestoreIrq(ime);
+  return prep;
+}
+#endif
+#endif
+
 OSIrqMask OS_ResetRequestIrqMask (OSIrqMask intr)
 {
     BOOL ime = OS_DisableIrq();
@@ -137,11 +266,26 @@ OSIrqMask OS_ResetRequestIrqMask (OSIrqMask intr)
     return prep;
 }
 
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_TWL) && defined(SDK_ARM7)
+OSIrqMask OS_ResetRequestIrqMaskEx(OSIrqMask intr) {
+  BOOL ime = OS_DisableIrq(); // IME disable
+  OSIrqMask prep = reg_OS_IF2;
+  reg_OS_IF2 = (u16)intr;
+  (void)OS_RestoreIrq(ime);
+  return prep;
+}
+#endif
+#endif
+
 #if defined(SDK_TCM_APPLY) && defined(SDK_ARM9)
     #include <nitro/itcm_end.h>
 #endif
 
 extern void SDK_IRQ_STACKSIZE(void);
+#if SDK_VERSION_MAJOR == 5
+#define OSi_IRQ_STACKSIZE ((int)SDK_IRQ_STACKSIZE)
+#endif
 
 #if (defined(SDK_ARM9) || defined(SDK_PORT))
     #define  OSi_IRQ_STACK_TOP                (HW_DTCM_SVC_STACK - ((s32)SDK_IRQ_STACKSIZE))

@@ -699,6 +699,46 @@ RTCResult RTC_SetAlarmParam (RTCAlarmChan chan, const RTCAlarmParam * param)
     return rtcWork.commonResult;
 }
 
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+
+RTCWork *RTCi_GetSysWork(void) { return &rtcWork; }
+
+RTCResult RTCi_GetCounterAsync(u32 *count, RTCCallback callback, void *arg) {
+  return ((OS_IsRunOnTwl() == FALSE)
+              ? RTC_RESULT_INVALID_COMMAND
+              : RTCEXi_GetCounterAsync(count, callback, arg));
+}
+
+RTCResult RTCi_GetCounter(u32 *count) {
+  return ((OS_IsRunOnTwl() == FALSE) ? RTC_RESULT_INVALID_COMMAND
+                                     : RTCEXi_GetCounter(count));
+}
+
+RTCResult RTCi_GetFoutAsync(u16 *fout, RTCCallback callback, void *arg) {
+  return ((OS_IsRunOnTwl() == FALSE)
+              ? RTC_RESULT_INVALID_COMMAND
+              : RTCEXi_GetFoutAsync(fout, callback, arg));
+}
+
+RTCResult RTCi_GetFout(u16 *fout) {
+  return ((OS_IsRunOnTwl() == FALSE) ? RTC_RESULT_INVALID_COMMAND
+                                     : RTCEXi_GetFout(fout));
+}
+
+RTCResult RTCi_SetFoutAsync(const u16 *fout, RTCCallback callback, void *arg) {
+  return ((OS_IsRunOnTwl() == FALSE)
+              ? RTC_RESULT_INVALID_COMMAND
+              : RTCEXi_SetFoutAsync(fout, callback, arg));
+}
+
+RTCResult RTCi_SetFout(const u16 *fout) {
+  return ((OS_IsRunOnTwl() == FALSE) ? RTC_RESULT_INVALID_COMMAND
+                                     : RTCEXi_SetFout(fout));
+}
+#endif
+#endif
+
 #ifdef SDK_PORT
 static void RtcCommonCallback (PXIFifoTag tag, u64 data, BOOL err)
 #else

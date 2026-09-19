@@ -9,6 +9,12 @@ libsnd_srcs = files(
     'snd_data.c'
 )
 
+if(sdk_version_major == 5)
+    libsnd_srcs += files(
+        'sndex.c'
+    )
+endif
+
 libsnd_arm7_srcs = files(
     'snd_global.c',
     'snd_channel.c',

@@ -1,5 +1,14 @@
 #include    <nitro/spi.h>
+#if SDK_VERSION_MAJOR == 5
+#include <nitro/os/common/systemWork.h>
 
+#ifdef SDK_TWL
+#include <twl/os/common/codecmode.h>
+#include "micex.h"
+#endif
+#endif
+
+#ifndef SDK_TWL
 typedef enum MICLock {
     MIC_LOCK_OFF = 0,
     MIC_LOCK_ON,
@@ -15,6 +24,7 @@ typedef struct MICWork {
     void * fullArg;
     void * dst_buf;
 } MICWork;
+#endif
 
 static u16 micInitialized;
 static MICWork micWork;
@@ -273,6 +283,46 @@ void * MIC_GetLastSamplingAddress (void)
     return (void *)(OS_GetSystemWork()->mic_last_address);
 }
 
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+
+MICResult MIC_StartLimitedSamplingAsync(const MICAutoParam *param,
+                                        MICCallback callback, void *arg) {
+  return ((OSi_IsCodecTwlMode() == TRUE)
+              ? MICEXi_StartLimitedSamplingAsync(param, callback, arg)
+              : MIC_StartAutoSamplingAsync(param, callback, arg));
+}
+
+MICResult MIC_StopLimitedSamplingAsync(MICCallback callback, void *arg) {
+  return ((OSi_IsCodecTwlMode() == TRUE)
+              ? MICEXi_StopLimitedSamplingAsync(callback, arg)
+              : MIC_StopAutoSamplingAsync(callback, arg));
+}
+
+MICResult MIC_AdjustLimitedSamplingAsync(u32 rate, MICCallback callback,
+                                         void *arg) {
+  return ((OSi_IsCodecTwlMode() == TRUE)
+              ? MICEXi_AdjustLimitedSamplingAsync(rate, callback, arg)
+              : MIC_AdjustAutoSamplingAsync(rate, callback, arg));
+}
+
+MICResult MIC_StartLimitedSampling(const MICAutoParam *param) {
+  return ((OSi_IsCodecTwlMode() == TRUE) ? MICEXi_StartLimitedSampling(param)
+                                         : MIC_StartAutoSampling(param));
+}
+
+MICResult MIC_StopLimitedSampling(void) {
+  return ((OSi_IsCodecTwlMode() == TRUE) ? MICEXi_StopLimitedSampling()
+                                         : MIC_StopAutoSampling());
+}
+
+MICResult MIC_AdjustLimitedSampling(u32 rate) {
+  return ((OSi_IsCodecTwlMode() == TRUE) ? MICEXi_AdjustLimitedSampling(rate)
+                                         : MIC_AdjustAutoSampling(rate));
+}
+#endif
+#endif
+
 #ifdef SDK_PORT
 static void MicCommonCallback (PXIFifoTag tag, u64 data, BOOL err)
 #else
@@ -453,4 +503,10 @@ loop:
 }
 
 #include <nitro/codereset.h>
+#endif
+
+#if SDK_VERSION_MAJOR == 5
+#ifdef SDK_TWL
+MICWork *MICi_GetSysWork(void) { return &micWork; }
+#endif
 #endif
