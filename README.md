@@ -23,14 +23,9 @@ Select the build target with the 'build_target' meson option.
  * win64 (x86_64 Windows PC)
  * nx (Switch via libnx)
 
-## DSi Support (WIP)
-DSi Support has been added for the following libraries
-* camera
-* dsp
-* el
-* fx
-* cp
-* env
-* gx
-* scfg
-* wxc
+## DSi Support (BETA)
+libntr supports building TWL applications. Set the meson options:
+ * sdk_version_major=5
+ * hardware_type=(twl_hyb) or (twl_ltd)
+ * * twl_hyb: DSi enhanced application, supports running on original NDS and DSi
+ * * twl_ltd: DSiWare, DSi only
