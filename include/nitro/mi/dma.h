@@ -84,6 +84,17 @@ extern "C" {
 #define MI_DMA_COUNT_MASK          (REG_MI_DMA0CNT_WORDCNT_MASK)
 #define MI_DMA_COUNT_SHIFT         (REG_MI_DMA0CNT_WORDCNT_SHIFT)
 
+#if SDK_VERSION_MAJOR == 5
+#define MI_DMA_NUM_WOFFSET(ndmaNo) (ndmaNo * 3)
+#define MI_DMA_REG_SAD_WOFFSET 0
+#define MI_DMA_REG_DAD_WOFFSET 1
+#define MI_DMA_REG_CNT_WOFFSET 2
+
+#define MI_DMA_REGADDR(dmaNo, reg)                                             \
+  (((vu32 *)REG_DMA0SAD_ADDR) + MI_DMA_NUM_WOFFSET(dmaNo) + (reg))
+#define MI_DMA_REG(dmaNo, reg) (*(MI_DMA_REGADDR(dmaNo, reg)))
+#endif
+
 #define MI_DMA_SINC_DINC_16        (MI_DMA_SRC_INC | MI_DMA_DEST_INC | MI_DMA_16BIT_BUS)
 #define MI_DMA_SFIX_DINC_16        (MI_DMA_SRC_FIX | MI_DMA_DEST_INC | MI_DMA_16BIT_BUS)
 #define MI_DMA_SINC_DFIX_16        (MI_DMA_SRC_INC | MI_DMA_DEST_FIX | MI_DMA_16BIT_BUS)

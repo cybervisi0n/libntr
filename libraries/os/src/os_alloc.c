@@ -103,6 +103,13 @@ struct HeapDesc {
 #endif
 };
 
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_TWL) && !defined(SDK_TWLLTD)
+static OSArenaId OSi_ExtraHeapArenaId = (OSArenaId)-1;
+static OSHeapHandle OSi_ExtraHeapHandle = -1;
+#endif
+#endif
+
 typedef struct {
     volatile OSHeapHandle currentHeap;
     int numHeaps;

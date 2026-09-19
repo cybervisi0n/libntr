@@ -27,6 +27,16 @@ typedef union {
     u16 b16;
 } MIiDmaClearSrc;
 
+#if SDK_VERSION_MAJOR == 5
+#define MIi_DMA_MODE_NOINT 1
+#define MIi_DMA_MODE_WAIT 2
+#define MIi_DMA_MODE_NOCLEAR 4
+#define MIi_DMA_MODE_SRC32 0x10
+#define MIi_DMA_MODE_SRC16 0x20
+
+void MIi_DmaSetParameters(u32 dmaNo, u32 src, u32 dest, u32 ctrl, u32 mode);
+#endif
+
 #if defined( SDK_ARM9 ) || defined( SDK_PORT )
     void MIi_DmaSetParams(u32 dmaNo, u32 src, u32 dest, u32 ctrl);
 #ifdef SDK_PORT

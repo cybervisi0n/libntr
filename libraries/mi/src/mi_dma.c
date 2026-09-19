@@ -8,6 +8,109 @@
 #include <simulator/assert.h>
 #endif
 
+#if SDK_VERSION_MAJOR == 5
+#if defined(SDK_ARM9) || defined(SDK_PORT)
+#include <nitro/itcm_begin.h>
+
+void MIi_DmaSetParameters(u32 dmaNo, u32 src, u32 dest, u32 ctrl, u32 mode) {
+  OSIntrMode enabled;
+  vu32 *p;
+
+  if (!(mode & MIi_DMA_MODE_NOINT)) {
+    enabled = OS_DisableInterrupts();
+  }
+
+  p = (vu32 *)MI_DMA_REGADDR(dmaNo, MI_DMA_REG_SAD_WOFFSET);
+
+  if (mode & MIi_DMA_MODE_SRC32) {
+    MIiDmaClearSrc *srcp =
+        (MIiDmaClearSrc *)((u32)MIi_DMA_CLEAR_DATA_BUF + dmaNo * 4);
+    srcp->b32 = src;
+    src = (u32)srcp;
+  } else if (mode & MIi_DMA_MODE_SRC16) {
+    MIiDmaClearSrc *srcp =
+        (MIiDmaClearSrc *)((u32)MIi_DMA_CLEAR_DATA_BUF + dmaNo * 4);
+    srcp->b16 = (u16)src;
+    src = (u32)srcp;
+  }
+
+  *p = (vu32)src;
+  *(p + 1) = (vu32)dest;
+  *(p + 2) = (vu32)ctrl;
+
+  if (mode & MIi_DMA_MODE_WAIT) {
+
+    {
+      u32 dummy = reg_MI_DMA0SAD;
+    }
+    {
+      u32 dummy = reg_MI_DMA0SAD;
+    }
+
+    if (!(mode & MIi_DMA_MODE_NOCLEAR)) {
+
+      if (dmaNo == MIi_DUMMY_DMA_NO) {
+        *p = (vu32)MIi_DUMMY_SRC;
+        *(p + 1) = (vu32)MIi_DUMMY_DEST;
+        *(p + 2) = (vu32)MIi_DUMMY_CNT;
+      }
+    }
+  }
+
+  if (!(mode & MIi_DMA_MODE_NOINT)) {
+    (void)OS_RestoreInterrupts(enabled);
+  }
+
+  if (mode & MIi_DMA_MODE_WAIT) {
+
+    {
+      u32 dummy = reg_MI_DMA0SAD;
+    }
+    {
+      u32 dummy = reg_MI_DMA0SAD;
+    }
+  }
+}
+#include <nitro/itcm_end.h>
+#else // ifdef SDK_ARM9
+void MIi_DmaSetParameters(u32 dmaNo, u32 src, u32 dest, u32 ctrl, u32 mode) {
+  OSIntrMode enabled;
+  vu32 *p;
+
+  if (!(mode & MIi_DMA_MODE_NOINT)) {
+    enabled = OS_DisableInterrupts();
+  }
+
+  p = (vu32 *)MI_DMA_REGADDR(dmaNo, MI_DMA_REG_SAD_WOFFSET);
+
+  if (mode & MIi_DMA_MODE_SRC32) {
+    MIiDmaClearSrc *srcp =
+        (MIiDmaClearSrc *)((u32)MIi_DMA_CLEAR_DATA_BUF + dmaNo * 4);
+    srcp->b32 = src;
+    src = (u32)srcp;
+  } else if (mode & MIi_DMA_MODE_SRC16) {
+    MIiDmaClearSrc *srcp =
+        (MIiDmaClearSrc *)((u32)MIi_DMA_CLEAR_DATA_BUF + dmaNo * 4);
+    srcp->b16 = (u16)src;
+    src = (u32)srcp;
+  }
+
+  *p = (vu32)src;
+  *(p + 1) = (vu32)dest;
+  *(p + 2) = (vu32)ctrl;
+
+  if (mode & MIi_DMA_MODE_WAIT) {
+
+    u32 dummy = reg_MI_DMA0SAD;
+  }
+
+  if (!(mode & MIi_DMA_MODE_NOINT)) {
+    (void)OS_RestoreInterrupts(enabled);
+  }
+}
+#endif
+#endif
+
 #if defined( SDK_ARM9 ) || defined( SDK_PORT )
     #include <nitro/itcm_begin.h>
 
@@ -104,7 +207,11 @@
     #include <nitro/itcm_end.h>
 #endif
 
+#if SDK_VERSION_MAJOR == 4
 void MI_DmaFill32 (u32 dmaNo, void * dest, u32 data, u32 size)
+#elif SDK_VERSION_MAJOR == 5
+void MIi_DmaFill32(u32 dmaNo, void *dest, u32 data, u32 size, BOOL dmaEnable)
+#endif
 {
     vu32 * dmaCntp;
 
@@ -123,12 +230,28 @@ void MI_DmaFill32 (u32 dmaNo, void * dest, u32 data, u32 size)
     memset(dest, data, size);
     #else
     MIi_Wait_BeforeDMA(dmaCntp, dmaNo);
+    #if SDK_VERSION_MAJOR == 4
     MIi_DmaSetParams_wait_src32(dmaNo, data, (u32)dest, MI_CNT_CLEAR32(size));
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    if (dmaEnable) {
+      MIi_DmaSetParameters(dmaNo, data, (u32)dest, MI_CNT_CLEAR32(size),
+                           MIi_DMA_MODE_WAIT | MIi_DMA_MODE_SRC32);
+    } else {
+      MIi_DmaSetParameters(dmaNo, data, (u32)dest, MI_CNT_SET_CLEAR32(size),
+                           MIi_DMA_MODE_WAIT | MIi_DMA_MODE_SRC32 |
+                               MIi_DMA_MODE_NOCLEAR);
+    }
+    #endif
     MIi_Wait_AfterDMA(dmaCntp);
     #endif
 }
 
+#if SDK_VERSION_MAJOR == 4
 void MI_DmaCopy32 (u32 dmaNo, const void * src, void * dest, u32 size)
+#elif SDK_VERSION_MAJOR == 5
+void MIi_DmaCopy32(u32 dmaNo, const void *src, void *dest, u32 size, BOOL dmaEnable)
+#endif
 {
     vu32 * dmaCntp;
 
@@ -151,12 +274,27 @@ void MI_DmaCopy32 (u32 dmaNo, const void * src, void * dest, u32 size)
     memcpy( dest, src, size );
     #else
     MIi_Wait_BeforeDMA(dmaCntp, dmaNo);
+    #if SDK_VERSION_MAJOR == 4
     MIi_DmaSetParams_wait(dmaNo, (u32)src, (u32)dest, MI_CNT_COPY32(size));
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    if (dmaEnable) {
+      MIi_DmaSetParameters(dmaNo, (u32)src, (u32)dest, MI_CNT_COPY32(size),
+                           MIi_DMA_MODE_WAIT);
+    } else {
+      MIi_DmaSetParameters(dmaNo, (u32)src, (u32)dest, MI_CNT_SET_COPY32(size),
+                           MIi_DMA_MODE_WAIT | MIi_DMA_MODE_NOCLEAR);
+    }
+    #endif
     MIi_Wait_AfterDMA(dmaCntp);
     #endif
 }
 
+#if SDK_VERSION_MAJOR == 4
 void MI_DmaSend32 (u32 dmaNo, const void * src, volatile void * dest, u32 size)
+#elif SDK_VERSION_MAJOR == 5
+void MIi_DmaSend32(u32 dmaNo, const void *src, volatile void *dest, u32 size, BOOL dmaEnable)
+#endif
 {
     vu32 * dmaCntp;
 
@@ -179,12 +317,27 @@ void MI_DmaSend32 (u32 dmaNo, const void * src, volatile void * dest, u32 size)
     memcpy(dest, src, size);
     #else
     MIi_Wait_BeforeDMA(dmaCntp, dmaNo);
+    #if SDK_VERSION_MAJOR == 4
     MIi_DmaSetParams_wait(dmaNo, (u32)src, (u32)dest, MI_CNT_SEND32(size));
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    if (dmaEnable) {
+      MIi_DmaSetParameters(dmaNo, (u32)src, (u32)dest, MI_CNT_SEND32(size),
+                           MIi_DMA_MODE_WAIT);
+    } else {
+      MIi_DmaSetParameters(dmaNo, (u32)src, (u32)dest, MI_CNT_SET_SEND32(size),
+                           MIi_DMA_MODE_WAIT | MIi_DMA_MODE_NOCLEAR);
+    }
+    #endif
     MIi_Wait_AfterDMA(dmaCntp);
     #endif
 }
 
+#if SDK_VERSION_MAJOR == 4
 void MI_DmaFill16 (u32 dmaNo, void * dest, u16 data, u32 size)
+#elif SDK_VERSION_MAJOR == 5
+void MIi_DmaFill16 (u32 dmaNo, void * dest, u16 data, u32 size, BOOL dmaEnable)
+#endif
 {
     vu32 * dmaCntp;
 
@@ -207,12 +360,28 @@ void MI_DmaFill16 (u32 dmaNo, void * dest, u16 data, u32 size)
     }
     #else
     MIi_Wait_BeforeDMA(dmaCntp, dmaNo);
+    #if SDK_VERSION_MAJOR == 4
     MIi_DmaSetParams_wait_src32(dmaNo, data, (u32)dest, MI_CNT_CLEAR16(size));
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    if (dmaEnable) {
+      MIi_DmaSetParameters(dmaNo, data, (u32)dest, MI_CNT_CLEAR16(size),
+                           MIi_DMA_MODE_WAIT | MIi_DMA_MODE_SRC16);
+    } else {
+      MIi_DmaSetParameters(dmaNo, data, (u32)dest, MI_CNT_SET_CLEAR16(size),
+                           MIi_DMA_MODE_WAIT | MIi_DMA_MODE_SRC16 |
+                               MIi_DMA_MODE_NOCLEAR);
+    }
+    #endif
     MIi_Wait_AfterDMA(dmaCntp);
     #endif
 }
 
+#if SDK_VERSION_MAJOR == 4
 void MI_DmaCopy16 (u32 dmaNo, const void * src, void * dest, u32 size)
+#elif SDK_VERSION_MAJOR == 5
+void MIi_DmaCopy16(u32 dmaNo, const void *src, void *dest, u32 size, BOOL dmaEnable)
+#endif
 {
     vu32 * dmaCntp;
 
@@ -235,12 +404,27 @@ void MI_DmaCopy16 (u32 dmaNo, const void * src, void * dest, u32 size)
     memcpy( dest, src, size );
     #else
     MIi_Wait_BeforeDMA(dmaCntp, dmaNo);
+    #if SDK_VERSION_MAJOR == 4
     MIi_DmaSetParams_wait(dmaNo, (u32)src, (u32)dest, MI_CNT_COPY16(size));
+    #endif
+    #if SDK_VERSION_MAJOR == 5
+    if (dmaEnable) {
+      MIi_DmaSetParameters(dmaNo, (u32)src, (u32)dest, MI_CNT_COPY16(size),
+                           MIi_DMA_MODE_WAIT);
+    } else {
+      MIi_DmaSetParameters(dmaNo, (u32)src, (u32)dest, MI_CNT_SET_COPY16(size),
+                           MIi_DMA_MODE_WAIT | MIi_DMA_MODE_NOCLEAR);
+    }
+    #endif
     MIi_Wait_AfterDMA(dmaCntp);
     #endif
 }
 
+#if SDK_VERSION_MAJOR == 4
 void MI_DmaSend16 (u32 dmaNo, const void * src, volatile void * dest, u32 size)
+#elif SDK_VERSION_MAJOR == 5
+void MIi_DmaSend16(u32 dmaNo, const void *src, volatile void *dest, u32 size, BOOL dmaEnable)
+#endif
 {
     vu32 * dmaCntp;
 
@@ -268,7 +452,11 @@ void MI_DmaSend16 (u32 dmaNo, const void * src, volatile void * dest, u32 size)
     #endif
 }
 
+#if SDK_VERSION_MAJOR == 4
 void MI_DmaFill32Async (u32 dmaNo, void * dest, u32 data, u32 size, MIDmaCallback callback, void * arg)
+#elif SDK_VERSION_MAJOR == 5
+void MIi_DmaFill32Async(u32 dmaNo, void *dest, u32 data, u32 size, MIDmaCallback callback, void *arg, BOOL dmaEnable)
+#endif
 {
     MIi_ASSERT_DMANO(dmaNo);
     MIi_ASSERT_MUL4(size);
@@ -304,7 +492,11 @@ void MI_DmaFill32Async (u32 dmaNo, void * dest, u32 data, u32 size, MIDmaCallbac
     }
 }
 
+#if SDK_VERSION_MAJOR == 4
 void MI_DmaCopy32Async (u32 dmaNo, const void * src, void * dest, u32 size, MIDmaCallback callback, void * arg)
+#elif SDK_VERSION_MAJOR == 5
+void MIi_DmaCopy32Async(u32 dmaNo, const void *src, void *dest, u32 size, MIDmaCallback callback, void *arg, BOOL dmaEnable)
+#endif
 {
     MIi_ASSERT_DMANO(dmaNo);
     MIi_ASSERT_MUL4(size);
@@ -340,7 +532,11 @@ void MI_DmaCopy32Async (u32 dmaNo, const void * src, void * dest, u32 size, MIDm
     }
 }
 
+#if SDK_VERSION_MAJOR == 4
 void MI_DmaSend32Async (u32 dmaNo, const void * src, volatile void * dest, u32 size, MIDmaCallback callback, void * arg)
+#elif SDK_VERSION_MAJOR == 5
+void MIi_DmaSend32Async(u32 dmaNo, const void *src, volatile void *dest, u32 size, MIDmaCallback callback, void *arg, BOOL dmaEnable)
+#endif
 {
     MIi_ASSERT_DMANO(dmaNo);
     MIi_ASSERT_MUL4(size);
@@ -376,7 +572,11 @@ void MI_DmaSend32Async (u32 dmaNo, const void * src, volatile void * dest, u32 s
     }
 }
 
+#if SDK_VERSION_MAJOR == 4
 void MI_DmaFill16Async (u32 dmaNo, void * dest, u16 data, u32 size, MIDmaCallback callback, void * arg)
+#elif SDK_VERSION_MAJOR == 5
+void MIi_DmaFill16Async(u32 dmaNo, void *dest, u16 data, u32 size, MIDmaCallback callback, void *arg, BOOL dmaEnable)
+#endif
 {
     MIi_ASSERT_DMANO(dmaNo);
     MIi_ASSERT_MUL2(size);
@@ -411,7 +611,11 @@ void MI_DmaFill16Async (u32 dmaNo, void * dest, u16 data, u32 size, MIDmaCallbac
     }
 }
 
+#if SDK_VERSION_MAJOR == 4
 void MI_DmaCopy16Async (u32 dmaNo, const void * src, void * dest, u32 size, MIDmaCallback callback, void * arg)
+#elif SDK_VERSION_MAJOR == 5
+void MIi_DmaCopy16Async(u32 dmaNo, const void *src, void *dest, u32 size, MIDmaCallback callback, void *arg, BOOL dmaEnable) 
+#endif
 {
     MIi_ASSERT_DMANO(dmaNo);
     MIi_ASSERT_MUL2(size);
