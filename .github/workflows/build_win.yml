@@ -41,6 +41,6 @@ jobs:
         run: .\Install_MSys2.ps1
         shell: powershell
 
-      - name: Build (win64 NTR)
+      - name: Build (win64 TWL)
         run: .\Launch_Msys2.ps1 "./standalone/scripts/ci_build_win64_twl.sh"
         shell: powershell
