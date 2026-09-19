@@ -81,6 +81,10 @@ void FS_End (void)
 #endif
 
 #if SDK_VERSION_MAJOR == 5
+static void FSi_ConvertToDirEntry(FSDirEntry *entry, FSArchive *arc,
+                                  const FSDirectoryEntryInfo *info);
+
+
 static BOOL FSi_IsValidTransferRegion(const void *buffer, s32 length) {
   BOOL retval = FALSE;
   if (buffer == NULL) {
@@ -170,9 +174,8 @@ int FSi_DecrementUnicodePositionToSlash(const u16 *str, int pos) {
 #if defined(FS_IMPLEMENT)
 void FS_InitFile (FSFile *p_file)
 {
-	FS_ASSERT_ARG(p_file, void);
-
 	#if SDK_VERSION_MAJOR == 4
+  FS_ASSERT_ARG(p_file, void);
 	p_file->link.next = p_file->link.prev = NULL;
 	p_file->command = FS_COMMAND_INVALID;
 	#endif
@@ -182,11 +185,11 @@ void FS_InitFile (FSFile *p_file)
 	p_file->arc = NULL;
 	p_file->stat = 0;
 	#if SDK_VERSION_MAJOR == 5
-    file->userdata = NULL;
-    file->next = NULL;
-    file->stat |= (FS_COMMAND_INVALID << FS_FILE_STATUS_CMD_SHIFT);
-    file->argument = NULL;
-    file->error = FS_RESULT_SUCCESS;
+    p_file->userdata = NULL;
+    p_file->next = NULL;
+    p_file->stat |= (FS_COMMAND_INVALID << FS_FILE_STATUS_CMD_SHIFT);
+    p_file->argument = NULL;
+    p_file->error = FS_RESULT_SUCCESS;
 	#endif
 }
 
@@ -360,7 +363,7 @@ BOOL FS_ConvertPathToFileID (FSFileID *p_file_id, const char *path)
 	return TRUE;
 	#elif SDK_VERSION_MAJOR == 5
   	BOOL retval = FALSE;
-  	SDK_NULL_ASSERT(p_fileid);
+  	SDK_NULL_ASSERT(p_file_id);
   	SDK_NULL_ASSERT(path);
   	SDK_ASSERT(FS_IsAvailable());
   	SDK_ASSERT(OS_GetProcMode() != OS_PROCMODE_IRQ);
@@ -378,8 +381,8 @@ BOOL FS_ConvertPathToFileID (FSFileID *p_file_id, const char *path)
   	    arg->relpath = relpath;
   	    arg->target_is_directory = FALSE;
   	    if (FSi_SendCommand(file, FS_COMMAND_FINDPATH, TRUE)) {
-  	      p_fileid->arc = arc;
-  	      p_fileid->file_id = arg->target_id;
+  	      p_file_id->arc = arc;
+  	      p_file_id->file_id = arg->target_id;
   	      retval = TRUE;
   	    }
   	  }
@@ -419,13 +422,13 @@ BOOL FS_OpenFileDirect (FSFile *p_file, FSArchive *p_arc, u32 image_top, u32 ima
   	SDK_ASSERT(OS_GetProcMode() != OS_PROCMODE_IRQ);
   	{
   	  FSArgumentForOpenFileDirect arg[1];
-  	  file->arc = arc;
-  	  file->argument = arg;
-  	  arg->id = id;
+  	  p_file->arc = p_arc;
+  	  p_file->argument = arg;
+  	  arg->id = file_index;
   	  arg->top = image_top;
   	  arg->bottom = image_bottom;
   	  arg->mode = 0;
-  	  retval = FSi_SendCommand(file, FS_COMMAND_OPENFILEDIRECT, TRUE);
+  	  retval = FSi_SendCommand(p_file, FS_COMMAND_OPENFILEDIRECT, TRUE);
   	}
 	#endif
 
@@ -446,7 +449,7 @@ BOOL FS_OpenFileDirect (FSFile *p_file, FSArchive *p_arc, u32 image_top, u32 ima
 	#if SDK_VERSION_MAJOR == 4
 	return TRUE;
 	#elif SDK_VERSION_MAJOR == 5
-	return retVal;
+	return retval;
 	#endif
 }
 
@@ -479,13 +482,13 @@ BOOL FS_OpenFileFast (FSFile *p_file, FSFileID file_id)
   	SDK_ASSERT(FS_IsAvailable());
   	SDK_ASSERT(!FS_IsFile(file));
   	SDK_ASSERT(OS_GetProcMode() != OS_PROCMODE_IRQ);
-  	if (id.arc) {
+  	if (file_id.arc) {
   	  FSArgumentForOpenFileFast arg[1];
-  	  file->arc = id.arc;
-  	  file->argument = arg;
-  	  arg->id = id.file_id;
+  	  p_file->arc = file_id.arc;
+  	  p_file->argument = arg;
+  	  arg->id = file_id.file_id;
   	  arg->mode = 0;
-  	  retval = FSi_SendCommand(file, FS_COMMAND_OPENFILEFAST, TRUE);
+  	  retval = FSi_SendCommand(p_file, FS_COMMAND_OPENFILEFAST, TRUE);
   	}
   	return retval;
 	#endif
@@ -494,7 +497,7 @@ BOOL FS_OpenFileFast (FSFile *p_file, FSFileID file_id)
 BOOL FS_OpenFile (FSFile *p_file, const char *path)
 {
 	#if SDK_VERSION_MAJOR == 5
-	return FS_OpenFileEx(file, path, FS_FILEMODE_R);
+	return FS_OpenFileEx(p_file, path, FS_FILEMODE_R);
 	#endif
 	FSFileID id;
 	#ifdef SDK_PORT
@@ -601,7 +604,9 @@ BOOL FS_CloseFile (FSFile *p_file)
 
 	#ifdef SDK_PORT
 	p_file->arc = NULL;
+  #if SDK_VERSION_MAJOR == 4
 	p_file->command = FS_COMMAND_INVALID;
+  #endif
 	p_file->stat &= ~(FS_FILE_STATUS_IS_FILE | FS_FILE_STATUS_IS_DIR);
 	if( p_file->pcFilePtr != NULL )
 	{
@@ -627,7 +632,7 @@ BOOL FS_CloseFile (FSFile *p_file)
 	return TRUE;
 	#elif SDK_VERSION_MAJOR == 5
   	{
-  	  	retval = FSi_SendCommand(file, FS_COMMAND_CLOSEFILE, TRUE);
+  	  	retval = FSi_SendCommand(p_file, FS_COMMAND_CLOSEFILE, TRUE);
   	}
   	return retval;
 	#endif
@@ -715,7 +720,7 @@ BOOL FS_GetPathName (FSFile *p_file, char *buf, u32 len)
 	#elif SDK_VERSION_MAJOR == 5
 	BOOL retval = FALSE;
   	SDK_ASSERT(FS_IsAvailable());
-  	SDK_ASSERT(FS_IsFile(file) || FS_IsDir(file));
+  	SDK_ASSERT(FS_IsFile(p_file) || FS_IsDir(p_file));
   	SDK_ASSERT(OS_GetProcMode() != OS_PROCMODE_IRQ);
 	#endif
 
@@ -732,11 +737,11 @@ BOOL FS_GetPathName (FSFile *p_file, char *buf, u32 len)
 	#elif SDK_VERSION_MAJOR == 5
   	{
   	  FSArgumentForGetPath arg[1];
-  	  file->argument = arg;
-  	  arg->is_directory = FS_IsDir(file);
-  	  arg->buffer = buffer;
-  	  arg->length = length;
-  	  retval = FSi_SendCommand(file, FS_COMMAND_GETPATH, TRUE);
+  	  p_file->argument = arg;
+  	  arg->is_directory = FS_IsDir(p_file);
+  	  arg->buffer = buf;
+  	  arg->length = len;
+  	  retval = FSi_SendCommand(p_file, FS_COMMAND_GETPATH, TRUE);
   	}
   	return retval;
 	#endif
@@ -747,6 +752,7 @@ s32 FS_GetPathLength (FSFile *p_file)
 	return FS_GetPathName(p_file, NULL, 0) ? p_file->arg.getpath.total_len : -1;
 }
 
+#if SDK_VERSION_MAJOR == 4
 BOOL FS_WaitAsync (FSFile *p_file)
 {
 	FS_ASSERT_INIT(FALSE);
@@ -784,11 +790,14 @@ BOOL FS_WaitAsync (FSFile *p_file)
 
 	return FS_IsSucceeded(p_file);
 }
+#endif
 
 void FS_CancelFile (FSFile *p_file)
 {
+  #if SDK_VERSION_MAJOR == 4
 	FS_ASSERT_INIT(FALSE);
 	FS_ASSERT_ARG(p_file, FALSE);
+  #endif
 
 	{
 		OSIntrMode bak_psr = OS_DisableInterrupts();
@@ -1417,7 +1426,7 @@ s32 FS_ReadFile (FSFile *p_file, void *dst, s32 len)
   	  p_file->argument = arg;
   	  arg->buffer = dst;
   	  arg->length = (u32)len;
-  	  if (FSi_SendCommand(file, FS_COMMAND_READFILE, TRUE)) {
+  	  if (FSi_SendCommand(p_file, FS_COMMAND_READFILE, TRUE)) {
   	    len = (s32)arg->length;
   	  } else {
   	    if ((p_file->error == FS_RESULT_INVALID_PARAMETER) ||
@@ -1540,12 +1549,12 @@ BOOL FS_SeekFile (FSFile *p_file, s32 offset, FSSeekFileMode origin)
 		p_file->prop.file.pos = (u32)offset;
 	}
 	#elif SDK_VERSION_MAJOR == 5
-  	if (!(retval = FSi_SeekFileIfProc(file, offset, origin))) {
+  	if (!(retval = FSi_SeekFileIfProc(p_file, offset, origin))) {
   	  FSArgumentForSeekFile arg[1];
-  	  file->argument = arg;
+  	  p_file->argument = arg;
   	  arg->offset = (int)offset;
   	  arg->from = origin;
-  	  retval = FSi_SendCommand(file, FS_COMMAND_SEEKFILE, TRUE);
+  	  retval = FSi_SendCommand(p_file, FS_COMMAND_SEEKFILE, TRUE);
   	}
 	#endif
 
@@ -1564,7 +1573,9 @@ BOOL FS_SeekFile (FSFile *p_file, s32 offset, FSSeekFileMode origin)
 				fseek(p_file->pcFilePtr, temp_offset, SEEK_CUR);
 				break;
 			default:
+        #if SDK_VERSION_MAJOR == 4
 				FS_ASSERT_ARG(FALSE, FALSE);
+        #endif
 				return FALSE;
 				break;
 		}
@@ -1574,7 +1585,7 @@ BOOL FS_SeekFile (FSFile *p_file, s32 offset, FSSeekFileMode origin)
 	#if SDK_VERSION_MAJOR == 4
 	return TRUE;
 	#elif SDK_VERSION_MAJOR == 5
-	return retVal;
+	return retval;
 	#endif
 }
 
@@ -1659,19 +1670,19 @@ BOOL FS_SeekDir (FSFile *p_dir, const FSDirPos *p_pos)
 	return TRUE;
 	#elif SDK_VERSION_MAJOR == 5
   	BOOL retval = FALSE;
-  	SDK_NULL_ASSERT(file);
-  	SDK_NULL_ASSERT(pos);
-  	SDK_NULL_ASSERT(pos->arc);
+  	SDK_NULL_ASSERT(p_dir);
+  	SDK_NULL_ASSERT(p_pos);
+  	SDK_NULL_ASSERT(p_pos->arc);
   	SDK_ASSERT(FS_IsAvailable());
   	SDK_ASSERT(OS_GetProcMode() != OS_PROCMODE_IRQ);
   	{
   	  FSArgumentForSeekDirectory arg[1];
-  	  arg->id = (u32)((pos->own_id << 0) | (pos->index << 16));
-  	  arg->position = pos->pos;
-  	  file->arc = pos->arc;
-  	  file->argument = arg;
-  	  if (FSi_SendCommand(file, FS_COMMAND_SEEKDIR, TRUE)) {
-  	    file->stat |= FS_FILE_STATUS_IS_DIR;
+  	  arg->id = (u32)((p_pos->own_id << 0) | (p_pos->index << 16));
+  	  arg->position = p_pos->pos;
+  	  p_dir->arc = p_pos->arc;
+  	  p_dir->argument = arg;
+  	  if (FSi_SendCommand(p_dir, FS_COMMAND_SEEKDIR, TRUE)) {
+  	    p_dir->stat |= FS_FILE_STATUS_IS_DIR;
   	    retval = TRUE;
   	  }
   	}
@@ -1694,8 +1705,8 @@ BOOL FS_ReadDir (FSFile *p_dir, FSDirEntry *p_entry)
 	#elif SDK_VERSION_MAJOR == 5
   	BOOL retval = FALSE;
   	FSDirectoryEntryInfo info[1];
-  	if (FS_ReadDirectory(file, info)) {
-  	  FSi_ConvertToDirEntry(entry, FS_GetAttachedArchive(file), info);
+  	if (FS_ReadDirectory(p_dir, info)) {
+  	  FSi_ConvertToDirEntry(p_entry, FS_GetAttachedArchive(p_dir), info);
   	  retval = TRUE;
   	}
   	return retval;
@@ -1712,7 +1723,7 @@ BOOL FS_FindDir (FSFile *p_dir, const char *path)
 
 	return FS_SeekDir(p_dir, &pos);
 	#elif SDK_VERSION_MAJOR == 5
-	return FS_OpenDirectory(dir, path, FS_FILEMODE_R);
+	return FS_OpenDirectory(p_dir, path, FS_FILEMODE_R);
 	#endif
 }
 
@@ -1752,7 +1763,7 @@ BOOL FS_TellDir (const FSFile *p_dir, FSDirPos *p_pos)
   	SDK_ASSERT(FS_IsAvailable());
   	SDK_ASSERT(FS_IsDir(dir));
   	{
-  	  *pos = dir->prop.dir.pos;
+  	  *p_pos = p_dir->prop.dir.pos;
   	  retval = TRUE;
   	}
   	return retval;
@@ -1761,10 +1772,12 @@ BOOL FS_TellDir (const FSFile *p_dir, FSDirPos *p_pos)
 
 BOOL FS_RewindDir (FSFile *p_dir)
 {
+  #if SDK_VERSION_MAJOR == 4
 	FS_ASSERT_INIT(FALSE);
 	FS_ASSERT_ARG(p_dir, FALSE);
 	FS_ASSERT_DIR(p_dir, FALSE);
 	FS_ASSERT_IRQ_ENABLED(-1);
+  #endif
 
 	{
 		FSDirPos pos;

@@ -289,6 +289,7 @@ BOOL FS_OpenDirectoryW(FSFile *file, const u16 *path, u32 mode);
 BOOL FS_ReadDirectoryW(FSFile *file, FSDirectoryEntryInfoW *info);
 #endif
 
+#if SDK_VERSION_MAJOR == 4
 static inline u32 FS_GetLength (const FSFile * p_file)
 {
 	return p_file->prop.file.bottom - p_file->prop.file.top;
@@ -298,6 +299,11 @@ static inline u32 FS_GetPosition (const FSFile * p_file)
 {
 	return p_file->prop.file.pos - p_file->prop.file.top;
 }
+#endif
+#if SDK_VERSION_MAJOR == 5
+u32 FS_GetLength(FSFile *file);
+u32 FS_GetPosition(FSFile *file);
+#endif
 
 s32 FS_ReadFile(FSFile * p_file, void * dst, s32 len);
 s32 FS_ReadFileAsync(FSFile * p_file, void * dst, s32 len);

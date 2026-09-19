@@ -37,6 +37,23 @@ extern int STD_TVSPrintf(char * dst, const char * fmt, va_list vlist);
 extern int STD_TSNPrintf(char * dst, size_t len, const char * fmt, ...);
 extern int STD_TVSNPrintf(char * dst, size_t len, const char * fmt, va_list vlist);
 
+#if SDK_VERSION_MAJOR == 5
+static inline void *STD_CopyMemory(void *destp, const void *srcp, u32 size) {
+  MI_CpuCopy(srcp, destp, size);
+  return destp;
+}
+
+static inline void *STD_MoveMemory(void *destp, const void *srcp, u32 size) {
+  MI_CpuMove(srcp, destp, size);
+  return destp;
+}
+
+static inline void *STD_FillMemory(void *destp, u8 data, u32 size) {
+  MI_CpuFill(destp, data, size);
+  return destp;
+}
+#endif
+
 #ifdef __cplusplus
 }
 #endif
