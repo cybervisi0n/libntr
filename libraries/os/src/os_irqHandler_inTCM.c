@@ -17,6 +17,10 @@
 #include <nitro/hw/ARM7/ioreg_OS.h>
 #endif // SDK_ARM9
 
+#ifdef SDK_PORT
+#include <simulator/sim.h>
+#endif
+
 OSThreadQueue OSi_IrqThreadQueue;
 
 #ifdef SDK_PORT
@@ -287,6 +291,16 @@ void OS_WaitIrq(BOOL clear, OSIrqMask irqFlags) {
   if (clear) {
     (void)OS_ClearIrqCheckFlag(irqFlags);
   }
+
+  #ifdef SDK_PORT
+  if( irqFlags == 1 )
+  {
+      SIM_PreRenderVBlank();
+      SIM_Render(NULL);
+      SIM_PostRenderVBlank();
+      return;
+  }
+  #endif
 
   while (!(OS_GetIrqCheckFlag() & irqFlags)) {
     OS_SleepThread(&OSi_IrqThreadQueue);
