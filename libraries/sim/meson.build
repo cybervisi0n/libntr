@@ -21,7 +21,7 @@ endif
 enet_dep = declare_dependency(dependencies: [enet_lib])
 
 libsim_dependencies = [sdl2_dep, enet_dep]
-libsim_args = []
+libsim_args = [ '-O2' ]
 
 if(build_target == 'win64')
 ws2_32_lib = meson.get_compiler('c').find_library('ws2_32')
