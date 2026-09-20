@@ -11,11 +11,7 @@ extern TPData s_tpData;
 #define TP_CALIBRATE_DOT_INV_SCALE_SHIFT    (28 - TP_CALIBRATE_DOT_SCALE_SHIFT)
 #define TP_CALIBRATE_DOT2ORIGIN_SCALE_SHIFT (TP_CALIBRATE_DOT_SCALE_SHIFT - TP_CALIBRATE_ORIGIN_SCALE_SHIFT)
 
-#ifdef SDK_PORT
-static void TPi_TpCallback(PXIFifoTag tag, u64 data, BOOL err);
-#else
-static void TPi_TpCallback(PXIFifoTag tag, u32 data, BOOL err);
-#endif
+static void TPi_TpCallback(PXIFifoTag tag, uPtr data, BOOL err);
 
 typedef struct {
     s32 x0;
@@ -122,11 +118,7 @@ static inline void TPi_ErrorAtPxi (TPRequestCommand command)
     }
 }
 
-#ifdef SDK_PORT
-static void TPi_TpCallback (PXIFifoTag tag, u64 data, BOOL err)
-#else
-static void TPi_TpCallback (PXIFifoTag tag, u32 data, BOOL err)
-#endif
+static void TPi_TpCallback (PXIFifoTag tag, uPtr data, BOOL err)
 {
 #pragma unused(tag)
 

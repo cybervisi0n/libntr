@@ -416,11 +416,7 @@ BOOL MI_IsWramSlotLocked(MIWramPos wram, int num) {
 #define MIi_SENDTYPE_COMMAND (FALSE)
 #define MIi_SENDTYPE_RESULT (TRUE)
 
-#ifdef SDK_PORT
-static void MIi_CallbackForPxi(PXIFifoTag tag, u64 data, BOOL sendType);
-#else
-static void MIi_CallbackForPxi(PXIFifoTag tag, u32 data, BOOL sendType);
-#endif
+static void MIi_CallbackForPxi(PXIFifoTag tag, uPtr data, BOOL sendType);
 
 static int MIi_LockForPxi(volatile BOOL *finishFlag, u32 *ptr);
 static void MIi_WaitWhileBusy(volatile BOOL *finished);
@@ -620,11 +616,7 @@ static void MIi_InitWramManager(void) {
 #endif
 }
 
-#ifdef SDK_PORT
-static void MIi_CallbackForPxi(PXIFifoTag tag, u64 data, BOOL sendType)
-#else
-static void MIi_CallbackForPxi(PXIFifoTag tag, u32 data, BOOL sendType)
-#endif
+static void MIi_CallbackForPxi(PXIFifoTag tag, uPtr data, BOOL sendType)
 {
 #pragma unused(tag)
 

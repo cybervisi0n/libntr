@@ -37,11 +37,7 @@ static u16 spiInitialized;
 static SPIWork spiWork;
 
 static void SpiCommonThread(void *arg);
-#ifdef SDK_PORT
-static void SpiPxiCallback(PXIFifoTag tag, u64 data, BOOL err);
-#else
-static void SpiPxiCallback(PXIFifoTag tag, u32 data, BOOL err);
-#endif
+static void SpiPxiCallback(PXIFifoTag tag, uPtr data, BOOL err);
 
 void SPI_Init(u32 prio)
 {
@@ -288,11 +284,7 @@ static void SpiCommonThread(void *arg)
     }
 }
 
-#ifdef SDK_PORT
-static void SpiPxiCallback(PXIFifoTag tag, u64 data, BOOL err)
-#else
-static void SpiPxiCallback(PXIFifoTag tag, u32 data, BOOL err)
-#endif
+static void SpiPxiCallback(PXIFifoTag tag, uPtr data, BOOL err)
 {
     if (err)
     {

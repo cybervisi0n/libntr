@@ -29,11 +29,7 @@ typedef struct MICWork {
 static u16 micInitialized;
 static MICWork micWork;
 
-#ifdef SDK_PORT
-static void MicCommonCallback(PXIFifoTag tag, u64 data, BOOL err);
-#else
-static void MicCommonCallback(PXIFifoTag tag, u32 data, BOOL err);
-#endif
+static void MicCommonCallback(PXIFifoTag tag, uPtr data, BOOL err);
 static BOOL MicDoSampling(u16 type);
 static BOOL MicStartAutoSampling(void * buf, u32 size, u32 span, u8 flags);
 static BOOL MicStopAutoSampling(void);
@@ -323,11 +319,7 @@ MICResult MIC_AdjustLimitedSampling(u32 rate) {
 #endif
 #endif
 
-#ifdef SDK_PORT
-static void MicCommonCallback (PXIFifoTag tag, u64 data, BOOL err)
-#else
-static void MicCommonCallback (PXIFifoTag tag, u32 data, BOOL err)
-#endif
+static void MicCommonCallback (PXIFifoTag tag, uPtr data, BOOL err)
 {
 #pragma unused(tag)
 

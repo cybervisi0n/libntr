@@ -277,11 +277,7 @@ u32 PMi_GetSoundVolume(PMSoundVolumeSwitch * swBuf);
 
 void PMi_SendPxiData(u32 data);
 
-#ifdef SDK_PORT
-void PMi_CommonCallback(PXIFifoTag tag, u64 data, BOOL err);
-#else
-void PMi_CommonCallback(PXIFifoTag tag, u32 data, BOOL err);
-#endif
+void PMi_CommonCallback(PXIFifoTag tag, uPtr data, BOOL err);
 
 u32 PMi_SendSleepStart(u16 trigger, u16 keyIntrData);
 u32 PMi_DisposeSleepEnd(void);

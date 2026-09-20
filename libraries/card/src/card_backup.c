@@ -13,11 +13,7 @@ SDK_DEFINE_MIDDLEWARE(cardi_backup_assert, "NINTENDO", "BACKUP");
 #if SDK_VERSION_MAJOR == 5
 static u8 CARDi_backup_cache_page_buf[256] ATTRIBUTE_ALIGN(32);
 
-#ifdef SDK_PORT
-void CARDi_OnFifoRecv(PXIFifoTag tag, u64 data, BOOL err)
-#else
-void CARDi_OnFifoRecv(PXIFifoTag tag, u32 data, BOOL err)
-#endif
+void CARDi_OnFifoRecv(PXIFifoTag tag, uPtr data, BOOL err)
 {
 #pragma unused(data)
   if ((tag == PXI_FIFO_TAG_FS) && err) {

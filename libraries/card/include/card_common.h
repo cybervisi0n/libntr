@@ -193,11 +193,7 @@ static inline void CARDi_SendPxi (u32 data)
     #endif
 }
 
-#ifdef SDK_PORT
-void CARDi_OnFifoRecv(PXIFifoTag tag, u64 data, BOOL err);
-#else
-void CARDi_OnFifoRecv(PXIFifoTag tag, u32 data, BOOL err);
-#endif
+void CARDi_OnFifoRecv(PXIFifoTag tag, uPtr data, BOOL err);
 #endif
 
 static inline CARDTargetMode CARDi_GetTargetMode (void)

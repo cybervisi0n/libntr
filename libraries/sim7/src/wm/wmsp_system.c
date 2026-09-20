@@ -11,11 +11,7 @@ static OSThread wmspIndicateThread;
 #include <nitro/wram_end.h>
 #endif
 
-#ifdef SDK_PORT
-static void WmspPxiCallback(PXIFifoTag tag, u64 data, BOOL err);
-#else
-static void WmspPxiCallback(PXIFifoTag tag, u32 data, BOOL err);
-#endif
+static void WmspPxiCallback(PXIFifoTag tag, uPtr data, BOOL err);
 static void WmspError(u16 wmApiID, u16 wlCommand, u16 wlResult);
 
 void WM_sp_init(WlInit *wlInit, WmInit *wmInit)
@@ -155,11 +151,7 @@ void   *WMSP_GetBuffer4Callback2Wm9(void)
 
 #include <nitro/wram_end.h>
 
-#ifdef SDK_PORT
-static void WmspPxiCallback(PXIFifoTag tag, u64 data, BOOL err)
-#else
-static void WmspPxiCallback(PXIFifoTag tag, u32 data, BOOL err)
-#endif
+static void WmspPxiCallback(PXIFifoTag tag, uPtr data, BOOL err)
 {
     #pragma unused( tag )
 

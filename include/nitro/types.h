@@ -61,6 +61,12 @@ typedef volatile s32 vs32;
 typedef volatile s64 vs64;
 #endif
 
+/*
+* uPtr Type
+*
+* This was not originally in the SDK. Use it wherever pointer data is being stored
+* as u32. It will always be the correct size to store pointers, and should be equivalent to u32 on ARM.
+*/
 #ifdef SDK_32BIT
 typedef u32 uPtr;
 #endif

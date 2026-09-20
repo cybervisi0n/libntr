@@ -27,11 +27,7 @@ extern void SDK_IRQ_STACKSIZE(void);
 #endif
 
 #if SDK_VERSION_MAJOR == 4
-#ifdef SDK_PORT
-static void OSi_CommonCallback(PXIFifoTag tag, u64 data, BOOL err);
-#else
-static void OSi_CommonCallback(PXIFifoTag tag, u32 data, BOOL err);
-#endif
+static void OSi_CommonCallback(PXIFifoTag tag, uPtr data, BOOL err);
 #endif
 
 #if SDK_VERSION_MAJOR == 4
@@ -84,11 +80,7 @@ BOOL OS_IsResetOccurred (void)
 #endif
 
 #if SDK_VERSION_MAJOR == 4
-#ifdef SDK_PORT
-static void OSi_CommonCallback (PXIFifoTag tag, u64 data, BOOL err)
-#else
-static void OSi_CommonCallback (PXIFifoTag tag, u32 data, BOOL err)
-#endif
+static void OSi_CommonCallback (PXIFifoTag tag, uPtr data, BOOL err)
 {
 #pragma unused(tag, err)
     u16 command;

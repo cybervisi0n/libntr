@@ -279,11 +279,7 @@ void PM_Init (void)
     #endif
 }
 
-#ifdef SDK_PORT
-void PMi_CommonCallback (PXIFifoTag tag, u64 data, BOOL err)
-#else
-void PMi_CommonCallback (PXIFifoTag tag, u32 data, BOOL err)
-#endif
+void PMi_CommonCallback (PXIFifoTag tag, uPtr data, BOOL err)
 {
 #pragma unused(tag)
 

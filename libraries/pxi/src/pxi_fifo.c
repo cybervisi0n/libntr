@@ -160,11 +160,7 @@ void PXI_SetFifoSendCallback (PXIFifoEmtpyCallback callback)
     (void)OS_RestoreInterrupts(enabled);
 }
 
-#ifdef SDK_PORT
-int PXI_SendWordByFifo (int fifotag, u64 data, BOOL err)
-#else
-int PXI_SendWordByFifo (int fifotag, u32 data, BOOL err)
-#endif
+int PXI_SendWordByFifo (int fifotag, uPtr data, BOOL err)
 {
     PXIFifoMessage fifomsg;
 
@@ -190,7 +186,7 @@ int PXI_SendWordByFifo (int fifotag, u32 data, BOOL err)
 }
 
 #ifdef SDK_PORT
-int PXI_SendWordByFifo7(int fifotag, u64 data, BOOL err)
+int PXI_SendWordByFifo7(int fifotag, uPtr data, BOOL err)
 {
     PXIFifoMessage fifomsg;
 

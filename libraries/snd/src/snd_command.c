@@ -47,11 +47,7 @@
     static OSMessageQueue sCommandMesgQueue;
 #endif
 
-#ifdef SDK_PORT
-static void PxiFifoCallback(PXIFifoTag tag, u64 data, BOOL err);
-#else
-static void PxiFifoCallback(PXIFifoTag tag, u32 data, BOOL err);
-#endif
+static void PxiFifoCallback(PXIFifoTag tag, uPtr data, BOOL err);
 static void InitPXI(void);
 
 #if defined(SDK_ARM9) || defined(SDK_PORT)

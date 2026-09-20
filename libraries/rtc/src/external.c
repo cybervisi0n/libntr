@@ -58,12 +58,10 @@ static u16 rtcTickInitialized;
 static OSTick rtcInitialTotalTicks;
 
 #ifdef SDK_PORT
-static void RtcCommonCallback(PXIFifoTag tag, u64 data, BOOL err);
 static void getPCTime(RTCTime* theTime);
 static void getPCDate(RTCDate* theDate);
-#else
-static void RtcCommonCallback(PXIFifoTag tag, u32 data, BOOL err);
 #endif
+static void RtcCommonCallback(PXIFifoTag tag, uPtr data, BOOL err);
 static u32 RtcBCD2HEX(u32 bcd);
 static u32 RtcHEX2BCD(u32 hex);
 static BOOL RtcCheckAlarmParam(const RTCAlarmParam * param);
@@ -749,11 +747,7 @@ RTCResult RTCi_SetFout(const u16 *fout) {
 #endif
 #endif
 
-#ifdef SDK_PORT
-static void RtcCommonCallback (PXIFifoTag tag, u64 data, BOOL err)
-#else
-static void RtcCommonCallback (PXIFifoTag tag, u32 data, BOOL err)
-#endif
+static void RtcCommonCallback (PXIFifoTag tag, uPtr data, BOOL err)
 {
 #pragma unused(tag)
 

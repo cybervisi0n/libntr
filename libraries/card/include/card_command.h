@@ -79,11 +79,7 @@ void CARDi_LockMutexForARM7(void);
 void CARDi_UnlockMutexForARM7(void);
 #endif // if defined(SDK_ARM7)
 
-#ifdef SDK_PORT
-void CARDi_OnFifoRecv(PXIFifoTag tag, u64 data, BOOL err);
-#else
-void CARDi_OnFifoRecv(PXIFifoTag tag, u32 data, BOOL err);
-#endif
+void CARDi_OnFifoRecv(PXIFifoTag tag, uPtr data, BOOL err);
 
 #ifdef __cplusplus
 } // extern "C"

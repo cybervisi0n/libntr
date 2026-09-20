@@ -4,15 +4,9 @@
 extern void CTRDGi_InitCommon(void);
 extern void CTRDGi_SendtoPxi(u32 data);
 
-#ifdef SDK_PORT
-static void CTRDGi_CallbackForInitModuleInfo(PXIFifoTag tag, u64 data, BOOL err);
-static void CTRDGi_PulledOutCallback(PXIFifoTag tag, u64 data, BOOL err);
-static void CTRDGi_CallbackForSetPhi(PXIFifoTag tag, u64 data, BOOL err);
-#else
-static void CTRDGi_CallbackForInitModuleInfo(PXIFifoTag tag, u32 data, BOOL err);
-static void CTRDGi_PulledOutCallback(PXIFifoTag tag, u32 data, BOOL err);
-static void CTRDGi_CallbackForSetPhi(PXIFifoTag tag, u32 data, BOOL err);
-#endif
+static void CTRDGi_CallbackForInitModuleInfo(PXIFifoTag tag, uPtr data, BOOL err);
+static void CTRDGi_PulledOutCallback(PXIFifoTag tag, uPtr data, BOOL err);
+static void CTRDGi_CallbackForSetPhi(PXIFifoTag tag, uPtr data, BOOL err);
 
 extern CTRDGWork CTRDGi_Work;
 
@@ -143,11 +137,7 @@ void CTRDGi_InitModuleInfo (void)
 #endif
 }
 
-#ifdef SDK_PORT
-static void CTRDGi_CallbackForInitModuleInfo (PXIFifoTag tag, u64 data, BOOL err)
-#else
-static void CTRDGi_CallbackForInitModuleInfo (PXIFifoTag tag, u32 data, BOOL err)
-#endif
+static void CTRDGi_CallbackForInitModuleInfo (PXIFifoTag tag, uPtr data, BOOL err)
 {
 #pragma unused( tag, err )
 
@@ -165,11 +155,7 @@ static void CTRDGi_CallbackForInitModuleInfo (PXIFifoTag tag, u32 data, BOOL err
 #if SDK_VERSION_MAJOR == 5
 #ifndef SDK_TWLLTD
 
-#ifdef SDK_PORT
-static void CTRDGi_DummyCallback(PXIFifoTag tag, u64 data, BOOL err);
-#else
-static void CTRDGi_DummyCallback(PXIFifoTag tag, u32 data, BOOL err);
-#endif
+static void CTRDGi_DummyCallback(PXIFifoTag tag, uPtr data, BOOL err);
 void CTRDG_DummyInit(void) {
   CTRDGi_InitCommon();
 
@@ -180,22 +166,14 @@ void CTRDG_DummyInit(void) {
   CTRDGi_SendtoPxi(CTRDG_PXI_COMMAND_INIT_MODULE_INFO);
 }
 
-#ifdef SDK_PORT
-static void CTRDGi_DummyCallback(PXIFifoTag tag, u64 data, BOOL err)
-#else
-static void CTRDGi_DummyCallback(PXIFifoTag tag, u32 data, BOOL err)
-#endif
+static void CTRDGi_DummyCallback(PXIFifoTag tag, uPtr data, BOOL err)
 {
 #pragma unused(tag, data, err)
 }
 #endif // ifndef SDK_TWLLTD
 #endif
 
-#ifdef SDK_PORT
-static void CTRDGi_PulledOutCallback (PXIFifoTag tag, u64 data, BOOL err)
-#else
-static void CTRDGi_PulledOutCallback (PXIFifoTag tag, u32 data, BOOL err)
-#endif
+static void CTRDGi_PulledOutCallback (PXIFifoTag tag, uPtr data, BOOL err)
 {
 #pragma unused( tag, err )
 
@@ -277,11 +255,7 @@ void CTRDG_SetPhiClock (CTRDGPhiClock clock)
 	}
 }
 
-#ifdef SDK_PORT
-static void CTRDGi_CallbackForSetPhi (PXIFifoTag tag, u64 data, BOOL err)
-#else
-static void CTRDGi_CallbackForSetPhi (PXIFifoTag tag, u32 data, BOOL err)
-#endif
+static void CTRDGi_CallbackForSetPhi (PXIFifoTag tag, uPtr data, BOOL err)
 {
 #pragma unused(tag, data, err)
 	CTRDGi_Lock = FALSE;

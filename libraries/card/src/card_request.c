@@ -5,11 +5,7 @@
 #include "../include/card_common.h"
 #include "../include/card_spi.h"
 
-#ifdef SDK_PORT
-void CARDi_OnFifoRecv (PXIFifoTag tag, u64 data, BOOL err)
-#else
-void CARDi_OnFifoRecv (PXIFifoTag tag, u32 data, BOOL err)
-#endif
+void CARDi_OnFifoRecv (PXIFifoTag tag, uPtr data, BOOL err)
 {
 #pragma unused(data)
 	if ((tag == PXI_FIFO_TAG_FS) && err) {

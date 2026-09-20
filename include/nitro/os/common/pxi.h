@@ -23,11 +23,7 @@ void OSi_SetTerminatePxiOccurred(void);
 #define OSi_SetTerminatePxiOccurred() ((void)0)
 #endif // SDK_NITRO
 
-#ifdef SDK_PORT
-void OSi_CommonCallback(PXIFifoTag tag, u64 data, BOOL err);
-#else
-void OSi_CommonCallback(PXIFifoTag tag, u32 data, BOOL err);
-#endif
+void OSi_CommonCallback(PXIFifoTag tag, uPtr data, BOOL err);
 void OSi_SendToPxi(u16 data);
 
 #ifdef __cplusplus
