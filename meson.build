@@ -107,7 +107,8 @@ if (build_target == 'arm')
         '-DSDK_ARM9',
         '-DSDK_CW',
         '-DSDK_CODE_ARM',
-        '-DSDK_BUILD_ARM'
+        '-DSDK_BUILD_ARM',
+        '-DSDK_32BIT'
     ]
 endif
 
@@ -117,6 +118,7 @@ if (build_target == 'win64')
         '-DSDK_X86',
         '-DSDK_CODE_X86',
         '-DSDK_BUILD_WIN64',
+        '-DSDK_64BIT',
         '-D_NITRO',
         '-w'
     ]
@@ -128,6 +130,7 @@ if (build_target == 'linux')
         '-DSDK_X86',
         '-DSDK_CODE_X86',
         '-DSDK_BUILD_LINUX',
+        '-DSDK_64BIT',
         '-D_NITRO',
         '-w',
     ]
@@ -138,6 +141,7 @@ if (build_target == 'nx')
         '-DSDK_PORT',
         '-DSDK_AARCH64',
         '-DSDK_BUILD_NX',
+        '-DSDK_64BIT',
         '-D_NITRO',
         '-D__SWITCH__',
         '-w',

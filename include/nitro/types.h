@@ -61,6 +61,13 @@ typedef volatile s32 vs32;
 typedef volatile s64 vs64;
 #endif
 
+#ifdef SDK_32BIT
+typedef u32 uPtr;
+#endif
+#ifdef SDK_64BIT
+typedef u64 uPtr;
+#endif
+
 typedef float f32;
 typedef volatile f32 vf32;
 
