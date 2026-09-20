@@ -15,6 +15,7 @@ libsim_srcs = files(
     'sim_crc32.c',
     'sim_debug.cpp',
     'sim_g2.cpp',
+    'sim_g3_CommandProcessor.cpp',
     'sim_main.cpp',
     'sim_net.cpp',
     'sim_screenquads.c',
