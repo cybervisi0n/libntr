@@ -354,9 +354,9 @@ static u64 map(u64 x, u64 in_min, u64 in_max, u64 out_min, u64 out_max) {
 }
 
 void SIM_u16ToRGB(u16 in, u8 *r, u8 *g, u8 *b) {
-  *r = (in & 0b0000000000011111) * 7;
-  *g = ((in >> 5) & 0b0000000000011111) * 7;
-  *b = ((in >> 10) & 0b0000000000011111) * 7;
+  *r = ( (in & 0x1F) * 527 + 23 ) >> 6;
+  *g = ( ((in >> 5) & 0x1F) * 527 + 23 ) >> 6;
+  *b = ( ((in >> 10) & 0x1F) * 527 + 23 ) >> 6;
 }
 
 void *runVblankInterrupt(void *arg) {
