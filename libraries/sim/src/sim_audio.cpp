@@ -73,8 +73,11 @@ static const s16 s_PSGTable[8][8] =
 #define INTERNAL_SAMPLE_RATE 16756991.f
 
 
+static SIM_config_type * sConfigPtr;
+
 void SIM_Audio_Init(int aAudioFrequency)
 {
+    sConfigPtr = SIM_GetConfigPtr();
     s_BlipLeft = blip_new(512*64);
     s_BlipRight = blip_new(512*64);
 
@@ -101,6 +104,9 @@ void SIM_Audio_Init(int aAudioFrequency)
 static u8 GetNextADPCMByte(int chNo);
 static void PanOutput(s32 in, s32 * left, s32 * right, int chNo);
 
+
+static int maxOutput = 0;
+
 void SIM_Audio_Callback(void *userdata, Uint8 *stream, int len)
 {
     #ifdef SDK_TRACY_ENABLE
@@ -125,30 +131,37 @@ void SIM_Audio_Callback(void *userdata, Uint8 *stream, int len)
         s32 ch2 = SIM_Audio_RunChannel(512, 2);
         s32 ch3 = SIM_Audio_RunChannel(512, 3);
 
-        // hack for now
         PanOutput(ch0, &left, &right, 0);
         PanOutput(ch1, &left, &right, 1);
         PanOutput(ch2, &left, &right, 2);
         PanOutput(ch3, &left, &right, 3);
-        //left += ch0;
-        //left += ch1;
-        //left += ch2;
-        //left += ch3;
 
         // pan output
-
         for(int chNo = 4; chNo < 16; chNo++) {
             s32 channel = SIM_Audio_RunChannel(512, chNo);
             PanOutput(channel, &left, &right, chNo);
         }
 
-        right = left;
+        left = ((s64)left * sConfigPtr->masterVolume) >> 7;
+        right = ((s64)right * sConfigPtr->masterVolume) >> 7;
+
+        left >>= 8;
+        right >>= 8;
+
+        // Apply sound bias
+        left += (0x200 << 6) - 0x8000;
+        right += (0x200 << 6) - 0x8000;
+
+        if(left > maxOutput) {
+            maxOutput = left;
+        }
+
         s_blipTimer += 512;
 
-        if(left != 0) {
+        if(left != s_outputLastLeftSample) {
             blip_add_delta(s_BlipLeft, s_blipTimer, left - s_outputLastLeftSample);
         }
-        if(right != 0) {
+        if(right != s_outputLastRightSample) {
             blip_add_delta(s_BlipRight, s_blipTimer, right - s_outputLastRightSample);
         }
 
@@ -227,11 +240,9 @@ s32 SIM_Audio_RunChannel(u32 cycles, int chNo)
     int volumeShift = (s_SIM_sndcnt[chNo] & (0x3 << 8)) >> 8;
     int volume = s_SIM_sndcnt[chNo] & 0b1111111;
 
-    //ret <<= volumeShift;
-    ret = ret >> volumeShift;
-    //ret *= volume;
-    //ret = ret / 128;
-    ret = (s16)((double)ret * ((double)volume/128.0));
+    ret = ret << (0x3) - volumeShift;
+
+    ret = ret * volume;
 
     return ret;
 }

@@ -38,6 +38,12 @@ static int IniHandler(void* user, const char* section, const char* name,
     if(MATCH("General", "WindowWidth")) {
         config->windowWidth = atoi(value);
     }
+    if(MATCH("General", "MasterVolume")) {
+        config->masterVolume = atoi(value);
+        if(config->masterVolume > 127) {
+            config->masterVolume = 127;
+        }
+    }
     if(MATCH("General", "ScreenLayout")) {
         config->screenLayout = StringToScreenLayoutType(value);
     }
@@ -336,6 +342,7 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->swapScreens = FALSE;
     aConfig->vsyncInterval = 1;
     aConfig->capFrameRate = TRUE;
+    aConfig->masterVolume = 127;
 
     aConfig->padSettings.joyAxisDeadzone = 32767 / 4;
     aConfig->padSettings.aKey = SDLK_z;
@@ -406,6 +413,7 @@ void SIM_Config_SaveConfigFile(SIM_config_type * aConfig)
     fprintf(configFile, "InternalResolutionScale=%d\n", aConfig->internalResolutionScale);
     fprintf(configFile, "WindowHeight=%d\n", aConfig->windowHeight);
     fprintf(configFile, "WindowWidth=%d\n", aConfig->windowWidth);
+    fprintf(configFile, "MasterVolume=%d\n", aConfig->masterVolume);
 
     const char * screenLayoutString = ScreenLayoutTypeToString(aConfig->screenLayout);
     fprintf(configFile, "ScreenLayout=%s\n", screenLayoutString);

@@ -12,6 +12,8 @@
 namespace SIM::GUI {
 
 static constexpr ImVec2 s_btnSize = {50, 20};
+static constexpr u8 MinMasterVolume = 0;
+static constexpr u8 MaxMasterVolume = 127;
 
 static SIM_config_type * sConfig;
 
@@ -52,6 +54,8 @@ void AppConfigMain(bool *openState) {
     if(ImGui::Checkbox("Cap framerate", &frameLimit)) {
         configChanged = true;
     }
+
+    if(ImGui::SliderScalar("Master Volume", ImGuiDataType_U8, &sConfig->masterVolume, &MinMasterVolume, &MaxMasterVolume));
 
     ImGui::End();
 

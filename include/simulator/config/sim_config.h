@@ -53,6 +53,7 @@ typedef struct {
     u32 internalResolutionScale; /* 3D rendering internal resolution scale factor */
     u32 windowWidth; /* Initial width of the window. If set to 0, will use the default width for the screen layout */
     u32 windowHeight; /* Initial height of the window. If set to 0, will use default height for the screen layout */
+    u8 masterVolume; /* Master sound volume (0-127) */
     SIM_config_screen_layout_type screenLayout; /* DS screen layout */
     BOOL swapScreens; /* Swap screen positions */
     u8 vsyncInterval; /* Vertical sync interval. Set to 0 to disable vsync, 1 every vblank, 2 every second vblank etc*/
