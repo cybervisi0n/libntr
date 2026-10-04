@@ -66,6 +66,8 @@ void SIM_procThread(void);
 void SIM_pxiInit(void);
 void * SIM_Render(void *arg);
 void * SIM_RenderInit(void * arg);
+void SIM_SetInternalResolution(int internalRes);
+void SIM_SetInternalResolutionAfterRender(int internalRes);
 int SIM_runNitroOSThread(void * thread);
 void * SIM_sndAlarm(void * arg);
 void SIM_u16ToRGB( u16 in, u8 * r, u8 *g, u8 * b );

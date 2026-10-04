@@ -374,6 +374,28 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id,
   //           type, severity, message );
 }
 
+void SIM_SetInternalResolution(int internalRes) {
+  glBindTexture(GL_TEXTURE_2D, g3RenderTextureId);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+               SIM_NDS_SCREEN_WIDTH * s_SIM_config.internalResolutionScale,
+               SIM_NDS_SCREEN_HEIGHT * 2 * s_SIM_config.internalResolutionScale,
+               0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+  glBindRenderbuffer(GL_RENDERBUFFER, g3RenderBufferId);
+  glRenderbufferStorage(
+      GL_RENDERBUFFER, GL_DEPTH24_STENCIL8,
+      SIM_NDS_SCREEN_WIDTH * s_SIM_config.internalResolutionScale,
+      SIM_NDS_SCREEN_HEIGHT * 2 * s_SIM_config.internalResolutionScale);
+}
+
+static bool sChangeInternalResAfterRender = false;
+static int sPendingInternalRes = 1;
+
+void SIM_SetInternalResolutionAfterRender(int internalRes) {
+  sChangeInternalResAfterRender = true;
+  sPendingInternalRes = internalRes;
+}
+
 void *SIM_RenderInit(void *arg) {
 
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER |
@@ -561,10 +583,6 @@ void *SIM_RenderInit(void *arg) {
   glGenTextures(1, &g3RenderTextureId);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, g3RenderTextureId);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-               SIM_NDS_SCREEN_WIDTH * s_SIM_config.internalResolutionScale,
-               SIM_NDS_SCREEN_HEIGHT * 2 * s_SIM_config.internalResolutionScale,
-               0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -573,10 +591,7 @@ void *SIM_RenderInit(void *arg) {
                          g3RenderTextureId, 0);
   glGenRenderbuffers(1, &g3RenderBufferId);
   glBindRenderbuffer(GL_RENDERBUFFER, g3RenderBufferId);
-  glRenderbufferStorage(
-      GL_RENDERBUFFER, GL_DEPTH24_STENCIL8,
-      SIM_NDS_SCREEN_WIDTH * s_SIM_config.internalResolutionScale,
-      SIM_NDS_SCREEN_HEIGHT * 2 * s_SIM_config.internalResolutionScale);
+  SIM_SetInternalResolution(s_SIM_config.internalResolutionScale);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
                             GL_RENDERBUFFER, g3RenderBufferId);
 
@@ -1384,6 +1399,10 @@ void *SIM_Render(void *arg) {
     }
 
     SDL_GL_SwapWindow(window);
+
+    if(sChangeInternalResAfterRender) {
+      SIM_SetInternalResolution(sPendingInternalRes);
+    }
 
     //Calculate full frametime (after swap)
     clock_gettime(CLOCK_MONOTONIC, &curTime);

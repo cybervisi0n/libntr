@@ -14,6 +14,8 @@ namespace SIM::GUI {
 static constexpr ImVec2 s_btnSize = {50, 20};
 static constexpr u8 MinMasterVolume = 0;
 static constexpr u8 MaxMasterVolume = 127;
+static constexpr u8 MinInternalRes = 1;
+static constexpr u8 MaxInternalRes = 20;
 
 static SIM_config_type * sConfig;
 
@@ -42,6 +44,12 @@ void AppConfigMain(bool *openState) {
     
     ImGui::Begin("Config", openState);
 
+    ImGui::Text("Internal Resolution");
+    if(ImGui::SliderScalar(" ", ImGuiDataType_U8, &sConfig->internalResolutionScale, &MinInternalRes, &MaxInternalRes, "%dx NDS")) {
+        configChanged = true;
+        SIM_SetInternalResolutionAfterRender(sConfig->internalResolutionScale);
+    }
+
     if(ImGui::Combo("Layout", &screenLayout, ScreenLayoutStrings, 3, 3)) {
         configChanged = true;
     }
@@ -55,7 +63,10 @@ void AppConfigMain(bool *openState) {
         configChanged = true;
     }
 
-    if(ImGui::SliderScalar("Master Volume", ImGuiDataType_U8, &sConfig->masterVolume, &MinMasterVolume, &MaxMasterVolume));
+    ImGui::Text("Master Volume");
+    if(ImGui::SliderScalar("  ", ImGuiDataType_U8, &sConfig->masterVolume, &MinMasterVolume, &MaxMasterVolume)) {
+        configChanged = true;
+    }
 
     ImGui::End();
 
