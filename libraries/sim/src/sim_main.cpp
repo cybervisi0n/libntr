@@ -134,27 +134,6 @@ static GLuint g2FrameBuffer;
 GLuint s_bgTextureId[4];
 GLuint s_objTextureId[5];
 static GLuint g2TextureId;
-static GLuint g3TextureId1024;
-static GLuint g3TextureId1024x512;
-static GLuint g3TextureId512;
-static GLuint g3TextureId256;
-static GLuint g3TextureId128;
-static GLuint g3TextureId128x64;
-static GLuint g3TextureId128x256;
-static GLuint g3TextureId64;
-static GLuint g3TextureId64x16;
-static GLuint g3TextureId64x32;
-static GLuint g3TextureId64x128;
-static GLuint g3TextureId32;
-static GLuint g3TextureId32x16;
-static GLuint g3TextureId32x64;
-static GLuint g3TextureId32x128;
-static GLuint g3TextureId16;
-static GLuint g3TextureId16x8;
-static GLuint g3TextureId16x32;
-static GLuint g3TextureId16x64;
-static GLuint g3TextureId8;
-static GLuint g3TextureId8x16;
 static GLuint g3RenderTextureId;
 static GLuint dummyScreenTextureId;
 static GLuint objWindowTextureId;
@@ -246,80 +225,6 @@ static SDL_sem *vcountResetSemaphore;
 static SDL_sem *vcountVblankSemaphore;
 
 SDL_Joystick *s_SIM_SDLJoystick = NULL;
-
-GLuint SIM_GetTextureID() {
-  if (s_texImageParam.textureSSize == 8 && s_texImageParam.textureTSize == 16) {
-    return g3TextureId8x16;
-  }
-  if (s_texImageParam.textureSSize == 16) {
-    switch (s_texImageParam.textureTSize) {
-    case 8:
-      return g3TextureId16x8;
-    default:
-    case 16:
-      return g3TextureId16;
-    case 32:
-      return g3TextureId16x32;
-    case 64:
-      return g3TextureId16x64;
-    }
-  }
-  if (s_texImageParam.textureSSize == 32) {
-    switch (s_texImageParam.textureTSize) {
-    case 16:
-      return g3TextureId32x16;
-    default:
-    case 32:
-      return g3TextureId32;
-    case 64:
-      return g3TextureId32x64;
-    case 128:
-      return g3TextureId32x128;
-    }
-  }
-  if (s_texImageParam.textureSSize == 64 &&
-      s_texImageParam.textureTSize == 16) {
-    return g3TextureId64x16;
-  }
-  if (s_texImageParam.textureSSize == 64 &&
-      s_texImageParam.textureTSize == 32) {
-    return g3TextureId64x32;
-  }
-  if (s_texImageParam.textureSSize == 64 &&
-      s_texImageParam.textureTSize == 128) {
-    return g3TextureId64x128;
-  }
-  if (s_texImageParam.textureSSize == 128 &&
-      s_texImageParam.textureTSize == 64) {
-    return g3TextureId128x64;
-  }
-  if (s_texImageParam.textureSSize == 128 &&
-      s_texImageParam.textureTSize == 256) {
-    return g3TextureId128x256;
-  }
-  if (s_texImageParam.textureSSize == 1024 &&
-      s_texImageParam.textureTSize == 512) {
-    return g3TextureId1024x512;
-  }
-  switch (s_texImageParam.textureSSize) {
-  case 8:
-    return g3TextureId8;
-  case 32:
-    return g3TextureId32;
-  case 64:
-    return g3TextureId64;
-  case 128:
-    return g3TextureId128;
-  case 256:
-    return g3TextureId256;
-  case 512:
-    return g3TextureId512;
-  case 1024:
-    return g3TextureId1024;
-  default:
-    return 0;
-  }
-}
 
 static void DrawScreenQuad() {
 #ifdef SDK_TRACY_ENABLE
@@ -555,27 +460,6 @@ void *SIM_RenderInit(void *arg) {
                   SIM_NDS_SCREEN_HEIGHT * 2);
   GenerateTexture(objWindowTextureId, SIM_NDS_SCREEN_WIDTH,
                   SIM_NDS_SCREEN_HEIGHT * 2);
-  GenerateTexture(g3TextureId1024, 1024, 1024);
-  GenerateTexture(g3TextureId1024x512, 1024, 512);
-  GenerateTexture(g3TextureId512, 512, 512);
-  GenerateTexture(g3TextureId256, 256, 256);
-  GenerateTexture(g3TextureId128, 128, 128);
-  GenerateTexture(g3TextureId128x64, 128, 64);
-  GenerateTexture(g3TextureId128x256, 128, 256);
-  GenerateTexture(g3TextureId64, 64, 64);
-  GenerateTexture(g3TextureId64x16, 64, 16);
-  GenerateTexture(g3TextureId64x32, 64, 32);
-  GenerateTexture(g3TextureId64x128, 64, 128);
-  GenerateTexture(g3TextureId32, 32, 32);
-  GenerateTexture(g3TextureId32x16, 32, 16);
-  GenerateTexture(g3TextureId32x64, 32, 64);
-  GenerateTexture(g3TextureId32x128, 32, 128);
-  GenerateTexture(g3TextureId16, 16, 16);
-  GenerateTexture(g3TextureId16x8, 16, 8);
-  GenerateTexture(g3TextureId16x32, 16, 32);
-  GenerateTexture(g3TextureId16x64, 16, 64);
-  GenerateTexture(g3TextureId8, 8, 8);
-  GenerateTexture(g3TextureId8x16, 8, 16);
 
   // 3D Framebuffer render texture
   glGenFramebuffers(1, &g3FrameBuffer);

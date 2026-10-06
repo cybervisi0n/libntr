@@ -56,8 +56,6 @@ extern u8 s_SIM_g3tex[4*1024*1024];
 extern GXVRamTex s_SIM_GXVRamTex;
 extern GXVRamTexPltt s_SIM_GXVRamTexPltt;
 
-extern GLuint SIM_GetTextureID();
-
 static void* getTextureVramBank();
 static void* getTexPlttVramBank();
 
