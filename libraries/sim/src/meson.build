@@ -20,6 +20,8 @@ libsim_srcs = files(
     'sim_debug.cpp',
     'sim_g2.cpp',
     'sim_g3_CommandProcessor.cpp',
+    'sim_g3_Texture.cpp',
+    'sim_g3_TextureCache.cpp',
     'sim_gui.cpp',
     'sim_gui_config.cpp',
     'sim_gui_net.cpp',

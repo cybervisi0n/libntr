@@ -4,6 +4,7 @@
 #include <simulator/assert.h>
 #include <string.h>
 #include <stddef.h>
+#include <memory>
 
 #include <nitro.h>
 #include <nitro/gx/g3.h>
@@ -11,6 +12,8 @@
 #include <nitro/gx/gx_vramcnt.h>
 #include <unordered_map>
 #include <simulator/sim_crc32.h>
+#include "simulator/sim_g3_TextureCache.hpp"
+#include "simulator/sim_g3_Texture.hpp"
 
 #ifdef SDK_BUILD_LINUX
 #include <signal.h>
@@ -35,8 +38,8 @@ typedef struct {
 
 G3SIM_Vertex_t s_G3DrawVerts[G3_DRAW_MAX_VERTS];
 
-// Texture cache based on the CRC of the texture and palette
-std::unordered_map<u64, u8*> sTextureCache;
+// GPU Texture Cache
+static SIM::G3::TextureCache sTextureCache;
 
 //The item list is used for drawing translucent things sorted by Z position
 static g3_draw_item_t s_G3DrawItemList[G3_DRAW_MAX_ITEMS];
@@ -178,29 +181,11 @@ void G3SIM_FlushArray()
 	#endif
 
 	u8 * texBuf = nullptr;
+	std::shared_ptr<SIM::G3::Texture> texture = nullptr;
 
 	if( s_texImageParam.textureFormat != GX_TEXFMT_NONE )
 	{
 		GLuint g3TextureId;
-		g3TextureId = SIM_GetTextureID();
-		
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture( GL_TEXTURE_2D, g3TextureId );
-
-		if(s_texImageParam.flipS)
-		{
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-		} else {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		}
-
-		if(s_texImageParam.flipT)
-		{
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-		} else {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		}
-
 		u8 * vramTex = (u8*)(getTextureVramBank() + s_texImageParam.textureOffset);
 		u8 * vramPltt = (u8*)(getTexPlttVramBank() + s_texPlttBase);
 		u16 * colorAddr = (u16*)vramPltt;
@@ -218,14 +203,9 @@ void G3SIM_FlushArray()
 		}
 
 		u32 textureCRC = SIM_crc32buf(vramTex, vramTexBufSize);
-
-		u64 finalCRC = (paletteCRC | ((u64)textureCRC << 32));
-		
-
-		if(sTextureCache.count(finalCRC)) {
-			// Texture is in the cache
-			texBuf = sTextureCache[finalCRC];
-		} else {
+		texture = sTextureCache.GetTexture(textureCRC, paletteCRC);
+		if(texture == nullptr) {
+			// decode texture and create it in the cache
 			//Convert the DS texture data into a format opengl can understand
 			u8 * outTexBuf = new u8[4*s_texImageParam.textureSSize * s_texImageParam.textureTSize];
 			memset((void*)outTexBuf, 0, 4*s_texImageParam.textureSSize * s_texImageParam.textureTSize);
@@ -256,11 +236,39 @@ void G3SIM_FlushArray()
 					break;
 			}
 
-			sTextureCache[finalCRC] = outTexBuf;
-			texBuf = outTexBuf;
+			// This creates a GL texture and uploads it to the GPU with glTexImage2D
+			texture = std::make_shared<SIM::G3::Texture>(s_texImageParam.textureTSize, s_texImageParam.textureSSize, outTexBuf);
+
+			sTextureCache.AddTexture(textureCRC, paletteCRC, texture);
+
+			// Texture buffer can be freed now, it has been sent to the GPU
+			delete[] outTexBuf;
 		}
 
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, s_texImageParam.textureSSize, s_texImageParam.textureTSize, GL_RGBA, GL_UNSIGNED_BYTE, (void *)texBuf);
+		texture->Activate();
+
+		if(s_texImageParam.repeatS) {
+			if(s_texImageParam.flipS)
+			{
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+			} else {
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			}
+		} else {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		}
+
+		if(s_texImageParam.repeatT) {
+			if(s_texImageParam.flipT)
+			{
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+			} else {
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			}
+		} else {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		}
+
 
 		GLint texUnitLoc = glGetUniformLocation(g3shaderProgramID, "myTexture");
 		//set texture 0 in the shader
@@ -336,16 +344,9 @@ void G3SIM_FlushArray()
 
 		if(s_texImageParam.textureFormat != GX_TEXFMT_NONE) {
 			//Allocate and store off the texture
-			glGenTextures(1, &item->textureId);
-			glBindTexture(GL_TEXTURE_2D, item->textureId);
-        	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	
-        	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, s_texImageParam.textureSSize, s_texImageParam.textureTSize, 0,
-        	         GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, s_texImageParam.textureSSize, s_texImageParam.textureTSize, GL_RGBA, GL_UNSIGNED_BYTE, (void *)texBuf);
+			item->textureId = texture->GetTextureID();
+		} else {
+			item->textureId = 0;
 		}
 
 		//Copy over the polygonattr
@@ -411,10 +412,6 @@ void G3SIM_DrawItems()
 		glDrawArrays(GL_TRIANGLES,0, item->vertsCount);
 
 		free(item->verts);
-
-		if(item->textureId != 0) {
-			glDeleteTextures(1, &item->textureId);
-		}
 	}
 	s_G3DrawItemListCount = 0;
 }
