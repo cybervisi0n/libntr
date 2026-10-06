@@ -1208,6 +1208,9 @@ void *SIM_Render(void *arg) {
         } else if (keyRead == s_SIM_config.padSettings.guiKey) {
           // Toggle Debug GUI
           SIM::GUI::Toggle();
+        } else if (keyRead == s_SIM_config.padSettings.frameCapKey) {
+          // Toggle Frame Cap
+          s_SIM_config.capFrameRate = !s_SIM_config.capFrameRate;
         }
       }
       if (Event.type == SDL_KEYUP) {
