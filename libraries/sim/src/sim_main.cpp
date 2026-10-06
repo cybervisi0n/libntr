@@ -1208,6 +1208,16 @@ void *SIM_Render(void *arg) {
         } else if (keyRead == s_SIM_config.padSettings.guiKey) {
           // Toggle Debug GUI
           SIM::GUI::Toggle();
+        } else if (keyRead == s_SIM_config.padSettings.frameCapToggleKey) {
+          // Toggle Frame Cap
+          if (s_SIM_config.capFrameRate) {
+            s_SIM_config.capFrameRate = false;
+            s_SIM_config.vsyncInterval = 0; // VSync Off
+          } else {
+            s_SIM_config.capFrameRate = true;
+            s_SIM_config.vsyncInterval = 1; // Every V-Blank
+          }
+          
         }
       }
       if (Event.type == SDL_KEYUP) {

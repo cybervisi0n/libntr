@@ -114,37 +114,38 @@ void AppPadMain(bool *openState) {
     KeySettingButton("Y   ", 4, sConfig->padSettings.yKey);
     KeySettingButton("L   ", 5, sConfig->padSettings.lKey);
     KeySettingButton("R   ", 6, sConfig->padSettings.rKey);
-    KeySettingButton("GUI ", 6, sConfig->padSettings.guiKey);
+    KeySettingButton("GUI ", 7, sConfig->padSettings.guiKey);
+    KeySettingButton("Frame Cap Toggle ", 8, sConfig->padSettings.frameCapToggleKey);
 
     ImGui::NextColumn();
 
-    KeySettingButton("Up     ", 7,  sConfig->padSettings.upKey);
-    KeySettingButton("Down   ", 8,  sConfig->padSettings.downKey);
-    KeySettingButton("Left   ", 9,  sConfig->padSettings.leftKey);
-    KeySettingButton("Right  ", 10, sConfig->padSettings.rightKey);
-    KeySettingButton("Start  ", 11, sConfig->padSettings.startKey);
-    KeySettingButton("Select ", 12, sConfig->padSettings.selectKey);
+    KeySettingButton("Up     ", 9,  sConfig->padSettings.upKey);
+    KeySettingButton("Down   ", 10,  sConfig->padSettings.downKey);
+    KeySettingButton("Left   ", 11,  sConfig->padSettings.leftKey);
+    KeySettingButton("Right  ", 12, sConfig->padSettings.rightKey);
+    KeySettingButton("Start  ", 13, sConfig->padSettings.startKey);
+    KeySettingButton("Select ", 14, sConfig->padSettings.selectKey);
 
     ImGui::Columns(1, "pad2", false);
     ImGui::Separator();
     ImGui::Text("Gamepad");
     ImGui::Columns(2, "padJoystick", true);
 
-    JoystickKeySettingButton("A ", 13, sConfig->padSettings.aJoyKey);
-    JoystickKeySettingButton("B ", 14, sConfig->padSettings.bJoyKey);
-    JoystickKeySettingButton("X ", 15, sConfig->padSettings.xJoyKey);
-    JoystickKeySettingButton("Y ", 16, sConfig->padSettings.yJoyKey);
-    JoystickKeySettingButton("L ", 17, sConfig->padSettings.lJoyKey);
-    JoystickKeySettingButton("R ", 18, sConfig->padSettings.rJoyKey);
+    JoystickKeySettingButton("A ", 15, sConfig->padSettings.aJoyKey);
+    JoystickKeySettingButton("B ", 16, sConfig->padSettings.bJoyKey);
+    JoystickKeySettingButton("X ", 17, sConfig->padSettings.xJoyKey);
+    JoystickKeySettingButton("Y ", 18, sConfig->padSettings.yJoyKey);
+    JoystickKeySettingButton("L ", 19, sConfig->padSettings.lJoyKey);
+    JoystickKeySettingButton("R ", 20, sConfig->padSettings.rJoyKey);
 
     ImGui::NextColumn();
 
-    JoystickKeySettingButton("Up     ", 19, sConfig->padSettings.upJoyKey);
-    JoystickKeySettingButton("Down   ", 20, sConfig->padSettings.downJoyKey);
-    JoystickKeySettingButton("Left   ", 21, sConfig->padSettings.leftJoyKey);
-    JoystickKeySettingButton("Right  ", 22, sConfig->padSettings.rightJoyKey);
-    JoystickKeySettingButton("Start  ", 23, sConfig->padSettings.startJoyKey);
-    JoystickKeySettingButton("Select ", 24, sConfig->padSettings.selectJoyKey);
+    JoystickKeySettingButton("Up     ", 21, sConfig->padSettings.upJoyKey);
+    JoystickKeySettingButton("Down   ", 22, sConfig->padSettings.downJoyKey);
+    JoystickKeySettingButton("Left   ", 23, sConfig->padSettings.leftJoyKey);
+    JoystickKeySettingButton("Right  ", 24, sConfig->padSettings.rightJoyKey);
+    JoystickKeySettingButton("Start  ", 25, sConfig->padSettings.startJoyKey);
+    JoystickKeySettingButton("Select ", 26, sConfig->padSettings.selectJoyKey);
 
     ImGui::End();
 
