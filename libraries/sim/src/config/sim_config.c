@@ -358,7 +358,7 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->padSettings.startKey = SDLK_RETURN;
     aConfig->padSettings.selectKey = SDLK_RSHIFT;
     aConfig->padSettings.guiKey = SDLK_TAB;
-    aConfig->padSettings.frameCapKey = SDLK_SPACE;
+    aConfig->padSettings.frameCapToggleKey = SDLK_SPACE;
     aConfig->padSettings.aJoyKey = 0;
     aConfig->padSettings.bJoyKey = 1;
     aConfig->padSettings.xJoyKey = 2;

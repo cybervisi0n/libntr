@@ -115,7 +115,7 @@ void AppPadMain(bool *openState) {
     KeySettingButton("L   ", 5, sConfig->padSettings.lKey);
     KeySettingButton("R   ", 6, sConfig->padSettings.rKey);
     KeySettingButton("GUI ", 7, sConfig->padSettings.guiKey);
-    KeySettingButton("Frame Cap ", 8, sConfig->padSettings.frameCapKey);
+    KeySettingButton("Frame Cap Toggle ", 8, sConfig->padSettings.frameCapToggleKey);
 
     ImGui::NextColumn();
 
