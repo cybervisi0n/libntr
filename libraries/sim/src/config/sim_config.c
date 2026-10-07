@@ -110,6 +110,12 @@ static int IniHandler(void* user, const char* section, const char* name,
     if(MATCH("PAD", "GUIKey")) {
         config->padSettings.guiKey = atoi(value);
     }
+    if(MATCH("PAD", "FrameCapKey")) {
+        config->padSettings.frameCapKey = atoi(value);
+    }
+    if(MATCH("PAD", "FrameCapToggleKey")) {
+        config->padSettings.frameCapToggleKey = atoi(value);
+    }
     if(MATCH("PAD", "AJoyKey")) {
         config->padSettings.aJoyKey = atoi(value);
     }
@@ -357,8 +363,9 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->padSettings.rKey = SDLK_e;
     aConfig->padSettings.startKey = SDLK_RETURN;
     aConfig->padSettings.selectKey = SDLK_RSHIFT;
-    aConfig->padSettings.guiKey = SDLK_TAB;
-    aConfig->padSettings.frameCapToggleKey = SDLK_SPACE;
+    aConfig->padSettings.guiKey = SDLK_BACKQUOTE;
+    aConfig->padSettings.frameCapToggleKey = SDLK_TAB;
+    aConfig->padSettings.frameCapKey = SDLK_SPACE;
     aConfig->padSettings.aJoyKey = 0;
     aConfig->padSettings.bJoyKey = 1;
     aConfig->padSettings.xJoyKey = 2;
@@ -444,6 +451,8 @@ void SIM_Config_SaveConfigFile(SIM_config_type * aConfig)
     fprintf(configFile, "StartKey=%d\n", aConfig->padSettings.startKey);
     fprintf(configFile, "SelectKey=%d\n", aConfig->padSettings.selectKey);
     fprintf(configFile, "GUIKey=%d\n", aConfig->padSettings.guiKey);
+    fprintf(configFile, "FrameCapKey=%d\n", aConfig->padSettings.frameCapKey);
+    fprintf(configFile, "FrameCapToggleKey=%d\n", aConfig->padSettings.frameCapToggleKey);
     fprintf(configFile, "AJoyKey=%d\n", aConfig->padSettings.aJoyKey);
     fprintf(configFile, "BJoyKey=%d\n", aConfig->padSettings.bJoyKey);
     fprintf(configFile, "XJoyKey=%d\n", aConfig->padSettings.xJoyKey);

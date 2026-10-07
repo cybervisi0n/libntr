@@ -29,6 +29,7 @@ typedef struct {
     int selectKey;
     int guiKey;
     int frameCapToggleKey;
+    int frameCapKey;
 
     // Joystick keys
     int joyAxisDeadzone;

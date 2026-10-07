@@ -176,6 +176,8 @@ WIN_snd_channel_info win_sndi_channels[16] = {0};
 WIN_snd_alarm_info win_snd_alarms[32] = {0};
 SNDSharedWork *win_SNDi_SharedWork;
 
+static bool sFastForward = false;
+
 OSIrqFunction OS_IRQTable[OS_IRQ_TABLE_MAX] = {
     OS_IrqDummy, // VBlank (for ARM9)
     OS_IrqDummy, // HBlank
@@ -1101,7 +1103,12 @@ void *SIM_Render(void *arg) {
             s_SIM_config.capFrameRate = true;
             s_SIM_config.vsyncInterval = 1; // Every V-Blank
           }
+
+          SDL_GL_SetSwapInterval(s_SIM_config.vsyncInterval);
           
+        } else if(keyRead == s_SIM_config.padSettings.frameCapKey) {
+          sFastForward = true;
+          SDL_GL_SetSwapInterval(0);
         }
       }
       if (Event.type == SDL_KEYUP) {
@@ -1144,6 +1151,9 @@ void *SIM_Render(void *arg) {
         } else if (keyRead == s_SIM_config.padSettings.selectKey) {
           // Select button
           s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000000100;
+        } else if(keyRead == s_SIM_config.padSettings.frameCapKey) {
+          sFastForward = false;
+          SDL_GL_SetSwapInterval(s_SIM_config.vsyncInterval);
         }
       }
       if (Event.type == SDL_JOYBUTTONDOWN) {
@@ -1280,7 +1290,7 @@ void *SIM_Render(void *arg) {
     TracyCZoneEnd(SimRenderZone);
 #endif
     // Limit framerate to 60 fps
-    if (s_SIM_config.capFrameRate) {
+    if (s_SIM_config.capFrameRate && !sFastForward) {
 
       // 60 Fps
       if (frameNs < 16600000) {
