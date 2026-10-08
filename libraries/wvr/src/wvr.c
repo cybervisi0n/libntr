@@ -120,9 +120,11 @@ WVRResult WVR_TerminateAsync (WVRCallbackFunc callback, void * arg)
     OSIntrMode e;
 
     PXI_Init();
+    #ifdef SDK_BUILD_ARM
     if (!PXI_IsCallbackReady(PXI_FIFO_TAG_WVR, PXI_PROC_ARM7)) {
         return WVR_RESULT_DISABLE;
     }
+    #endif
 
     e = OS_DisableInterrupts();
 
@@ -141,6 +143,12 @@ WVRResult WVR_TerminateAsync (WVRCallbackFunc callback, void * arg)
         wvrCallback = callback;
     }
     wvrArg = arg;
+
+    #ifdef SDK_PORT
+    WvrReceiveCallback(PXI_FIFO_TAG_WVR, (uPtr)arg, FALSE);
+    #endif
+
+    
 
     if (0 > PXI_SendWordByFifo(PXI_FIFO_TAG_WVR, WVR_PXI_COMMAND_TERMINATE, FALSE)) {
         wvrCallback = NULL;
