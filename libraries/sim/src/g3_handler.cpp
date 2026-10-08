@@ -503,26 +503,9 @@ void G3SIM_Color(u16 color)
     u8 r;
     u8 g;
     u8 b;
-	r = color & 0b0000000000011111;
-    if(r == 31) {
-        r = 255;
-    } else {
-        r = r * 7;
-    }
-	g = (color >> 5) & 0b0000000000011111;
-    if(g == 31) {
-        g = 255;
-    } else {
-        g = g * 7;
-    }
-	b = (color >> 10) & 0b0000000000011111;
-    if(b == 31) {
-        b = 255;
-    } else {
-        b = b * 7;
-    }
 
-    //printf("Color: %d %d %d\n", r, g, b);
+    SIM_u16ToRGB(color, &r, &g, &b);
+
     s_g3CurColor[0] = r;
     s_g3CurColor[1] = g;
     s_g3CurColor[2] = b;
