@@ -277,7 +277,7 @@ void SND_SetChannelPan7(int chNo, int pan)
     *((REGType8v *)(REG_SOUND0CNT_PAN_ADDR + SND_CHANNEL_REG_OFFSET(chNo))) = (u8)pan;
     #else
     u32 reg = s_SIM_sndcnt[chNo];
-    reg = ~(0b1111111 << 16);
+    reg &= ~(0b1111111 << 16);
 
     reg |= (pan << 16);
     s_SIM_sndcnt[chNo] = reg;
