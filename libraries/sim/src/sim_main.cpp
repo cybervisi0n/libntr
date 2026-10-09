@@ -1411,7 +1411,8 @@ int main(int argc, char *argv[]) {
   }
 #endif
 
-  chdir(SDL_GetBasePath());
+  // TODO: This broke the linux AppImage build
+  //chdir(SDL_GetBasePath());
 
   // Start up debug system
   SIM_Dbg_Init();
