@@ -167,7 +167,7 @@ static GLint myFragmentShader;
 // GL Context
 static SDL_GLContext context;
 
-SDL_Window *window;
+static SDL_Window *window;
 
 u8 s_SIM_dbg_dumpSound = 0;
 static u8 s_SIM_dbg_soundFileOpen = 0;
@@ -259,6 +259,8 @@ static void DrawScreenQuad() {
 }
 
 SIM_config_type *SIM_GetConfigPtr() { return &s_SIM_config; }
+
+SDL_Window * SIM_GetSDLWindow() {return window;}
 
 static u64 map(u64 x, u64 in_min, u64 in_max, u64 out_min, u64 out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
