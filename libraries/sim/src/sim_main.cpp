@@ -381,6 +381,10 @@ void *SIM_RenderInit(void *arg) {
       SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
   context = SDL_GL_CreateContext(window);
 
+  if(s_SIM_config.fullScreen) {
+    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+  }
+
   gladLoadGLLoader(SDL_GL_GetProcAddress);
 
   glViewport(0, 0, windowWidth, windowHeight);

@@ -41,6 +41,7 @@ void AppConfigMain(bool *openState) {
     bool swapScreens = sConfig->swapScreens;
     int vSyncInterval = sConfig->vsyncInterval;
     bool frameLimit = sConfig->capFrameRate;
+    bool fullScreen = sConfig->fullScreen;
     
     ImGui::Begin("Config", openState);
 
@@ -48,6 +49,10 @@ void AppConfigMain(bool *openState) {
     if(ImGui::SliderScalar(" ", ImGuiDataType_U8, &sConfig->internalResolutionScale, &MinInternalRes, &MaxInternalRes, "%dx NDS")) {
         configChanged = true;
         SIM_SetInternalResolutionAfterRender(sConfig->internalResolutionScale);
+    }
+
+    if(ImGui::Checkbox("Fullscreen", &fullScreen)) {
+        configChanged = true;
     }
 
     if(ImGui::Combo("Layout", &screenLayout, ScreenLayoutStrings, 3, 3)) {
@@ -73,6 +78,12 @@ void AppConfigMain(bool *openState) {
     if(configChanged) {
         sConfig->screenLayout = static_cast<SIM_config_screen_layout_type>(screenLayout);
         sConfig->swapScreens = swapScreens;
+        sConfig->fullScreen = fullScreen;
+        if(sConfig->fullScreen) {
+            SDL_SetWindowFullscreen(SIM_GetSDLWindow(), SDL_WINDOW_FULLSCREEN_DESKTOP);
+        } else {
+            SDL_SetWindowFullscreen(SIM_GetSDLWindow(), 0);
+        }
         sConfig->vsyncInterval = vSyncInterval;
         if(vSyncInterval != SDL_GL_GetSwapInterval()) {
             SDL_GL_SetSwapInterval(vSyncInterval);
