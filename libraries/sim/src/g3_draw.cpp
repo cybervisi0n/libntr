@@ -1,6 +1,6 @@
 #include <simulator/g3_draw.h>
 
-#include <simulator/g3_handler.h>
+#include <simulator/sim_g3_CommandHandler.hpp>
 #include <simulator/assert.h>
 #include <string.h>
 #include <stddef.h>
@@ -211,26 +211,26 @@ void G3SIM_FlushArray()
 
 			switch( s_texImageParam.textureFormat ){
 				case GX_TEXFMT_A3I5:
-					G3SIM_DecodeTexA3I5(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
+					SIM::G3::DecodeTexA3I5(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
 					break;
 				case GX_TEXFMT_PLTT4:
-					G3SIM_DecodeTex4(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
+					SIM::G3::DecodeTex4(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
 					break;
 				case GX_TEXFMT_PLTT16:
-					G3SIM_DecodeTex16(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
+					SIM::G3::DecodeTex16(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
 					break;
 				case GX_TEXFMT_PLTT256:
-					G3SIM_DecodeTex256(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
+					SIM::G3::DecodeTex256(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
 					break;
 				case GX_TEXFMT_COMP4x4:
 					SIM_assert_always();
 					//TODO
 					break;
 				case GX_TEXFMT_A5I3:
-					G3SIM_DecodeTexA5I3(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
+					SIM::G3::DecodeTexA5I3(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
 					break;
 				case GX_TEXFMT_DIRECT:
-					G3SIM_DecodeTexDirect(vramTex, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
+					SIM::G3::DecodeTexDirect(vramTex, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
 					break;
 			}
 

@@ -34,7 +34,7 @@ extern "C" int NitroSpMain(void *arg);
 #include <simulator/queue.h>
 #include <simulator/simvariables.h>
 #include <simulator/g3_draw.h>
-#include <simulator/g3_handler.h>
+#include <simulator/sim_g3_CommandHandler.hpp>
 #include <simulator/sim_gui.hpp>
 
 #include <math.h>

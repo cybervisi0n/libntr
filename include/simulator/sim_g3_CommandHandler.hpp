@@ -108,45 +108,51 @@ extern G3SIM_PolygonAttr_t s_curPolygonAttr;
 //Procedures
 
 //GPU Commands
-void G3SIM_Begin(GXBegin type);
-void G3SIM_BoxTest(s16 x, s16 y, s16 z, s16 width, s16 height, s16 depth);
-void G3SIM_Color(u16 color);
-void G3SIM_DecodeTex4(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
-void G3SIM_DecodeTex16(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
-void G3SIM_DecodeTex256(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
-void G3SIM_DecodeTexA3I5(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
-void G3SIM_DecodeTexA5I3(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
-void G3SIM_DecodeTexDirect(u8* vramTex, u8* out, u32 s, u32 t);
-void G3SIM_DiffAmb(u32 data);
-void G3SIM_Identity();
-void G3SIM_LightColor(u32 data);
-void G3SIM_LightVector(u32 data);
-void G3SIM_MtxLoad43(MtxFx43 * mtx);
-void G3SIM_MtxLoad44(MtxFx44 * mtx);
-void G3SIM_MtxMode(GXMtxMode mode);
-void G3SIM_MtxMult33(MtxFx33 * mtx);
-void G3SIM_MtxMult43(MtxFx43 * mtx);
-void G3SIM_MtxMult44(MtxFx44 * mtx);
-void G3SIM_MtxPop(u8 num);
-void G3SIM_MtxPush();
-void G3SIM_MtxRestore(u8 idx);
-void G3SIM_MtxScale(fx32 * scale);
-void G3SIM_MtxStore(u8 idx);
-void G3SIM_MtxTranslate(fx32* trans);
-void G3SIM_Normal(u32 data);
-void G3SIM_PolygonAttr(u32 data);
-void G3SIM_SpecEmi(u32 data);
-void G3SIM_SwapBuffers(u8 depthBufferMode);
-void G3SIM_TexCoord(u32 data);
-void G3SIM_TexImageParam(u32 data);
-void G3SIM_TexPlttBase(u32 data);
-void G3SIM_Vtx(s16 x, s16 y, s16 z);
+
+namespace SIM::G3 {
+void Begin(GXBegin type);
+void BoxTest(s16 x, s16 y, s16 z, s16 width, s16 height, s16 depth);
+void Color(u16 color);
+void DecodeTex4(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
+void DecodeTex16(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
+void DecodeTex256(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
+void DecodeTexA3I5(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
+void DecodeTexA5I3(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
+void DecodeTexDirect(u8* vramTex, u8* out, u32 s, u32 t);
+void DiffAmb(u32 data);
+void Identity();
+void LightColor(u32 data);
+void LightVector(u32 data);
+void MtxLoad43(MtxFx43 * mtx);
+void MtxLoad44(MtxFx44 * mtx);
+void MtxMode(GXMtxMode mode);
+void MtxMult33(MtxFx33 * mtx);
+void MtxMult43(MtxFx43 * mtx);
+void MtxMult44(MtxFx44 * mtx);
+void MtxPop(u8 num);
+void MtxPush();
+void MtxRestore(u8 idx);
+void MtxScale(fx32 * scale);
+void MtxStore(u8 idx);
+void MtxTranslate(fx32* trans);
+void Normal(u32 data);
+void PolygonAttr(u32 data);
+void SpecEmi(u32 data);
+void SwapBuffers(u8 depthBufferMode);
+void TexCoord(u32 data);
+void TexImageParam(u32 data);
+void TexPlttBase(u32 data);
+void Vtx(s16 x, s16 y, s16 z);
+
+//Not GPU commands
+void SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts);
+}
+
 
 // Not GPU Commands
 int G3SIM_ClipPolygon(fx32 verts[][4], int nVerts, int clipStart, BOOL attribs);
 u8 G3SIM_SwapBuffersCalledThisFrame();
 void G3SIM_ResetSwapBuffersCall();
-void G3SIM_SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts);
 
 #ifdef __cplusplus
 }

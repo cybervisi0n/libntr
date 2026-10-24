@@ -227,24 +227,27 @@ void MTX_ScaleApply44 (const MtxFx44 *pSrc, MtxFx44 *pDst, fx32 x, fx32 y, fx32 
 
 #ifdef SDK_PORT
 void MTX_RotX44_(MtxFx44 * pDst, fx32 sinVal, fx32 cosVal) {
-    pDst->a[5] = cosVal;
+    MTX_Identity44_(pDst);
+	pDst->a[5] = cosVal;
     pDst->a[10] = cosVal;
-    pDst->a[6] = -sinVal;
-    pDst->a[9] = sinVal;
+    pDst->a[6] = sinVal;
+    pDst->a[9] = -sinVal;
 }
 
 void MTX_RotY44_(MtxFx44 * pDst, fx32 sinVal, fx32 cosVal) {
-    pDst->a[0] = cosVal;
+    MTX_Identity44_(pDst);
+	pDst->a[0] = cosVal;
     pDst->a[10] = cosVal;
-    pDst->a[2] = sinVal;
-    pDst->a[8] = -sinVal;
+    pDst->a[2] = -sinVal;
+    pDst->a[8] = sinVal;
 }
 
 void MTX_RotZ44_(MtxFx44 * pDst, fx32 sinVal, fx32 cosVal) {
-    pDst->a[0] = cosVal;
+    MTX_Identity44_(pDst);
+	pDst->a[0] = cosVal;
     pDst->a[5] = cosVal;
-    pDst->a[4] = sinVal;
-    pDst->a[1] = -sinVal;
+    pDst->a[4] = -sinVal;
+    pDst->a[1] = sinVal;
 }
 #else
 #include <nitro/code16.h>

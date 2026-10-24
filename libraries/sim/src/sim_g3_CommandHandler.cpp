@@ -17,7 +17,7 @@
 
 #include <simulator/drawmsg.h>
 #include <simulator/queue.h>
-#include <simulator/g3_handler.h>
+#include <simulator/sim_g3_CommandHandler.hpp>
 #include <simulator/g3_draw.h>
 #include <simulator/sim.h>
 
@@ -394,7 +394,8 @@ static void calculateVtx(float * x, float * y, float * z, float * w)
 }
 
 //Begin vertices
-void G3SIM_Begin(GXBegin type)
+namespace SIM::G3 {
+void Begin(GXBegin type)
 {
     char debugMessage[50] = {0};
     char * typeString = "";
@@ -427,7 +428,7 @@ void G3SIM_Begin(GXBegin type)
 }
 
 //Box Test
-void G3SIM_BoxTest(s16 x, s16 y, s16 z, s16 width, s16 height, s16 depth)
+void BoxTest(s16 x, s16 y, s16 z, s16 width, s16 height, s16 depth)
 {
     fx32 cube[8][4];
     fx32 face[10][4];
@@ -498,7 +499,7 @@ void G3SIM_BoxTest(s16 x, s16 y, s16 z, s16 width, s16 height, s16 depth)
 }
 
 //Set the color
-void G3SIM_Color(u16 color)
+void Color(u16 color)
 {
     u8 r;
     u8 g;
@@ -513,7 +514,7 @@ void G3SIM_Color(u16 color)
     return;
 }
 
-void G3SIM_DecodeTex4(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
+void DecodeTex4(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
     u32 texOffset = 0;
     u8 color1;
     u8 color2;
@@ -602,7 +603,7 @@ void G3SIM_DecodeTex4(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
     }
 }
 
-void G3SIM_DecodeTex16(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
+void DecodeTex16(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
     //4 bit per pixel (16 colour)
 	u32 texOffset = 0;
     if( vramTex == NULL )
@@ -660,8 +661,7 @@ void G3SIM_DecodeTex16(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
 	}
 }
 
-void G3SIM_DecodeTex256(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
-    //4 bit per pixel (16 colour)
+void DecodeTex256(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
 	u32 texOffset = 0;
 	for( int i=0; i < s; i++ )
 	{
@@ -694,7 +694,7 @@ void G3SIM_DecodeTex256(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
 	}
 }
 
-void G3SIM_DecodeTexA3I5(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t)
+void DecodeTexA3I5(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t)
 {
     #ifdef SDK_TRACY_ENABLE
     TracyCZone(ctx, 1);
@@ -734,7 +734,7 @@ void G3SIM_DecodeTexA3I5(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t)
     #endif
 }
 
-void G3SIM_DecodeTexA5I3(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t)
+void DecodeTexA5I3(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t)
 {
     #ifdef SDK_TRACY_ENABLE
     TracyCZone(ctx, 1);
@@ -772,7 +772,7 @@ void G3SIM_DecodeTexA5I3(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t)
     #endif
 }
 
-void G3SIM_DecodeTexDirect(u8* vramTex, u8* out, u32 s, u32 t)
+void DecodeTexDirect(u8* vramTex, u8* out, u32 s, u32 t)
 {
     #ifdef SDK_TRACY_ENABLE
     TracyCZone(ctx, 1);
@@ -804,7 +804,7 @@ void G3SIM_DecodeTexDirect(u8* vramTex, u8* out, u32 s, u32 t)
     #endif
 }
 
-void G3SIM_DiffAmb(u32 data)
+void DiffAmb(u32 data)
 {
     u8 diffuseRed = (data & 0b11111);
     u8 diffuseGreen = (data & 0b1111100000) >> 5;
@@ -830,7 +830,7 @@ void G3SIM_DiffAmb(u32 data)
 }
 
 //Copy the identity matrix to the current matrix
-void G3SIM_Identity()
+void Identity()
 {
     G3SIM_Matrix_t * curMtx = getCurrentMatrix();
     if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR )
@@ -847,7 +847,7 @@ void G3SIM_Identity()
     return;
 }
 
-void G3SIM_LightColor(u32 data)
+void LightColor(u32 data)
 {
     u8 lightRed = (data & 0b11111);
     u8 lightGreen = (data & 0b1111100000) >> 5;
@@ -860,7 +860,7 @@ void G3SIM_LightColor(u32 data)
     s_G3LightColor[lightNum][2] = lightBlue << 3;
 }
 
-void G3SIM_LightVector(u32 data)
+void LightVector(u32 data)
 {
     u8 lightVecX = (data & 0b1111111111);
     u8 lightVecXSign = (lightVecX & 0b1000000000) >> 9;
@@ -889,7 +889,7 @@ void G3SIM_LightVector(u32 data)
 }
 
 //Load Matrix
-void G3SIM_MtxLoad43(MtxFx43 * mtx)
+void MtxLoad43(MtxFx43 * mtx)
 {
     G3SIM_Matrix_t * curMtx = getCurrentMatrix();
     fx32 num;
@@ -933,7 +933,7 @@ void G3SIM_MtxLoad43(MtxFx43 * mtx)
     return;
 }
 
-void G3SIM_MtxLoad44(MtxFx44 * mtx)
+void MtxLoad44(MtxFx44 * mtx)
 {
     G3SIM_Matrix_t * curMtx = getCurrentMatrix();
     fx32 num;
@@ -957,7 +957,7 @@ void G3SIM_MtxLoad44(MtxFx44 * mtx)
 }
 
 //Change matrix mode
-void G3SIM_MtxMode(GXMtxMode mode)
+void MtxMode(GXMtxMode mode)
 {
     s_curMtxMode = mode;
 
@@ -970,7 +970,7 @@ void G3SIM_MtxMode(GXMtxMode mode)
 }
 
 //CurrentMatrix = CurrentMatrix * mtxs
-void G3SIM_MtxMult33(MtxFx33 * mtx)
+void MtxMult33(MtxFx33 * mtx)
 {
     G3SIM_Matrix_t mtxTemp;
     G3SIM_Matrix_t * currentMatrix;
@@ -1022,7 +1022,7 @@ void G3SIM_MtxMult33(MtxFx33 * mtx)
 }
 
 //CurrentMatrix = CurrentMatrix * mtxs
-void G3SIM_MtxMult43(MtxFx43 * mtx)
+void MtxMult43(MtxFx43 * mtx)
 {
     G3SIM_Matrix_t mtxTemp;
     G3SIM_Matrix_t * currentMatrix;
@@ -1072,7 +1072,7 @@ void G3SIM_MtxMult43(MtxFx43 * mtx)
     return;
 }
 
-void G3SIM_MtxMult44(MtxFx44 * mtx)
+void MtxMult44(MtxFx44 * mtx)
 {
 
     G3SIM_Matrix_t mtxTemp;
@@ -1124,7 +1124,7 @@ void G3SIM_MtxMult44(MtxFx44 * mtx)
 }
 
 //TODO: Keep G3X_GXSTAT up to date
-void G3SIM_MtxPop(u8 num)
+void MtxPop(u8 num)
 {
     G3SIM_MatrixStack_t * curMtxStack = getCurrentMatrixStack();
     G3SIM_Matrix_t * currentMatrix = getCurrentMatrix();
@@ -1180,7 +1180,7 @@ void G3SIM_MtxPop(u8 num)
     return;
 }
 
-void G3SIM_MtxPush()
+void MtxPush()
 {
     if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR
      || s_curMtxMode == GX_MTXMODE_POSITION )
@@ -1203,7 +1203,7 @@ void G3SIM_MtxPush()
     return;
 }
 
-void G3SIM_MtxRestore(u8 idx)
+void MtxRestore(u8 idx)
 {
     G3SIM_MatrixStack_t * curMtxStack = getCurrentMatrixStack();
     G3SIM_Matrix_t * currentMatrix = getCurrentMatrix();
@@ -1230,7 +1230,7 @@ void G3SIM_MtxRestore(u8 idx)
     return;
 }
 
-void G3SIM_MtxScale(fx32 * scale)
+void MtxScale(fx32 * scale)
 {
     fx32 s[3];
 
@@ -1239,17 +1239,15 @@ void G3SIM_MtxScale(fx32 * scale)
     s[2] = scale[2];
     
     G3SIM_Matrix_t * currentMatrix = getCurrentMatrix();
+    if(s_curMtxMode == GX_MTXMODE_POSITION_VECTOR) {
+        currentMatrix = &currentPositionMatrix;
+    }
 
     for(int i=0; i < 3; i ++)
     {
         for( int j=0; j < 3; j ++)
         {
             currentMatrix->nums[i][j] = FX_Mul(s[i], currentMatrix->nums[i][j]);
-            if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR )
-            {
-                //Also multiply the position matrix
-                currentPositionMatrix.nums[i][j] = FX_Mul(s[i], currentPositionMatrix.nums[i][j]);
-            }
         }   
     }
     if( s_curMtxMode != GX_MTXMODE_TEXTURE )
@@ -1259,7 +1257,7 @@ void G3SIM_MtxScale(fx32 * scale)
     return;
 }
 
-void G3SIM_MtxStore(u8 idx)
+void MtxStore(u8 idx)
 {
     if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR
      || s_curMtxMode == GX_MTXMODE_POSITION )
@@ -1282,7 +1280,7 @@ void G3SIM_MtxStore(u8 idx)
 
 
 
-void G3SIM_MtxTranslate(fx32* trans)
+void MtxTranslate(fx32* trans)
 {
     fx32 s[3];
 
@@ -1308,7 +1306,7 @@ void G3SIM_MtxTranslate(fx32* trans)
     }
 }
 
-void G3SIM_Normal(u32 data)
+void Normal(u32 data)
 {
     u8 vecX = (data & 0b1111111111);
     u8 vecXSign = (vecX & 0b1000000000) >> 9;
@@ -1419,7 +1417,7 @@ void G3SIM_Normal(u32 data)
 }
 
 //PolygonAttr
-void G3SIM_PolygonAttr(u32 data)
+void PolygonAttr(u32 data)
 {
     u8 lightFlag = data & 0b1111;
     u8 alpha = (data & 0b111110000000000000000) >> 16;
@@ -1478,7 +1476,7 @@ void G3SIM_PolygonAttr(u32 data)
     return;
 }
 
-void G3SIM_SpecEmi(u32 data)
+void SpecEmi(u32 data)
 {
     u8 specularRed = (data & 0b11111);
     u8 specularGreen = (data & 0b1111100000) >> 5;
@@ -1503,24 +1501,14 @@ void G3SIM_SpecEmi(u32 data)
 }
 
 //SwapBuffers
-void G3SIM_SwapBuffers(u8 depthBufferMode)
+void SwapBuffers(u8 depthBufferMode)
 {
     s_SIM_useWBuffer = depthBufferMode;
     s_swapBuffersCalledThisFrame = TRUE;
 }
 
-u8 G3SIM_SwapBuffersCalledThisFrame()
-{
-    return s_swapBuffersCalledThisFrame;
-}
-
-void G3SIM_ResetSwapBuffersCall()
-{
-    s_swapBuffersCalledThisFrame = FALSE;
-}
-
 //TexCoord
-void G3SIM_TexCoord(u32 data)
+void TexCoord(u32 data)
 {
     s16 s = data & 0xFFFF;
     s16 t = (data & 0xFFFF0000) >> 16;
@@ -1555,7 +1543,7 @@ void G3SIM_TexCoord(u32 data)
 }
 
 //TexImageParam
-void G3SIM_TexImageParam(u32 data)
+void TexImageParam(u32 data)
 {
     s_texImageParam.textureOffset = ((u16)data) << 3;
     s_texImageParam.repeatS = (data & 0b10000000000000000) >> 16;
@@ -1571,7 +1559,7 @@ void G3SIM_TexImageParam(u32 data)
 }
 
 //TexPlttBase
-void G3SIM_TexPlttBase(u32 data)
+void TexPlttBase(u32 data)
 {
     if( s_texImageParam.textureFormat == 2 )
     {
@@ -1585,7 +1573,7 @@ void G3SIM_TexPlttBase(u32 data)
 }
 
 //Add a vertex
-void G3SIM_Vtx(s16 x, s16 y, s16 z)
+void Vtx(s16 x, s16 y, s16 z)
 {
     fx32 fxX;
     fx32 fxY;
@@ -1650,7 +1638,7 @@ void G3SIM_Vtx(s16 x, s16 y, s16 z)
     return;
 }
 
-void G3SIM_SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts) {
+void SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts) {
     G3SIM_Vertex_t glVerts[6];
     u8 addPolygon = TRUE;
     int numFinalVerts = numVerts;
@@ -1775,4 +1763,16 @@ void G3SIM_SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts) {
     }
 
 
+}
+} // namespace SIM::G3
+
+
+u8 G3SIM_SwapBuffersCalledThisFrame()
+{
+    return s_swapBuffersCalledThisFrame;
+}
+
+void G3SIM_ResetSwapBuffersCall()
+{
+    s_swapBuffersCalledThisFrame = FALSE;
 }
