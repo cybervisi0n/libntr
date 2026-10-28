@@ -374,7 +374,11 @@ void *SIM_RenderInit(void *arg) {
 
   window = SDL_CreateWindow(
       windowTitle.c_str(), 100, 100, windowWidth, windowHeight,
-      SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+      SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL
+      #if defined(SDK_BUILD_WIN64) || defined(SDK_BUILD_LINUX)
+      | SDL_WINDOW_RESIZABLE
+      #endif
+    );
   context = SDL_GL_CreateContext(window);
 
   if(s_SIM_config.fullScreen) {
@@ -1431,6 +1435,11 @@ int main(int argc, char *argv[]) {
   while (!TracyCIsStarted) {
     SDL_Delay(1);
   }
+#endif
+
+#ifdef SDK_BUILD_PROSPERO
+  // Add a delay to start up the debugger
+  SDL_Delay(5000);
 #endif
 
   // TODO: This broke the linux AppImage build
