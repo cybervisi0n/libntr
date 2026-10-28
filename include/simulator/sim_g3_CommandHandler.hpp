@@ -136,11 +136,11 @@ void MtxScale(fx32 * scale);
 void MtxStore(u8 idx);
 void MtxTranslate(fx32* trans);
 void Normal(u32 data);
-void PolygonAttr(u32 data);
+void PolygonAttrCommand(u32 data);
 void SpecEmi(u32 data);
 void SwapBuffers(u8 depthBufferMode);
 void TexCoord(u32 data);
-void TexImageParam(u32 data);
+void TexImageParamCommand(u32 data);
 void TexPlttBase(u32 data);
 void Vtx(s16 x, s16 y, s16 z);
 

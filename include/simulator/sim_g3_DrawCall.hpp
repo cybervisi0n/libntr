@@ -64,6 +64,7 @@ class DrawCall {
   inline size_t GetRenderVertsCount() { return mRenderVertsCount; };
   inline PolygonAttr& GetPolygonAttr() { return mPolygonAttr; };
   inline TexImageParam& GetTexImageParam() { return mTexImageParam; };
+  inline void SetTexImageParam(const TexImageParam& param) { mTexImageParam = param; };
   inline std::shared_ptr<Texture> GetTexture() { return mTexture; };
 
  private:

@@ -17,6 +17,7 @@ extern "C" int NitroSpMain(void *arg);
 #include <simulator/sim_audio.h>
 #include <simulator/sim_net.h>
 #include <simulator/sim_shaders.hpp>
+#include <simulator/sim_g3_GlobalState.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1545,6 +1546,8 @@ int main(int argc, char *argv[]) {
 #ifdef SDK_BUILD_WIN64
   SetConsoleOutputCP(65001);
 #endif
+
+  SIM::G3::GetGlobalState().Init();
 
   SIM_RenderInit(NULL);
   G3SIM_DrawInit();

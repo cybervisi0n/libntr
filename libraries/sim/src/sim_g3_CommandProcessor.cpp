@@ -414,7 +414,7 @@ void HandleCommandMessage(draw_msg_t *msg) {
   case DRAW_CMD_G3_TEXIMAGEPARAM:
 
     G3SIM_FlushArray();
-    TexImageParam(msg->data.numU32);
+    TexImageParamCommand(msg->data.numU32);
     break;
   case DRAW_CMD_G3_VTXXY:
     msg->type = DRAW_CMD_G3_VTX16;
@@ -539,7 +539,7 @@ void HandleCommandMessage(draw_msg_t *msg) {
     TexCoord(msg->data.numU32);
     break;
   case DRAW_CMD_G3_POLYGONATTR:
-    PolygonAttr(msg->data.numU32);
+    PolygonAttrCommand(msg->data.numU32);
     break;
   case DRAW_CMD_G3_DIFF_AMB:
     DiffAmb(msg->data.numU32);

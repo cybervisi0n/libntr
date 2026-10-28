@@ -44,6 +44,15 @@ class GlobalState {
   GlobalState();
   ~GlobalState();
 
+  void Init();
+
+  void PushMatrix();
+  void PopMatrix(u8 popNum);
+
+  inline std::shared_ptr<DrawCall> GetCurrentDrawCall() { return mCurrentDrawCall; }
+
+  inline void SetMatrixMode(GXMtxMode mode) { mCurrentMatrixMode = mode; }
+
  private:
   GXMtxMode mCurrentMatrixMode = GX_MTXMODE_PROJECTION;
   GXBegin mCurrentPrimitiveType = GX_BEGIN_TRIANGLES;
@@ -74,10 +83,10 @@ class GlobalState {
   int mPositionVectorMatrixStackPointer;
   int mTextureMatrixStackPointer;
 
-  std::array<MtxFx44, 1> mProjectionStack;
-  std::array<MtxFx44, 31> mPositionStack;
-  std::array<MtxFx44, 31> mVectorStack;
-  std::array<MtxFx44, 1> mTextureStack;
+  std::array<MtxFx44, 1> mProjectionStack = {};
+  std::array<MtxFx44, 31> mPositionStack = {};
+  std::array<MtxFx44, 31> mVectorStack = {};
+  std::array<MtxFx44, 1> mTextureStack = {};
   
   std::shared_ptr<DrawCall> mCurrentDrawCall = nullptr;
   std::vector<std::shared_ptr<DrawCall>> mTransparentDrawCalls = {};
@@ -90,6 +99,8 @@ class GlobalState {
 
   
 };
+
+GlobalState& GetGlobalState();
 
 }
 

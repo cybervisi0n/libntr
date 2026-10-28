@@ -18,6 +18,7 @@
 #include <simulator/drawmsg.h>
 #include <simulator/queue.h>
 #include <simulator/sim_g3_CommandHandler.hpp>
+#include <simulator/sim_g3_GlobalState.hpp>
 #include <simulator/g3_draw.h>
 #include <simulator/sim.h>
 
@@ -1126,6 +1127,9 @@ void MtxMult44(MtxFx44 * mtx)
 //TODO: Keep G3X_GXSTAT up to date
 void MtxPop(u8 num)
 {
+    auto& g3State = SIM::G3::GetGlobalState();
+    g3State.PopMatrix(num);
+
     G3SIM_MatrixStack_t * curMtxStack = getCurrentMatrixStack();
     G3SIM_Matrix_t * currentMatrix = getCurrentMatrix();
     if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR
@@ -1417,7 +1421,7 @@ void Normal(u32 data)
 }
 
 //PolygonAttr
-void PolygonAttr(u32 data)
+void PolygonAttrCommand(u32 data)
 {
     u8 lightFlag = data & 0b1111;
     u8 alpha = (data & 0b111110000000000000000) >> 16;
@@ -1543,8 +1547,22 @@ void TexCoord(u32 data)
 }
 
 //TexImageParam
-void TexImageParam(u32 data)
+void TexImageParamCommand(u32 data)
 {
+    SIM::G3::TexImageParam param;
+    param.textureOffset = ((u16)data) << 3;
+    param.repeatS = (data & 0b10000000000000000) >> 16;
+    param.repeatT = (data & 0b100000000000000000) >> 17;
+    param.flipS = (data & 0b1000000000000000000) >> 18;
+    param.flipT = (data & 0b10000000000000000000) >> 19;
+    param.textureSSize = 8 << ((data & 0b11100000000000000000000) >> 20);
+    param.textureTSize = 8 << ((data & 0b11100000000000000000000000) >> 23);
+    param.textureFormat = (data & 0b11100000000000000000000000000) >> 26;
+    param.color0 = (data & 0b100000000000000000000000000000) >> 29;
+    param.texCordTransform = (data & 0b11000000000000000000000000000000) >> 30;
+    auto& g3State = SIM::G3::GetGlobalState();
+    g3State.GetCurrentDrawCall()->SetTexImageParam(param);
+
     s_texImageParam.textureOffset = ((u16)data) << 3;
     s_texImageParam.repeatS = (data & 0b10000000000000000) >> 16;
     s_texImageParam.repeatT = (data & 0b100000000000000000) >> 17;
