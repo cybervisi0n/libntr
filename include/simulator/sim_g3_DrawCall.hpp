@@ -60,12 +60,13 @@ class DrawCall {
   void AddVertex(const RenderVertex& vert);
   void ClearVerts();
 
-  const RenderVertex * GetRenderVerts() { return mRenderVerts; };
-  inline size_t GetRenderVertsCount() { return mRenderVertsCount; };
-  inline PolygonAttr& GetPolygonAttr() { return mPolygonAttr; };
-  inline TexImageParam& GetTexImageParam() { return mTexImageParam; };
-  inline void SetTexImageParam(const TexImageParam& param) { mTexImageParam = param; };
-  inline std::shared_ptr<Texture> GetTexture() { return mTexture; };
+  const RenderVertex * GetRenderVerts() { return mRenderVerts; }
+  inline size_t GetRenderVertsCount() { return mRenderVertsCount; }
+  inline PolygonAttr GetPolygonAttr() { return mPolygonAttr; }
+  inline void SetPolygonAttr(const PolygonAttr& attr) { mPolygonAttr = attr; }
+  inline TexImageParam GetTexImageParam() { return mTexImageParam; }
+  inline void SetTexImageParam(const TexImageParam& param) { mTexImageParam = param; }
+  inline std::shared_ptr<Texture> GetTexture() { return mTexture; }
 
  private:
   RenderVertex * mRenderVerts;

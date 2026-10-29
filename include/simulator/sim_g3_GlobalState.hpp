@@ -46,14 +46,46 @@ class GlobalState {
 
   void Init();
 
+  // Matrix stack operations
   void PushMatrix();
   void PopMatrix(u8 popNum);
+  void StoreMatrix(u8 idx);
+  void RestoreMatrix(u8 idx);
+
+  // Matrix operations with logic handled by GlobalState
+  void IdentityMatrix();
 
   inline std::shared_ptr<DrawCall> GetCurrentDrawCall() { return mCurrentDrawCall; }
+  inline GXMtxMode GetMatrixMode() { return mCurrentMatrixMode; };
+  MtxFx44 GetCurrentMatrix();
+  inline MtxFx44 GetProjectionMatrix() { return mCurrentProjectionMatrix; };
+  inline MtxFx44 GetPositionMatrix() { return mCurrentPositionMatrix; };
+  inline MtxFx44 GetVectorMatrix() { return mCurrentVectorMatrix; };
+  inline MtxFx44 GetTextureMatrix() { return mCurrentTextureMatrix; };
+  inline MtxFx44 GetClipMatrix() { return mCurrentClipMatrix; }
+  inline RGBBytes GetVertexColor() { return mVertexColor; }
+  inline RGBBytes GetDiffuseColor() { return mDiffuseColor; }
+  inline RGBBytes GetAmbientColor() { return mAmbientColor; }
+  inline RGBBytes GetSpecularColor() { return mSpecularColor; }
+  inline RGBBytes GetEmissionColor() { return mEmissionColor; }
+  inline RGBBytes GetLightColor(int lightId) { mLightColor[lightId]; }
 
   inline void SetMatrixMode(GXMtxMode mode) { mCurrentMatrixMode = mode; }
+  void SetCurrentMatrix(const MtxFx44& matrix);
+  void SetProjectionMatrix(const MtxFx44& matrix);
+  void SetPositionMatrix(const MtxFx44& matrix);
+  inline void SetVectorMatrix(const MtxFx44& matrix) { mCurrentVectorMatrix = matrix; }
+  inline void SetTextureMatrix(const MtxFx44& matrix) { mCurrentTextureMatrix = matrix; }
+  inline void SetVertexColor(const RGBBytes& color) { mVertexColor = color; }
+  inline void SetDiffuseColor(const RGBBytes& color) { mDiffuseColor = color; }
+  inline void SetAmbientColor(const RGBBytes& color) { mAmbientColor = color; }
+  inline void SetSpecularColor(const RGBBytes& color) { mSpecularColor = color; }
+  inline void SetEmissionColor(const RGBBytes& color) { mEmissionColor = color; }
+  inline void SetLightColor(int lightId, const RGBBytes& color) { mLightColor[lightId] = color; }
+
 
  private:
+  void UpdateClipMatrix();
   GXMtxMode mCurrentMatrixMode = GX_MTXMODE_PROJECTION;
   GXBegin mCurrentPrimitiveType = GX_BEGIN_TRIANGLES;
 

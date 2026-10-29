@@ -19,6 +19,7 @@
 #include <simulator/queue.h>
 #include <simulator/sim_g3_CommandHandler.hpp>
 #include <simulator/sim_g3_GlobalState.hpp>
+#include <simulator/sim_g3_Utilities.hpp>
 #include <simulator/g3_draw.h>
 #include <simulator/sim.h>
 
@@ -502,17 +503,10 @@ void BoxTest(s16 x, s16 y, s16 z, s16 width, s16 height, s16 depth)
 //Set the color
 void Color(u16 color)
 {
-    u8 r;
-    u8 g;
-    u8 b;
+    RGBBytes rgbColor;
 
-    SIM_u16ToRGB(color, &r, &g, &b);
-
-    s_g3CurColor[0] = r;
-    s_g3CurColor[1] = g;
-    s_g3CurColor[2] = b;
-
-    return;
+    SIM_u16ToRGB(color, &rgbColor.r, &rgbColor.g, &rgbColor.b);
+    GetGlobalState().SetVertexColor(rgbColor);
 }
 
 void DecodeTex4(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
@@ -807,58 +801,55 @@ void DecodeTexDirect(u8* vramTex, u8* out, u32 s, u32 t)
 
 void DiffAmb(u32 data)
 {
-    u8 diffuseRed = (data & 0b11111);
-    u8 diffuseGreen = (data & 0b1111100000) >> 5;
-    u8 diffuseBlue = (data & 0b111110000000000) >> 10;
-    u8 setVtxColor = (data & 0b1000000000000000) >> 15;
-    u8 ambientRed = (data & 0b111110000000000000000) >> 16;
-    u8 ambientGreen = (data & 0b11111000000000000000000000) >> 21;
-    u8 ambientBlue = (data & 0b1111100000000000000000000000000) >> 26;
+    auto& g3State = GetGlobalState();
+
+    RGBBytes diffuse;
+    RGBBytes ambient;
+
+    diffuse.r = (data & 0b11111);
+    diffuse.g = (data & 0b1111100000) >> 5;
+    diffuse.b = (data & 0b111110000000000) >> 10;
+
+    diffuse.r <<=3;
+    diffuse.g <<=3;
+    diffuse.b <<=3;
+
+    bool setVtxColor = ((data & 0b1000000000000000) >> 15) != 0;
+
+    ambient.r = (data & 0b111110000000000000000) >> 16;
+    ambient.g = (data & 0b11111000000000000000000000) >> 21;
+    ambient.b = (data & 0b1111100000000000000000000000000) >> 26;
+
+    ambient.r <<=3;
+    ambient.g <<=3;
+    ambient.b <<=3;
 
     if(setVtxColor) {
-        s_g3CurColor[0] = diffuseRed << 3;
-        s_g3CurColor[1] = diffuseGreen << 3;
-        s_g3CurColor[2] = diffuseBlue << 3;
+        g3State.SetVertexColor(diffuse);
     }
-    s_g3DiffuseColor[0] = diffuseRed << 3;
-    s_g3DiffuseColor[1] = diffuseGreen << 3;
-    s_g3DiffuseColor[2] = diffuseBlue << 3;
 
-    s_g3AmbientColor[0] = ambientRed << 3;
-    s_g3AmbientColor[1] = ambientGreen << 3;
-    s_g3AmbientColor[2] = ambientBlue << 3;
-    return;
+    g3State.SetDiffuseColor(diffuse);
+    g3State.SetAmbientColor(ambient);
 }
 
 //Copy the identity matrix to the current matrix
 void Identity()
 {
-    G3SIM_Matrix_t * curMtx = getCurrentMatrix();
-    if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR )
-    {
-        //Also copy to position matrix
-        memcpy( &currentPositionMatrix, &G3SIM_IdentityMatrix, sizeof(G3SIM_Matrix_t) );
-    }
-    memcpy( curMtx, &G3SIM_IdentityMatrix, sizeof(G3SIM_Matrix_t) );
-
-    if( s_curMtxMode != GX_MTXMODE_TEXTURE)
-    {
-        calculateClipMatrix();
-    }
-    return;
+    GetGlobalState().IdentityMatrix();
 }
 
 void LightColor(u32 data)
 {
-    u8 lightRed = (data & 0b11111);
-    u8 lightGreen = (data & 0b1111100000) >> 5;
-    u8 lightBlue = (data & 0b111110000000000) >> 10;
+    RGBBytes color;
+    color.r = (data & 0b11111);
+    color.g = (data & 0b1111100000) >> 5;
+    color.b = (data & 0b111110000000000) >> 10;
+    color.r <<= 3;
+    color.g <<= 3;
+    color.b <<= 3;
     u8 lightNum = (data & 0b11000000000000000000000000000000) >> 30;
 
-    // Should get us close but colors might not be 100% accurate
-    s_G3LightColor[lightNum][0] = lightRed << 3;
-    s_G3LightColor[lightNum][1] = lightGreen << 3;
-    s_G3LightColor[lightNum][2] = lightBlue << 3;
+    GetGlobalState().SetLightColor(lightNum, color);
 }
 
 void LightVector(u32 data)
@@ -892,87 +883,44 @@ void LightVector(u32 data)
 //Load Matrix
 void MtxLoad43(MtxFx43 * mtx)
 {
-    G3SIM_Matrix_t * curMtx = getCurrentMatrix();
-    fx32 num;
-    int curNum = 0;
-    for(int i=0; i < 4; i++)
-    {
-        for(int j=0; j<3; j++)
-        {
-            curMtx->nums[i][j] = mtx->m[i][j];
-            if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR )
-            {
-                currentPositionMatrix.nums[i][j] = mtx->m[i][j];
-            }
+    // Convert to a 4x4 matrix and put FX32_ONE in the last row/column
+    MtxFx44 matrix = {};
+    MtxFx43 temp43 = *mtx;
+    for(int i=0; i < 4; i++) {
+        for(int j=0; j < 3; j++) {
+            matrix.m[i][j] = temp43.m[i][j];
         }
-        if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR )
-        {
-            if( i==3 )
-            {
-                currentPositionMatrix.nums[i][3] = FX32_ONE;
-            }
-            else
-            {
-                currentPositionMatrix.nums[i][3] = 0;
-            }
-            
-        }
-        if( i==3 )
-        {
-            curMtx->nums[i][3] = FX32_ONE;
-        }
-        else
-        {
-            curMtx->nums[i][3] = 0;
-        }
-        
+
+        matrix.m[i][3] = 0;
     }
-    if( s_curMtxMode != GX_MTXMODE_TEXTURE )
-    {
-        calculateClipMatrix();
-    }
-    return;
+
+    matrix.m[3][3] = FX32_ONE;
+
+    MtxLoad44(&matrix);
 }
 
 void MtxLoad44(MtxFx44 * mtx)
 {
-    G3SIM_Matrix_t * curMtx = getCurrentMatrix();
-    fx32 num;
-    int curNum = 0;
-    for(int i=0; i < 4; i++)
-    {
-        for(int j=0; j<4; j++)
-        {
-            curMtx->nums[i][j] = mtx->m[i][j];
-            if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR )
-            {
-                currentPositionMatrix.nums[i][j] = mtx->m[i][j];
-            }
-        }
+    auto& g3State = GetGlobalState();
+    MtxFx44 matrix = *mtx;
+
+    g3State.SetCurrentMatrix(matrix);
+    if(g3State.GetMatrixMode() == GX_MTXMODE_POSITION_VECTOR) {
+        g3State.SetPositionMatrix(matrix);
     }
-        if( s_curMtxMode != GX_MTXMODE_TEXTURE )
-    {
-        calculateClipMatrix();
-    }
-    return;
 }
 
 //Change matrix mode
 void MtxMode(GXMtxMode mode)
 {
-    s_curMtxMode = mode;
-
-
-    if( mode > GX_MTXMODE_TEXTURE )
-    {
-        printf( "Warning: Invalid matrix mode %d\n", s_curMtxMode );
-    }
-    return;
+    GetGlobalState().SetMatrixMode(mode);
 }
 
 //CurrentMatrix = CurrentMatrix * mtxs
 void MtxMult33(MtxFx33 * mtx)
 {
+
+
     G3SIM_Matrix_t mtxTemp;
     G3SIM_Matrix_t * currentMatrix;
     G3SIM_Matrix_t currentMatrixCopy;
@@ -1075,161 +1023,42 @@ void MtxMult43(MtxFx43 * mtx)
 
 void MtxMult44(MtxFx44 * mtx)
 {
+    auto& g3State = GetGlobalState();
 
-    G3SIM_Matrix_t mtxTemp;
-    G3SIM_Matrix_t * currentMatrix;
-    G3SIM_Matrix_t currentMatrixCopy;
-    fx32 curSum;
-    currentMatrix = getCurrentMatrix();
-    mtxTemp.nums[0][0] = mtx->_00;
-    mtxTemp.nums[0][1] = mtx->_01;
-    mtxTemp.nums[0][2] = mtx->_02;
-    mtxTemp.nums[0][3] = mtx->_03;
-    mtxTemp.nums[1][0] = mtx->_10;
-    mtxTemp.nums[1][1] = mtx->_11;
-    mtxTemp.nums[1][2] = mtx->_12;
-    mtxTemp.nums[1][3] = mtx->_13;
-    mtxTemp.nums[2][0] = mtx->_20;
-    mtxTemp.nums[2][1] = mtx->_21;
-    mtxTemp.nums[2][2] = mtx->_22;
-    mtxTemp.nums[2][3] = mtx->_23;
-    mtxTemp.nums[3][0] = mtx->_30;
-    mtxTemp.nums[3][1] = mtx->_31;
-    mtxTemp.nums[3][2] = mtx->_32;
-    mtxTemp.nums[3][3] = mtx->_33;
-    memcpy( &currentMatrixCopy, currentMatrix, sizeof(G3SIM_Matrix_t));
+    MtxFx44 matrix = *mtx;
 
-    //Do the multiplication
-    for( int i=0; i < 4; i++ )
-    {
-        for(int j=0; j < 4; j++)
-        {
-            curSum = 0;
-            for( int k=0; k < 4; k++ )
-            {
-                curSum = curSum + FX_Mul(mtxTemp.nums[i][k], currentMatrixCopy.nums[k][j]);
-            }
-            currentMatrix->nums[i][j] = curSum;
-            if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR )
-            {
-                currentPositionMatrix.nums[i][j] = curSum;
-            }
-        }
+    // Notes: the clipping matrix is going to be calculated twice, when it should probably only be calculated once at the end of the command
+
+    MtxFx44 result = Util::MultiplyMtxFx44(g3State.GetCurrentMatrix(), matrix);
+    g3State.SetCurrentMatrix(result);
+
+    if(g3State.GetMatrixMode() == GX_MTXMODE_POSITION_VECTOR) {
+        result = Util::MultiplyMtxFx44(g3State.GetPositionMatrix(), matrix);
+        g3State.SetPositionMatrix(result);
     }
-
-    if( s_curMtxMode != GX_MTXMODE_TEXTURE )
-    {
-        calculateClipMatrix();
-    }
-    return;
 }
 
 //TODO: Keep G3X_GXSTAT up to date
 void MtxPop(u8 num)
 {
-    auto& g3State = SIM::G3::GetGlobalState();
+    auto& g3State = GetGlobalState();
     g3State.PopMatrix(num);
 
-    G3SIM_MatrixStack_t * curMtxStack = getCurrentMatrixStack();
-    G3SIM_Matrix_t * currentMatrix = getCurrentMatrix();
-    if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR
-     || s_curMtxMode == GX_MTXMODE_POSITION )
-    {
-        //Perform stack operations on both position and vector matrices
-        G3SIM_MatrixStack_t * positionMtxStack = getPositionMatrixStack();
-        G3SIM_MatrixStack_t * vectorMtxStack = getVectorMatrixStack();
-        if( num <= positionMtxStack->stackPtr)
-        {
-            positionMtxStack->stackPtr -= num;
-        }
-        else
-        {
-            positionMtxStack->stackPtr = 0;
-        }
-
-        if( num <= vectorMtxStack->stackPtr)
-        {
-            vectorMtxStack->stackPtr -= num;
-        }
-        else
-        {
-            vectorMtxStack->stackPtr = 0;
-        }
-        
-        //Copy to current position and vector matrix
-        memcpy( &currentPositionMatrix, &curMtxStack->mtxs[curMtxStack->stackPtr], sizeof(G3SIM_Matrix_t));
-        memcpy( &currentVectorMatrix, &curMtxStack->mtxs[curMtxStack->stackPtr], sizeof(G3SIM_Matrix_t));
-        calculateClipMatrix();
-    }
-    else
-    {
-        if( num <= curMtxStack->stackPtr )
-        {
-            curMtxStack->stackPtr -= num;
-        }  
-        else
-        {
-            curMtxStack->stackPtr = 0;
-        }
-        
-
-        //Copy to current matrix
-        memcpy( currentMatrix, &curMtxStack->mtxs[curMtxStack->stackPtr], sizeof(G3SIM_Matrix_t));
-        if( s_curMtxMode == GX_MTXMODE_PROJECTION )
-        {
-            calculateClipMatrix();
-        }
-    }
-    
     return;
 }
 
 void MtxPush()
 {
-    if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR
-     || s_curMtxMode == GX_MTXMODE_POSITION )
-    {
-        //Position and vector
-        G3SIM_MatrixStack_t * positionMtxStack = getPositionMatrixStack();
-        G3SIM_MatrixStack_t * vectorMtxStack = getVectorMatrixStack();
-        memcpy( &positionMtxStack->mtxs[positionMtxStack->stackPtr], &currentPositionMatrix, sizeof(G3SIM_Matrix_t) );
-        memcpy( &vectorMtxStack->mtxs[vectorMtxStack->stackPtr], &currentVectorMatrix, sizeof(G3SIM_Matrix_t) );
-        positionMtxStack->stackPtr++;
-        vectorMtxStack->stackPtr++;
-    }
-    else
-    {
-        G3SIM_MatrixStack_t * curMtxStack = getCurrentMatrixStack();
-        G3SIM_Matrix_t * currentMatrix = getCurrentMatrix();
-        memcpy( &curMtxStack->mtxs[curMtxStack->stackPtr], currentMatrix, sizeof(G3SIM_Matrix_t) );
-        curMtxStack->stackPtr++;
-    }
+    auto& g3State = GetGlobalState();
+    g3State.PushMatrix();
+
     return;
 }
 
 void MtxRestore(u8 idx)
 {
-    G3SIM_MatrixStack_t * curMtxStack = getCurrentMatrixStack();
-    G3SIM_Matrix_t * currentMatrix = getCurrentMatrix();
-    if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR
-     || s_curMtxMode == GX_MTXMODE_POSITION )
-    {
-        //Restore to both current position matrix and current vector matrix
-        G3SIM_MatrixStack_t * positionMtxStack = getPositionMatrixStack();
-        G3SIM_MatrixStack_t * vectorMtxStack = getVectorMatrixStack();
-        memcpy( &currentPositionMatrix, &positionMtxStack->mtxs[idx], sizeof(G3SIM_Matrix_t) );
-        memcpy( &currentVectorMatrix, &vectorMtxStack->mtxs[idx], sizeof(G3SIM_Matrix_t) );
-        calculateClipMatrix();
-    }
-    else
-    {
-        memcpy( currentMatrix, &curMtxStack->mtxs[idx], sizeof(G3SIM_Matrix_t) );
-        if( s_curMtxMode == GX_MTXMODE_PROJECTION )
-        {
-            calculateClipMatrix();
-        }
-    }
-
+    auto& g3State = GetGlobalState();
+    g3State.RestoreMatrix(idx);
 
     return;
 }
@@ -1242,42 +1071,31 @@ void MtxScale(fx32 * scale)
     s[1] = scale[1];
     s[2] = scale[2];
     
-    G3SIM_Matrix_t * currentMatrix = getCurrentMatrix();
-    if(s_curMtxMode == GX_MTXMODE_POSITION_VECTOR) {
-        currentMatrix = &currentPositionMatrix;
+    auto& g3State = GetGlobalState();
+    auto currentMatrix = g3State.GetCurrentMatrix();
+    if(g3State.GetMatrixMode() == GX_MTXMODE_POSITION_VECTOR) {
+        currentMatrix = g3State.GetPositionMatrix();
     }
 
     for(int i=0; i < 3; i ++)
     {
         for( int j=0; j < 3; j ++)
         {
-            currentMatrix->nums[i][j] = FX_Mul(s[i], currentMatrix->nums[i][j]);
+            currentMatrix.m[i][j] = FX_Mul(s[i], currentMatrix.m[i][j]);
         }   
     }
-    if( s_curMtxMode != GX_MTXMODE_TEXTURE )
-    {
-        calculateClipMatrix();
+
+    if(g3State.GetMatrixMode() == GX_MTXMODE_POSITION_VECTOR) {
+        g3State.SetPositionMatrix(currentMatrix);
+    } else {
+        g3State.SetCurrentMatrix(currentMatrix);
     }
-    return;
 }
 
 void MtxStore(u8 idx)
 {
-    if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR
-     || s_curMtxMode == GX_MTXMODE_POSITION )
-    {
-        G3SIM_MatrixStack_t * positionMtxStack = getPositionMatrixStack();
-        G3SIM_MatrixStack_t * vectorMtxStack = getVectorMatrixStack();
-        memcpy( &positionMtxStack->mtxs[idx], &currentPositionMatrix, sizeof(G3SIM_Matrix_t) );
-        memcpy( &vectorMtxStack->mtxs[idx], &currentVectorMatrix, sizeof(G3SIM_Matrix_t) );
-    }
-    else
-    {
-        G3SIM_MatrixStack_t * curMtxStack = getCurrentMatrixStack();
-        G3SIM_Matrix_t * currentMatrix = getCurrentMatrix();
-        memcpy( &curMtxStack->mtxs[idx], currentMatrix, sizeof(G3SIM_Matrix_t) );
-    }
-
+    auto& g3State = GetGlobalState();
+    g3State.StoreMatrix(idx);
 
     return;
 }
@@ -1312,6 +1130,7 @@ void MtxTranslate(fx32* trans)
 
 void Normal(u32 data)
 {
+    auto& g3State = GetGlobalState();
     u8 vecX = (data & 0b1111111111);
     u8 vecXSign = (vecX & 0b1000000000) >> 9;
     vecX = vecX & 0b111111111;
@@ -1339,44 +1158,50 @@ void Normal(u32 data)
 
     //Multiply by the vector matrix
     float normalVector[3];
-    normalVector[0] = (normalVectorIn[0] * FX_FX32_TO_F32(currentVectorMatrix.nums[0][0]))
-                    + (normalVectorIn[1] * FX_FX32_TO_F32(currentVectorMatrix.nums[1][0]))
-                    + (normalVectorIn[2] * FX_FX32_TO_F32(currentVectorMatrix.nums[2][0]));
+    MtxFx44 vectorMatrix = g3State.GetVectorMatrix();
+    normalVector[0] = (normalVectorIn[0] * FX_FX32_TO_F32(vectorMatrix.m[0][0]))
+                    + (normalVectorIn[1] * FX_FX32_TO_F32(vectorMatrix.m[1][0]))
+                    + (normalVectorIn[2] * FX_FX32_TO_F32(vectorMatrix.m[2][0]));
     
-    normalVector[1] = (normalVectorIn[0] * FX_FX32_TO_F32(currentVectorMatrix.nums[0][1]))
-                    + (normalVectorIn[1] * FX_FX32_TO_F32(currentVectorMatrix.nums[1][1]))
-                    + (normalVectorIn[2] * FX_FX32_TO_F32(currentVectorMatrix.nums[2][1]));
+    normalVector[1] = (normalVectorIn[0] * FX_FX32_TO_F32(vectorMatrix.m[0][1]))
+                    + (normalVectorIn[1] * FX_FX32_TO_F32(vectorMatrix.m[1][1]))
+                    + (normalVectorIn[2] * FX_FX32_TO_F32(vectorMatrix.m[2][1]));
 
-    normalVector[2] = (normalVectorIn[0] * FX_FX32_TO_F32(currentVectorMatrix.nums[0][2]))
-                    + (normalVectorIn[1] * FX_FX32_TO_F32(currentVectorMatrix.nums[1][2]))
-                    + (normalVectorIn[2] * FX_FX32_TO_F32(currentVectorMatrix.nums[2][2]));
+    normalVector[2] = (normalVectorIn[0] * FX_FX32_TO_F32(vectorMatrix.m[0][2]))
+                    + (normalVectorIn[1] * FX_FX32_TO_F32(vectorMatrix.m[1][2]))
+                    + (normalVectorIn[2] * FX_FX32_TO_F32(vectorMatrix.m[2][2]));
 
     // Calculate the color
 
     float color[3] = {};
+    auto emissionColor = g3State.GetEmissionColor();
+    auto specularColor = g3State.GetSpecularColor();
+    auto diffuseColor = g3State.GetDiffuseColor();
+    auto ambientColor = g3State.GetAmbientColor();
 
-    color[0] = (float)s_g3EmissionColor[0] / 255.0f;
-    color[1] = (float)s_g3EmissionColor[1] / 255.0f;
-    color[2] = (float)s_g3EmissionColor[2] / 255.0f;
+    color[0] = (float)emissionColor.r / 255.0f;
+    color[1] = (float)emissionColor.g / 255.0f;
+    color[2] = (float)emissionColor.b / 255.0f;
 
     for(int lightNum=0; lightNum<4; lightNum++) {
+        auto lightColor = g3State.GetLightColor(lightNum);
         if((s_curPolygonAttr.lightFlag >> lightNum) & 1)
         {
             // Light is enabled
 
             //Multiply light vector by vector matrix
             float lightVector[3];
-            lightVector[0] = (s_G3LightVector[lightNum][0] * FX_FX32_TO_F32(currentVectorMatrix.nums[0][0]))
-                           + (s_G3LightVector[lightNum][1] * FX_FX32_TO_F32(currentVectorMatrix.nums[1][0]))
-                           + (s_G3LightVector[lightNum][2] * FX_FX32_TO_F32(currentVectorMatrix.nums[2][0]));
+            lightVector[0] = (s_G3LightVector[lightNum][0] * FX_FX32_TO_F32(vectorMatrix.m[0][0]))
+                           + (s_G3LightVector[lightNum][1] * FX_FX32_TO_F32(vectorMatrix.m[1][0]))
+                           + (s_G3LightVector[lightNum][2] * FX_FX32_TO_F32(vectorMatrix.m[2][0]));
 
-            lightVector[1] = (s_G3LightVector[lightNum][0] * FX_FX32_TO_F32(currentVectorMatrix.nums[0][1]))
-                           + (s_G3LightVector[lightNum][1] * FX_FX32_TO_F32(currentVectorMatrix.nums[1][1]))
-                           + (s_G3LightVector[lightNum][2] * FX_FX32_TO_F32(currentVectorMatrix.nums[2][1]));
+            lightVector[1] = (s_G3LightVector[lightNum][0] * FX_FX32_TO_F32(vectorMatrix.m[0][1]))
+                           + (s_G3LightVector[lightNum][1] * FX_FX32_TO_F32(vectorMatrix.m[1][1]))
+                           + (s_G3LightVector[lightNum][2] * FX_FX32_TO_F32(vectorMatrix.m[2][1]));
 
-            lightVector[2] = (s_G3LightVector[lightNum][0] * FX_FX32_TO_F32(currentVectorMatrix.nums[0][2]))
-                           + (s_G3LightVector[lightNum][1] * FX_FX32_TO_F32(currentVectorMatrix.nums[1][2]))
-                           + (s_G3LightVector[lightNum][2] * FX_FX32_TO_F32(currentVectorMatrix.nums[2][2]));
+            lightVector[2] = (s_G3LightVector[lightNum][0] * FX_FX32_TO_F32(vectorMatrix.m[0][2]))
+                           + (s_G3LightVector[lightNum][1] * FX_FX32_TO_F32(vectorMatrix.m[1][2]))
+                           + (s_G3LightVector[lightNum][2] * FX_FX32_TO_F32(vectorMatrix.m[2][2]));
 
             //Calculate Diffuse level
             float diffuseLevel = (lightVector[0] * normalVector[0])
@@ -1389,19 +1214,19 @@ void Normal(u32 data)
             }
 
             //Specular color
-            color[0] = color[0] + (((float)s_g3SpecularColor[0] / 255.0f) * ((float)s_G3LightColor[lightNum][0] / 255.0f)); // * ShininessLevel TODO
-            color[1] = color[1] + (((float)s_g3SpecularColor[1] / 255.0f) * ((float)s_G3LightColor[lightNum][1] / 255.0f)); // * ShininessLevel TODO
-            color[2] = color[2] + (((float)s_g3SpecularColor[2] / 255.0f) * ((float)s_G3LightColor[lightNum][2] / 255.0f)); // * ShininessLevel TODO
+            color[0] = color[0] + (((float)specularColor.r / 255.0f) * ((float)lightColor.r / 255.0f)); // * ShininessLevel TODO
+            color[1] = color[1] + (((float)specularColor.g / 255.0f) * ((float)lightColor.g / 255.0f)); // * ShininessLevel TODO
+            color[2] = color[2] + (((float)specularColor.b / 255.0f) * ((float)lightColor.b / 255.0f)); // * ShininessLevel TODO
 
             //Diffuse color
-            color[0] = color[0] + (((float)s_g3DiffuseColor[0] / 255.0f) * ((float)s_G3LightColor[lightNum][0] / 255.0f) * diffuseLevel); // * DiffuseLevel TODO
-            color[1] = color[1] + (((float)s_g3DiffuseColor[1] / 255.0f) * ((float)s_G3LightColor[lightNum][1] / 255.0f) * diffuseLevel); // * DiffuseLevel TODO
-            color[2] = color[2] + (((float)s_g3DiffuseColor[2] / 255.0f) * ((float)s_G3LightColor[lightNum][2] / 255.0f) * diffuseLevel); // * DiffuseLevel TODO
+            color[0] = color[0] + (((float)diffuseColor.r / 255.0f) * ((float)lightColor.r / 255.0f) * diffuseLevel); // * DiffuseLevel TODO
+            color[1] = color[1] + (((float)diffuseColor.g / 255.0f) * ((float)lightColor.g / 255.0f) * diffuseLevel); // * DiffuseLevel TODO
+            color[2] = color[2] + (((float)diffuseColor.b / 255.0f) * ((float)lightColor.b / 255.0f) * diffuseLevel); // * DiffuseLevel TODO
 
             //Ambient color
-            color[0] = color[0] + (((float)s_g3AmbientColor[0] / 255.0f) * ((float)s_G3LightColor[lightNum][0] / 255.0f));
-            color[1] = color[1] + (((float)s_g3AmbientColor[1] / 255.0f) * ((float)s_G3LightColor[lightNum][1] / 255.0f));
-            color[2] = color[2] + (((float)s_g3AmbientColor[2] / 255.0f) * ((float)s_G3LightColor[lightNum][2] / 255.0f));
+            color[0] = color[0] + (((float)ambientColor.r / 255.0f) * ((float)lightColor.r / 255.0f));
+            color[1] = color[1] + (((float)ambientColor.g / 255.0f) * ((float)lightColor.g / 255.0f));
+            color[2] = color[2] + (((float)ambientColor.b / 255.0f) * ((float)lightColor.b / 255.0f));
         }
     }
 
@@ -1415,14 +1240,22 @@ void Normal(u32 data)
         color[2] = 1.0f;
     }
 
-    s_g3CurColor[0] = (u8)(color[0] * 255.0f);
-    s_g3CurColor[1] = (u8)(color[1] * 255.0f);
-    s_g3CurColor[2] = (u8)(color[2] * 255.0f);
+    RGBBytes vertexColor;
+
+
+    vertexColor.r = (u8)(color[0] * 255.0f);
+    vertexColor.g = (u8)(color[1] * 255.0f);
+    vertexColor.b = (u8)(color[2] * 255.0f);
+
+    g3State.SetVertexColor(vertexColor);
 }
 
 //PolygonAttr
 void PolygonAttrCommand(u32 data)
 {
+    auto& g3State = GetGlobalState();
+    std::shared_ptr<DrawCall> drawCall = g3State.GetCurrentDrawCall();
+    PolygonAttr attr = drawCall->GetPolygonAttr();
     u8 lightFlag = data & 0b1111;
     u8 alpha = (data & 0b111110000000000000000) >> 16;
     u8 polygonMode = (data & 0b110000) >> 4;
@@ -1430,7 +1263,11 @@ void PolygonAttrCommand(u32 data)
     u8 depthTest = (data & 0b100000000000000) >> 14;
     u8 useFog = (data & 0b1000000000000000) >> 15;
 
-    if(cullMode != s_curPolygonAttr.cullMode || polygonMode != s_curPolygonAttr.polygonMode || alpha != s_curPolygonAttr.alphaInt || depthTest != s_curPolygonAttr.depthTest || useFog != s_curPolygonAttr.fogEnable)
+    if(cullMode != attr.cullMode 
+    || polygonMode != attr.polygonMode 
+    || alpha != attr.alphaInt 
+    || depthTest != attr.depthTest 
+    || useFog != attr.fogEnable)
     {
         // Flush the vertex buffer
         G3SIM_FlushArray();
@@ -1445,17 +1282,17 @@ void PolygonAttrCommand(u32 data)
         }
     }
 
-    s_curPolygonAttr.lightFlag = lightFlag;
-    s_curPolygonAttr.cullMode = cullMode;
-    s_curPolygonAttr.polygonMode = polygonMode;
-    s_curPolygonAttr.alphaInt = alpha;
-    s_curPolygonAttr.depthTest = depthTest;
-    s_curPolygonAttr.fogEnable = useFog;
+    attr.lightFlag = lightFlag;
+    attr.cullMode = cullMode;
+    attr.polygonMode = polygonMode;
+    attr.alphaInt = alpha;
+    attr.depthTest = depthTest;
+    attr.fogEnable = useFog;
 
     if(alpha == 31){
-        s_curPolygonAttr.alpha = 1.0f;
+        attr.alpha = 1.0f;
     } else {
-        s_curPolygonAttr.alpha = (float)alpha / 31.0f;
+        attr.alpha = (float)alpha / 31.0f;
     }
 
     switch(cullMode) {
@@ -1476,32 +1313,38 @@ void PolygonAttrCommand(u32 data)
             break;
     }
 
+    drawCall->SetPolygonAttr(attr);
+
 
     return;
 }
 
 void SpecEmi(u32 data)
 {
-    u8 specularRed = (data & 0b11111);
-    u8 specularGreen = (data & 0b1111100000) >> 5;
-    u8 specularBlue = (data & 0b111110000000000) >> 10;
-    u8 setVtxColor = (data & 0b1000000000000000) >> 15;
-    u8 emissionRed = (data & 0b111110000000000000000) >> 16;
-    u8 emissionGreen = (data & 0b11111000000000000000000000) >> 21;
-    u8 emissionBlue = (data & 0b1111100000000000000000000000000) >> 26;
+    RGBBytes specularColor;
+    RGBBytes emissionColor;
+    auto& g3State = GetGlobalState();
+
+    specularColor.r = (data & 0b11111);
+    specularColor.g = (data & 0b1111100000) >> 5;
+    specularColor.b = (data & 0b111110000000000) >> 10;
+    specularColor.r <<= 3;
+    specularColor.g <<= 3;
+    specularColor.b <<= 3;
+    bool setVtxColor = ((data & 0b1000000000000000) >> 15) != 0;
+    emissionColor.r = (data & 0b111110000000000000000) >> 16;
+    emissionColor.g = (data & 0b11111000000000000000000000) >> 21;
+    emissionColor.b = (data & 0b1111100000000000000000000000000) >> 26;
+    emissionColor.r <<= 3;
+    emissionColor.g <<= 3;
+    emissionColor.b <<= 3;
 
     if(setVtxColor) {
-        s_g3CurColor[0] = specularRed << 3;
-        s_g3CurColor[1] = specularGreen << 3;
-        s_g3CurColor[2] = specularBlue << 3;
+        g3State.SetVertexColor(specularColor);
     }
-    s_g3SpecularColor[0] = specularRed << 3;
-    s_g3SpecularColor[1] = specularGreen << 3;
-    s_g3SpecularColor[2] = specularBlue << 3;
 
-    s_g3EmissionColor[0] = emissionRed << 3;
-    s_g3EmissionColor[1] = emissionGreen << 3;
-    s_g3EmissionColor[2] = emissionBlue << 3;
+    g3State.SetSpecularColor(specularColor);
+    g3State.SetEmissionColor(emissionColor);
 }
 
 //SwapBuffers

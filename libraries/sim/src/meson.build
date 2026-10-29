@@ -24,6 +24,7 @@ libsim_srcs = files(
     'sim_g3_GlobalState.cpp',
     'sim_g3_Texture.cpp',
     'sim_g3_TextureCache.cpp',
+    'sim_g3_Utilities.cpp',
     'sim_gui.cpp',
     'sim_gui_config.cpp',
     'sim_gui_net.cpp',
