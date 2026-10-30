@@ -65,12 +65,15 @@ class DrawCall {
   inline PolygonAttr GetPolygonAttr() { return mPolygonAttr; }
   inline void SetPolygonAttr(const PolygonAttr& attr) { mPolygonAttr = attr; }
   inline TexImageParam GetTexImageParam() { return mTexImageParam; }
+  inline u32 GetTexPaletteBase() { return mTexPaletteBase; }
   inline void SetTexImageParam(const TexImageParam& param) { mTexImageParam = param; }
+  inline void SetTexPaletteBase(const u32 texPaletteBase) { mTexPaletteBase = texPaletteBase; }
   inline std::shared_ptr<Texture> GetTexture() { return mTexture; }
 
  private:
   RenderVertex * mRenderVerts;
   TexImageParam mTexImageParam = {};
+  u32 mTexPaletteBase = 0;
   PolygonAttr mPolygonAttr = {};
   std::shared_ptr<Texture> mTexture = nullptr;
   size_t mRenderVertsCount;

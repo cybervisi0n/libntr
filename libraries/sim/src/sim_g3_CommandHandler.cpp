@@ -28,15 +28,6 @@
 #endif
 
 //Constants
-const G3SIM_Matrix_t G3SIM_IdentityMatrix = 
-    {
-        .nums = {
-            { FX32_ONE, 0,        0,        0        },
-            { 0,        FX32_ONE, 0,        0        },
-            { 0,        0,        FX32_ONE, 0        },
-            { 0,        0,        0,        FX32_ONE },
-        },
-    };
 
 
 GXMtxMode s_curMtxMode = GX_MTXMODE_PROJECTION;
@@ -53,9 +44,6 @@ static G3SIM_Matrix_t currentVectorMatrix = {0};
 static G3SIM_Matrix_t currentTextureMatrix = {0};
 
 static G3SIM_Matrix_t currentClipMatrix = {0};
-
-static u8 s_G3LightColor [4][3];
-static float s_G3LightVector[4][3];
 
 u8 s_G3numInPoly = 0;
 u8 s_G3drawPoly = 0;
@@ -208,137 +196,6 @@ int G3SIM_ClipPolygon(fx32 verts[][4], int nVerts, int clipStart, BOOL attribs)
     return nVerts;
 }
 
-static G3SIM_Matrix_t * getCurrentMatrix()
-{
-    switch( s_curMtxMode )
-    {
-        case GX_MTXMODE_PROJECTION:
-            return &currentProjectionMatrix;
-            break;
-        case GX_MTXMODE_POSITION:
-            return &currentPositionMatrix;
-            break;
-        case GX_MTXMODE_POSITION_VECTOR:
-            return &currentVectorMatrix;
-            break;
-        case GX_MTXMODE_TEXTURE:
-            return &currentTextureMatrix;
-            break;
-        default:
-            return NULL;
-    }
-}
-
-//Return a pointer to the top matrix from the current matrix stack
-static G3SIM_Matrix_t * getTopMatrixFromCurrentStack()
-{
-    switch( s_curMtxMode )
-    {
-        case GX_MTXMODE_PROJECTION:
-            return &s_projectionStack.mtxs[0];
-            break;
-        case GX_MTXMODE_POSITION:
-            return &s_positionStack.mtxs[s_positionStack.stackPtr];
-            break;
-        case GX_MTXMODE_POSITION_VECTOR:
-            return &s_vectorStack.mtxs[s_vectorStack.stackPtr];
-            break;
-        case GX_MTXMODE_TEXTURE:
-            return &s_textureStack.mtxs[0];
-            break;
-        default:
-            return NULL;
-    }
-}
-
-static G3SIM_Matrix_t * getPositionMatrix()
-{
-    return &s_positionStack.mtxs[s_positionStack.stackPtr];
-}
-
-static G3SIM_Matrix_t * getVectorMatrix()
-{
-    return &s_vectorStack.mtxs[s_vectorStack.stackPtr];
-}
-
-//Get a pointer to the current matrix stack structure
-static G3SIM_MatrixStack_t * getCurrentMatrixStack()
-{
-    switch( s_curMtxMode )
-    {
-        case GX_MTXMODE_PROJECTION:
-            return &s_projectionStack;
-            break;
-        case GX_MTXMODE_POSITION:
-            return &s_positionStack;
-            break;
-        case GX_MTXMODE_POSITION_VECTOR:
-            return &s_vectorStack;
-            break;
-        case GX_MTXMODE_TEXTURE:
-            return &s_textureStack;
-            break;
-        default:
-            return NULL;
-    }
-}
-
-static G3SIM_MatrixStack_t * getPositionMatrixStack()
-{
-    return &s_positionStack;
-}
-
-static G3SIM_MatrixStack_t * getVectorMatrixStack()
-{
-    return &s_vectorStack;
-}
-
-//Calculate the clip matrix
-//Multiply the PositionMatrix * ProjectionMatrix
-static void calculateClipMatrix()
-{
-    fx32 curSum = 0;
-    //A * B
-    for( int i = 0; i < 4; i++ ) //Row of A
-    {
-        for( int j = 0; j < 4; j++ )
-        {
-            
-            //Get the dot product of curRow * curCol
-            curSum = 0;
-            for(int k=0; k < 4; k++)
-            {
-                curSum = curSum + FX_Mul(currentPositionMatrix.nums[i][k], currentProjectionMatrix.nums[k][j]);
-            }
-            currentClipMatrix.nums[i][j] = curSum;
-        }
-    }
-
-    //Update reg_G3X_CLIPMTX_RESULT
-    MtxFx44 fxMtx;
-    fxMtx._00 = currentClipMatrix.nums[0][0];
-    fxMtx._01 = currentClipMatrix.nums[0][1];
-    fxMtx._02 = currentClipMatrix.nums[0][2];
-    fxMtx._03 = currentClipMatrix.nums[0][3];
-    fxMtx._10 = currentClipMatrix.nums[1][0];
-    fxMtx._11 = currentClipMatrix.nums[1][1];
-    fxMtx._12 = currentClipMatrix.nums[1][2];
-    fxMtx._13 = currentClipMatrix.nums[1][3];
-    fxMtx._20 = currentClipMatrix.nums[2][0];
-    fxMtx._21 = currentClipMatrix.nums[2][1];
-    fxMtx._22 = currentClipMatrix.nums[2][2];
-    fxMtx._23 = currentClipMatrix.nums[2][3];
-    fxMtx._30 = currentClipMatrix.nums[3][0];
-    fxMtx._31 = currentClipMatrix.nums[3][1];
-    fxMtx._32 = currentClipMatrix.nums[3][2];
-    fxMtx._33 = currentClipMatrix.nums[3][3];
-
-    memcpy( (void*)&s_reg_G3X_CLIPMTX_RESULT_0, &fxMtx, sizeof( MtxFx44 ) );
-
-
-    return;
-}
-
 static void calculateVtxFx(fx32 * x, fx32 * y, fx32 * z, fx32 * w)
 {
     fx32 myW = FX32_ONE;
@@ -351,12 +208,15 @@ static void calculateVtxFx(fx32 * x, fx32 * y, fx32 * z, fx32 * w)
     oldVec[2] = *z;
     oldVec[3] = FX32_ONE;
 
+    auto& g3State = SIM::G3::GetGlobalState();
+    MtxFx44 clipMatrix = g3State.GetClipMatrix();
+
     for( int i=0; i < 4; i++ )
     {
         curSum = 0;
         for(int j=0; j < 4; j++ )
         {
-            curSum = curSum + FX_Mul(oldVec[j], currentClipMatrix.nums[j][i]);
+            curSum = curSum + FX_Mul(oldVec[j], clipMatrix.m[j][i]);
         }
         newVec[i] = curSum;
     }
@@ -399,6 +259,7 @@ static void calculateVtx(float * x, float * y, float * z, float * w)
 namespace SIM::G3 {
 void Begin(GXBegin type)
 {
+    auto& g3State = GetGlobalState();
     char debugMessage[50] = {0};
     char * typeString = "";
     switch(type) {
@@ -418,15 +279,12 @@ void Begin(GXBegin type)
     snprintf(debugMessage, 50, "GX_Begin %s", typeString);
 
     glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_OTHER, 1337, GL_DEBUG_SEVERITY_NOTIFICATION, 50, debugMessage);
-    s_primType = type;
-    s_G3numInPoly = 0;
-    s_G3drawPoly = 0;
-    s_G3triStripTriNum = 0;
-    s_G3quadStripTriNum = 0;
 
-    //printf("GXBegin %d\n", type);
-
-    return;
+    g3State.SetPrimitiveType(type);
+    g3State.SetCurrentIndexInPolygon(0);
+    g3State.SetPolygonReady(false);
+    g3State.SetTriStripTriangleIndex(0);
+    g3State.SetQuadStripQuadIndex(0);
 }
 
 //Box Test
@@ -865,19 +723,23 @@ void LightVector(u32 data)
     lightVecZ = lightVecZ & 0b111111111;
     u8 lightNum = (data & 0b11000000000000000000000000000000) >> 30;
 
+    FloatVec3 vector = {};
+
     // Should get us a number from -1 to 1
-    s_G3LightVector[lightNum][0] = (float)lightVecX / 511.0f;
+    vector.x = (float)lightVecX / 511.0f;
     if(lightVecXSign) {
-        s_G3LightVector[lightNum][0] = s_G3LightVector[lightNum][0] * -1.0f;
+        vector.x = vector.x * -1.0f;
     }
-    s_G3LightVector[lightNum][1] = (float)lightVecY / 511.0f;
+    vector.y = (float)lightVecY / 511.0f;
     if(lightVecYSign) {
-        s_G3LightVector[lightNum][1] = s_G3LightVector[lightNum][1] * -1.0f;
+        vector.y = vector.y * -1.0f;
     }
-    s_G3LightVector[lightNum][2] = (float)lightVecZ / 511.0f;
+    vector.z = (float)lightVecZ / 511.0f;
     if(lightVecZSign) {
-        s_G3LightVector[lightNum][2] = s_G3LightVector[lightNum][2] * -1.0f;
+        vector.z = vector.z * -1.0f;
     }
+
+    GetGlobalState().SetLightVector(lightNum, vector);
 }
 
 //Load Matrix
@@ -916,109 +778,45 @@ void MtxMode(GXMtxMode mode)
     GetGlobalState().SetMatrixMode(mode);
 }
 
-//CurrentMatrix = CurrentMatrix * mtxs
+//CurrentMatrix = CurrentMatrix * mtx
 void MtxMult33(MtxFx33 * mtx)
 {
+    auto& g3State = GetGlobalState();
+    MtxFx33 a;
+    MtxFx44 a4x4 = g3State.GetCurrentMatrix();
+    MTX_Copy44To33(&a4x4, &a);
+    MtxFx33 b = *mtx;
 
+    MtxFx33 result3x3 = Util::MultiplyMtxFx33(a, b);
+    MtxFx44 result4x4 = a4x4;
+    MTX_Copy33To44(&result3x3, &result4x4);
+    g3State.SetCurrentMatrix(result4x4);
 
-    G3SIM_Matrix_t mtxTemp;
-    G3SIM_Matrix_t * currentMatrix;
-    G3SIM_Matrix_t currentMatrixCopy;
-    fx32 curSum;
-    currentMatrix = getCurrentMatrix();
-    mtxTemp.nums[0][0] = mtx->_00;
-    mtxTemp.nums[0][1] = mtx->_01;
-    mtxTemp.nums[0][2] = mtx->_02;
-    mtxTemp.nums[0][3] = 0;
-    mtxTemp.nums[1][0] = mtx->_10;
-    mtxTemp.nums[1][1] = mtx->_11;
-    mtxTemp.nums[1][2] = mtx->_12;
-    mtxTemp.nums[1][3] = 0;
-    mtxTemp.nums[2][0] = mtx->_20;
-    mtxTemp.nums[2][1] = mtx->_21;
-    mtxTemp.nums[2][2] = mtx->_22;
-    mtxTemp.nums[2][3] = 0;
-    mtxTemp.nums[3][0] = 0;
-    mtxTemp.nums[3][1] = 0;
-    mtxTemp.nums[3][2] = 0;
-    mtxTemp.nums[3][3] = FX32_ONE;
-    memcpy( &currentMatrixCopy, currentMatrix, sizeof(G3SIM_Matrix_t));
-
-    //Do the multiplication
-    for( int i=0; i < 3; i++ )
-    {
-        for(int j=0; j < 3; j++)
-        {
-            curSum = 0;
-            for( int k=0; k < 3; k++ )
-            {
-                curSum = curSum + (FX_Mul(mtxTemp.nums[i][k], currentMatrixCopy.nums[k][j]));
-            }
-            currentMatrix->nums[i][j] = curSum;
-            if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR )
-            {
-                currentPositionMatrix.nums[i][j] = curSum;
-            }
-        }
+    if(g3State.GetMatrixMode() == GX_MTXMODE_POSITION_VECTOR) {
+        a4x4 = g3State.GetPositionMatrix();
+        MTX_Copy44To33(&a4x4, &a);
+        result3x3 = Util::MultiplyMtxFx33(a, b);
+        result4x4 = a4x4;
+        MTX_Copy33To44(&result3x3, &result4x4);
+        g3State.SetPositionMatrix(result4x4);
     }
-
-    if( s_curMtxMode != GX_MTXMODE_TEXTURE )
-    {
-        calculateClipMatrix();
-    }
-
-    return;
 }
 
 //CurrentMatrix = CurrentMatrix * mtxs
 void MtxMult43(MtxFx43 * mtx)
 {
-    G3SIM_Matrix_t mtxTemp;
-    G3SIM_Matrix_t * currentMatrix;
-    G3SIM_Matrix_t currentMatrixCopy;
-    fx32 curSum;
-    currentMatrix = getCurrentMatrix();
-    mtxTemp.nums[0][0] = mtx->_00;
-    mtxTemp.nums[0][1] = mtx->_01;
-    mtxTemp.nums[0][2] = mtx->_02;
-    mtxTemp.nums[0][3] = 0;
-    mtxTemp.nums[1][0] = mtx->_10;
-    mtxTemp.nums[1][1] = mtx->_11;
-    mtxTemp.nums[1][2] = mtx->_12;
-    mtxTemp.nums[1][3] = 0;
-    mtxTemp.nums[2][0] = mtx->_20;
-    mtxTemp.nums[2][1] = mtx->_21;
-    mtxTemp.nums[2][2] = mtx->_22;
-    mtxTemp.nums[2][3] = 0;
-    mtxTemp.nums[3][0] = mtx->_30;
-    mtxTemp.nums[3][1] = mtx->_31;
-    mtxTemp.nums[3][2] = mtx->_32;
-    mtxTemp.nums[3][3] = FX32_ONE;
-    memcpy( &currentMatrixCopy, currentMatrix, sizeof(G3SIM_Matrix_t));
+    auto& g3State = GetGlobalState();
+    MtxFx44 matrix = {};
+    MTX_Copy43To44(mtx, &matrix);
+    matrix.m[3][3] = FX32_ONE;
 
-    //Do the multiplication
-    for( int i=0; i < 4; i++ )
-    {
-        for(int j=0; j < 3; j++)
-        {
-            curSum = 0;
-            for( int k=0; k < 4; k++ )
-            {
-                curSum = curSum + FX_Mul(mtxTemp.nums[i][k], currentMatrixCopy.nums[k][j]);
-            }
-            currentMatrix->nums[i][j] = curSum;
-            if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR )
-            {
-                currentPositionMatrix.nums[i][j] = curSum;
-            }
-        }
-    }
+    MtxFx44 result = Util::MultiplyMtxFx44(g3State.GetCurrentMatrix(), matrix);
+    g3State.SetCurrentMatrix(result);
 
-    if( s_curMtxMode != GX_MTXMODE_TEXTURE )
-    {
-        calculateClipMatrix();
+    if(g3State.GetMatrixMode() == GX_MTXMODE_POSITION_VECTOR) {
+        result = Util::MultiplyMtxFx44(g3State.GetPositionMatrix(), matrix);
+        g3State.SetPositionMatrix(result);
     }
-    return;
 }
 
 void MtxMult44(MtxFx44 * mtx)
@@ -1026,8 +824,6 @@ void MtxMult44(MtxFx44 * mtx)
     auto& g3State = GetGlobalState();
 
     MtxFx44 matrix = *mtx;
-
-    // Notes: the clipping matrix is going to be calculated twice, when it should probably only be calculated once at the end of the command
 
     MtxFx44 result = Util::MultiplyMtxFx44(g3State.GetCurrentMatrix(), matrix);
     g3State.SetCurrentMatrix(result);
@@ -1104,27 +900,31 @@ void MtxStore(u8 idx)
 
 void MtxTranslate(fx32* trans)
 {
-    fx32 s[3];
+    auto& g3State = GetGlobalState();
 
+    fx32 s[3];
     s[0] = trans[0];
     s[1] = trans[1];
     s[2] = trans[2];
-    G3SIM_Matrix_t * matrix = getCurrentMatrix();
-    if( s_curMtxMode == GX_MTXMODE_POSITION_VECTOR )
-    {
-        currentPositionMatrix.nums[3][0] += (FX_Mul(s[0],currentPositionMatrix.nums[0][0]) + FX_Mul(s[1],currentPositionMatrix.nums[1][0]) + FX_Mul(s[2],currentPositionMatrix.nums[2][0]));
-        currentPositionMatrix.nums[3][1] += (FX_Mul(s[0],currentPositionMatrix.nums[0][1]) + FX_Mul(s[1],currentPositionMatrix.nums[1][1]) + FX_Mul(s[2],currentPositionMatrix.nums[2][1]));
-        currentPositionMatrix.nums[3][2] += (FX_Mul(s[0],currentPositionMatrix.nums[0][2]) + FX_Mul(s[1],currentPositionMatrix.nums[1][2]) + FX_Mul(s[2],currentPositionMatrix.nums[2][2]));
-        currentPositionMatrix.nums[3][3] += (FX_Mul(s[0],currentPositionMatrix.nums[0][3]) + FX_Mul(s[1],currentPositionMatrix.nums[1][3]) + FX_Mul(s[2],currentPositionMatrix.nums[2][3]));
-    }
-    matrix->nums[3][0] += (FX_Mul(s[0],matrix->nums[0][0]) + FX_Mul(s[1],matrix->nums[1][0]) + FX_Mul(s[2],matrix->nums[2][0]));
-    matrix->nums[3][1] += (FX_Mul(s[0],matrix->nums[0][1]) + FX_Mul(s[1],matrix->nums[1][1]) + FX_Mul(s[2],matrix->nums[2][1]));
-    matrix->nums[3][2] += (FX_Mul(s[0],matrix->nums[0][2]) + FX_Mul(s[1],matrix->nums[1][2]) + FX_Mul(s[2],matrix->nums[2][2]));
-    matrix->nums[3][3] += (FX_Mul(s[0],matrix->nums[0][3]) + FX_Mul(s[1],matrix->nums[1][3]) + FX_Mul(s[2],matrix->nums[2][3]));
 
-    if( s_curMtxMode != GX_MTXMODE_TEXTURE )
-    {
-        calculateClipMatrix();
+    MtxFx44 currentMatrix = g3State.GetCurrentMatrix();
+
+    currentMatrix.m[3][0] += (FX_Mul(s[0],currentMatrix.m[0][0]) + FX_Mul(s[1],currentMatrix.m[1][0]) + FX_Mul(s[2],currentMatrix.m[2][0]));
+    currentMatrix.m[3][1] += (FX_Mul(s[0],currentMatrix.m[0][1]) + FX_Mul(s[1],currentMatrix.m[1][1]) + FX_Mul(s[2],currentMatrix.m[2][1]));
+    currentMatrix.m[3][2] += (FX_Mul(s[0],currentMatrix.m[0][2]) + FX_Mul(s[1],currentMatrix.m[1][2]) + FX_Mul(s[2],currentMatrix.m[2][2]));
+    currentMatrix.m[3][3] += (FX_Mul(s[0],currentMatrix.m[0][3]) + FX_Mul(s[1],currentMatrix.m[1][3]) + FX_Mul(s[2],currentMatrix.m[2][3]));
+
+    g3State.SetCurrentMatrix(currentMatrix);
+
+    if(g3State.GetMatrixMode() == GX_MTXMODE_POSITION_VECTOR) {
+        currentMatrix = g3State.GetPositionMatrix();
+
+        currentMatrix.m[3][0] += (FX_Mul(s[0],currentMatrix.m[0][0]) + FX_Mul(s[1],currentMatrix.m[1][0]) + FX_Mul(s[2],currentMatrix.m[2][0]));
+        currentMatrix.m[3][1] += (FX_Mul(s[0],currentMatrix.m[0][1]) + FX_Mul(s[1],currentMatrix.m[1][1]) + FX_Mul(s[2],currentMatrix.m[2][1]));
+        currentMatrix.m[3][2] += (FX_Mul(s[0],currentMatrix.m[0][2]) + FX_Mul(s[1],currentMatrix.m[1][2]) + FX_Mul(s[2],currentMatrix.m[2][2]));
+        currentMatrix.m[3][3] += (FX_Mul(s[0],currentMatrix.m[0][3]) + FX_Mul(s[1],currentMatrix.m[1][3]) + FX_Mul(s[2],currentMatrix.m[2][3]));
+
+        g3State.SetPositionMatrix(currentMatrix);
     }
 }
 
@@ -1189,19 +989,20 @@ void Normal(u32 data)
         {
             // Light is enabled
 
-            //Multiply light vector by vector matrix
+            // Multiply light vector by vector matrix
+            auto currentLightVector = g3State.GetLightVector(lightNum);
             float lightVector[3];
-            lightVector[0] = (s_G3LightVector[lightNum][0] * FX_FX32_TO_F32(vectorMatrix.m[0][0]))
-                           + (s_G3LightVector[lightNum][1] * FX_FX32_TO_F32(vectorMatrix.m[1][0]))
-                           + (s_G3LightVector[lightNum][2] * FX_FX32_TO_F32(vectorMatrix.m[2][0]));
+            lightVector[0] = (currentLightVector.x * FX_FX32_TO_F32(vectorMatrix.m[0][0]))
+                           + (currentLightVector.y * FX_FX32_TO_F32(vectorMatrix.m[1][0]))
+                           + (currentLightVector.z * FX_FX32_TO_F32(vectorMatrix.m[2][0]));
 
-            lightVector[1] = (s_G3LightVector[lightNum][0] * FX_FX32_TO_F32(vectorMatrix.m[0][1]))
-                           + (s_G3LightVector[lightNum][1] * FX_FX32_TO_F32(vectorMatrix.m[1][1]))
-                           + (s_G3LightVector[lightNum][2] * FX_FX32_TO_F32(vectorMatrix.m[2][1]));
+            lightVector[1] = (currentLightVector.x * FX_FX32_TO_F32(vectorMatrix.m[0][1]))
+                           + (currentLightVector.y * FX_FX32_TO_F32(vectorMatrix.m[1][1]))
+                           + (currentLightVector.z * FX_FX32_TO_F32(vectorMatrix.m[2][1]));
 
-            lightVector[2] = (s_G3LightVector[lightNum][0] * FX_FX32_TO_F32(vectorMatrix.m[0][2]))
-                           + (s_G3LightVector[lightNum][1] * FX_FX32_TO_F32(vectorMatrix.m[1][2]))
-                           + (s_G3LightVector[lightNum][2] * FX_FX32_TO_F32(vectorMatrix.m[2][2]));
+            lightVector[2] = (currentLightVector.x * FX_FX32_TO_F32(vectorMatrix.m[0][2]))
+                           + (currentLightVector.y * FX_FX32_TO_F32(vectorMatrix.m[1][2]))
+                           + (currentLightVector.z * FX_FX32_TO_F32(vectorMatrix.m[2][2]));
 
             //Calculate Diffuse level
             float diffuseLevel = (lightVector[0] * normalVector[0])
@@ -1314,8 +1115,6 @@ void PolygonAttrCommand(u32 data)
     }
 
     drawCall->SetPolygonAttr(attr);
-
-
     return;
 }
 
@@ -1350,13 +1149,16 @@ void SpecEmi(u32 data)
 //SwapBuffers
 void SwapBuffers(u8 depthBufferMode)
 {
-    s_SIM_useWBuffer = depthBufferMode;
-    s_swapBuffersCalledThisFrame = TRUE;
+    auto& g3State = GetGlobalState();
+
+    g3State.SetUseWBuffering(depthBufferMode);
+    g3State.SetSwapBuffersCalledThisFrame(true);
 }
 
 //TexCoord
 void TexCoord(u32 data)
 {
+    auto& g3State = GetGlobalState();
     s16 s = data & 0xFFFF;
     s16 t = (data & 0xFFFF0000) >> 16;
 
@@ -1372,21 +1174,19 @@ void TexCoord(u32 data)
         G3SIM_Matrix_t * textureMtx = &currentTextureMatrix;
 
 
-        s_g3NextTexCoordS = (texCoordVector[0] * FX_FX32_TO_F32(textureMtx->nums[0][0]))
+        g3State.SetNextTexCoordS((texCoordVector[0] * FX_FX32_TO_F32(textureMtx->nums[0][0]))
                           + (texCoordVector[1] * FX_FX32_TO_F32(textureMtx->nums[1][0]))
                           + (texCoordVector[2] * FX_FX32_TO_F32(textureMtx->nums[2][0]))
-                          + (texCoordVector[3] * FX_FX32_TO_F32(textureMtx->nums[3][0]));
+                          + (texCoordVector[3] * FX_FX32_TO_F32(textureMtx->nums[3][0])));
 
-        s_g3NextTexCoordT = (texCoordVector[0] * FX_FX32_TO_F32(textureMtx->nums[0][1]))
+        g3State.SetNextTexCoordT((texCoordVector[0] * FX_FX32_TO_F32(textureMtx->nums[0][1]))
                           + (texCoordVector[1] * FX_FX32_TO_F32(textureMtx->nums[1][1]))
                           + (texCoordVector[2] * FX_FX32_TO_F32(textureMtx->nums[2][1]))
-                          + (texCoordVector[3] * FX_FX32_TO_F32(textureMtx->nums[3][1]));
+                          + (texCoordVector[3] * FX_FX32_TO_F32(textureMtx->nums[3][1])));
     } else {
-        s_g3NextTexCoordS = ((float)s)/16.0f;
-        s_g3NextTexCoordT = ((float)t)/16.0f;
+        g3State.SetNextTexCoordS(((float)s)/16.0f);
+        g3State.SetNextTexCoordT(s_g3NextTexCoordT = ((float)t)/16.0f);
     }
-
-    return;
 }
 
 //TexImageParam
@@ -1405,32 +1205,23 @@ void TexImageParamCommand(u32 data)
     param.texCordTransform = (data & 0b11000000000000000000000000000000) >> 30;
     auto& g3State = SIM::G3::GetGlobalState();
     g3State.GetCurrentDrawCall()->SetTexImageParam(param);
-
-    s_texImageParam.textureOffset = ((u16)data) << 3;
-    s_texImageParam.repeatS = (data & 0b10000000000000000) >> 16;
-    s_texImageParam.repeatT = (data & 0b100000000000000000) >> 17;
-    s_texImageParam.flipS = (data & 0b1000000000000000000) >> 18;
-    s_texImageParam.flipT = (data & 0b10000000000000000000) >> 19;
-    s_texImageParam.textureSSize = 8 << ((data & 0b11100000000000000000000) >> 20);
-    s_texImageParam.textureTSize = 8 << ((data & 0b11100000000000000000000000) >> 23);
-    s_texImageParam.textureFormat = (data & 0b11100000000000000000000000000) >> 26;
-    s_texImageParam.color0 = (data & 0b100000000000000000000000000000) >> 29;
-    s_texImageParam.texCordTransform = (data & 0b11000000000000000000000000000000) >> 30;
     return;
 }
 
 //TexPlttBase
 void TexPlttBase(u32 data)
 {
-    if( s_texImageParam.textureFormat == 2 )
+    auto& g3State = GetGlobalState();
+    const auto texParam = g3State.GetCurrentDrawCall()->GetTexImageParam();
+
+    if( texParam.textureFormat == 2 )
     {
-        s_texPlttBase = data << 3;
+        g3State.GetCurrentDrawCall()->SetTexPaletteBase(data << 3);
     }
     else
     {
-        s_texPlttBase = data << 4;
+        g3State.GetCurrentDrawCall()->SetTexPaletteBase(data << 4);
     }
-    return;
 }
 
 //Add a vertex
@@ -1448,55 +1239,67 @@ void Vtx(s16 x, s16 y, s16 z)
 
     calculateVtxFx(&fxX, &fxY, &fxZ, &fxW);
 
-    s_g3PolygonVerts[s_G3numInPoly].x = fxX;
-    s_g3PolygonVerts[s_G3numInPoly].y = fxY;
-    s_g3PolygonVerts[s_G3numInPoly].z = fxZ;
-    s_g3PolygonVerts[s_G3numInPoly].w = fxW;
+    FixedPointVertex currentVert;
 
-    s_g3PolygonVerts[s_G3numInPoly].r = (float)s_g3CurColor[0] / 255.0f;
-    s_g3PolygonVerts[s_G3numInPoly].g = (float)s_g3CurColor[1] / 255.0f;
-    s_g3PolygonVerts[s_G3numInPoly].b = (float)s_g3CurColor[2] / 255.0f;
-    s_g3PolygonVerts[s_G3numInPoly].a = s_curPolygonAttr.alpha;
+    
 
-    s_g3PolygonVerts[s_G3numInPoly].s = s_g3NextTexCoordS / (float)s_texImageParam.textureSSize;
-    s_g3PolygonVerts[s_G3numInPoly].t = s_g3NextTexCoordT / (float)s_texImageParam.textureTSize;
+    currentVert.x = fxX;
+    currentVert.y = fxY;
+    currentVert.z = fxZ;
+    currentVert.w = fxW;
 
-    s_G3numInPoly++;
-    if( s_primType == GX_BEGIN_QUADS )
-    {
-        if( s_G3numInPoly >= 4 )
-        {
-            s_G3numInPoly = 0;
-        }       
+    auto& g3State = GetGlobalState();
+    int polygonIndex = g3State.GetCurrentIndexInPolygon();
+    auto vertexColor = g3State.GetVertexColor();
+    currentVert.r = (float)vertexColor.r / 255.0f;
+    currentVert.g = (float)vertexColor.g / 255.0f;
+    currentVert.b = (float)vertexColor.b / 255.0f;
+    currentVert.a = g3State.GetCurrentDrawCall()->GetPolygonAttr().alpha;
+
+    const auto texParam = g3State.GetCurrentDrawCall()->GetTexImageParam();
+    currentVert.s = g3State.GetNextTexCoordS() / (float)texParam.textureSSize;
+    currentVert.t = g3State.GetNextTexCoordT() / (float)texParam.textureTSize;
+    g3State.SetPolygonVertex(polygonIndex, currentVert);
+
+    polygonIndex++;
+    g3State.SetCurrentIndexInPolygon(polygonIndex);
+
+    switch(g3State.GetPrimitiveType()) {
+        case GX_BEGIN_QUADS:
+            if(polygonIndex >= 4) {
+                polygonIndex = 0;
+                g3State.SetCurrentIndexInPolygon(polygonIndex);
+            }
+            break;
+        case GX_BEGIN_TRIANGLES:
+            if(polygonIndex >= 3) {
+                polygonIndex = 0;
+                g3State.SetCurrentIndexInPolygon(polygonIndex);
+            }
+            break;
+        case GX_BEGIN_QUAD_STRIP:
+            if(polygonIndex >= 4) {
+                polygonIndex = 2;
+                g3State.SetCurrentIndexInPolygon(polygonIndex);
+                g3State.SetPolygonReady(true);
+                u32 quadStripNum = g3State.GetQuadStripQuadIndex();
+                quadStripNum++;
+                g3State.SetQuadStripQuadIndex(quadStripNum);
+            }
+            break;
+        case GX_BEGIN_TRIANGLE_STRIP:
+            if(polygonIndex >= 3) {
+                polygonIndex = 2;
+                g3State.SetCurrentIndexInPolygon(polygonIndex);
+                g3State.SetPolygonReady(true);
+                u32 triStripNum = g3State.GetTriStripTriangleIndex();
+                triStripNum++;
+                g3State.SetTriStripTriangleIndex(triStripNum);
+            }
+            break;
+        default:
+            break;
     }
-    if( s_primType == GX_BEGIN_TRIANGLES )
-    {
-        if( s_G3numInPoly >= 3 )
-        {
-            s_G3numInPoly = 0;
-        }
-    }
-    if( s_primType == GX_BEGIN_QUAD_STRIP )
-    {        
-        if( s_G3numInPoly >= 4 )
-        {
-            s_G3numInPoly = 2;
-            s_G3drawPoly = 1;
-            s_G3quadStripTriNum++;
-        }
-    }
-    if( s_primType == GX_BEGIN_TRIANGLE_STRIP )
-    {
-        if( s_G3numInPoly >= 3 )
-        {
-            s_G3numInPoly = 2;
-            s_G3drawPoly = 1;
-            s_G3triStripTriNum++;
-        }
-    }
-
-
-    return;
 }
 
 void SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts) {
@@ -1630,10 +1433,10 @@ void SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts) {
 
 u8 G3SIM_SwapBuffersCalledThisFrame()
 {
-    return s_swapBuffersCalledThisFrame;
+    return SIM::G3::GetGlobalState().GetSwapBuffersCalledThisFrame();
 }
 
 void G3SIM_ResetSwapBuffersCall()
 {
-    s_swapBuffersCalledThisFrame = FALSE;
+    SIM::G3::GetGlobalState().SetSwapBuffersCalledThisFrame(false);
 }
