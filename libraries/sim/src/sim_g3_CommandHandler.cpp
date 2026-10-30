@@ -404,23 +404,17 @@ void MtxMode(GXMtxMode mode)
 void MtxMult33(MtxFx33 * mtx)
 {
     auto& g3State = GetGlobalState();
-    MtxFx33 a;
-    MtxFx44 a4x4 = g3State.GetCurrentMatrix();
-    MTX_Copy44To33(&a4x4, &a);
-    MtxFx33 b = *mtx;
 
-    MtxFx33 result3x3 = Util::MultiplyMtxFx33(a, b);
-    MtxFx44 result4x4 = a4x4;
-    MTX_Copy33To44(&result3x3, &result4x4);
-    g3State.SetCurrentMatrix(result4x4);
+    MtxFx44 a = {};
+    MTX_Copy33To44(mtx, &a);
+    a.m[3][3] = FX32_ONE;
+    
+    MtxFx44 result = Util::MultiplyMtxFx44(a, g3State.GetCurrentMatrix());
+    g3State.SetCurrentMatrix(result);
 
     if(g3State.GetMatrixMode() == GX_MTXMODE_POSITION_VECTOR) {
-        a4x4 = g3State.GetPositionMatrix();
-        MTX_Copy44To33(&a4x4, &a);
-        result3x3 = Util::MultiplyMtxFx33(a, b);
-        result4x4 = a4x4;
-        MTX_Copy33To44(&result3x3, &result4x4);
-        g3State.SetPositionMatrix(result4x4);
+        result = Util::MultiplyMtxFx44(a, g3State.GetPositionMatrix());
+        g3State.SetPositionMatrix(result);
     }
 }
 
@@ -432,11 +426,11 @@ void MtxMult43(MtxFx43 * mtx)
     MTX_Copy43To44(mtx, &matrix);
     matrix.m[3][3] = FX32_ONE;
 
-    MtxFx44 result = Util::MultiplyMtxFx44(g3State.GetCurrentMatrix(), matrix);
+    MtxFx44 result = Util::MultiplyMtxFx44(matrix, g3State.GetCurrentMatrix());
     g3State.SetCurrentMatrix(result);
 
     if(g3State.GetMatrixMode() == GX_MTXMODE_POSITION_VECTOR) {
-        result = Util::MultiplyMtxFx44(g3State.GetPositionMatrix(), matrix);
+        result = Util::MultiplyMtxFx44(matrix, g3State.GetPositionMatrix());
         g3State.SetPositionMatrix(result);
     }
 }
@@ -447,11 +441,11 @@ void MtxMult44(MtxFx44 * mtx)
 
     MtxFx44 matrix = *mtx;
 
-    MtxFx44 result = Util::MultiplyMtxFx44(g3State.GetCurrentMatrix(), matrix);
+    MtxFx44 result = Util::MultiplyMtxFx44(matrix, g3State.GetCurrentMatrix());
     g3State.SetCurrentMatrix(result);
 
     if(g3State.GetMatrixMode() == GX_MTXMODE_POSITION_VECTOR) {
-        result = Util::MultiplyMtxFx44(g3State.GetPositionMatrix(), matrix);
+        result = Util::MultiplyMtxFx44(matrix, g3State.GetPositionMatrix());
         g3State.SetPositionMatrix(result);
     }
 }
