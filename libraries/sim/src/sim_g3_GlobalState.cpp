@@ -1,5 +1,7 @@
 #include "simulator/sim_g3_GlobalState.hpp"
 
+#include <cstring>
+
 #include "simulator/sim_g3_Utilities.hpp"
 
 #include <nitro/fx/fx.h>

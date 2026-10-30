@@ -1,5 +1,7 @@
 #include "simulator/sim_g3_DrawCall.hpp"
 
+#include <cstring>
+
 namespace SIM::G3 {
 
 static constexpr auto InitialRenderVertsCapacity = 512;
