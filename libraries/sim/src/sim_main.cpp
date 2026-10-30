@@ -948,9 +948,7 @@ void *SIM_Render(void *arg) {
 
   auto& g3State = SIM::G3::GetGlobalState();
   g3State.FlushDrawCall();
-
-  // Draw the translucent 3D stuff
-  //G3SIM_DrawItems(); // TODO Add this to GlobalState
+  g3State.DrawTransparentItems();
 
 
   do {

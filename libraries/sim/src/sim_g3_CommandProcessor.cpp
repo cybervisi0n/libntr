@@ -464,6 +464,7 @@ void HandleCommandMessage(draw_msg_t *msg) {
       bool polygonReady = g3State.GetPolygonReady();
       Vtx(msg->data.xyz.x, msg->data.xyz.y, msg->data.xyz.z);
       indexInPolygon = g3State.GetCurrentIndexInPolygon();
+      polygonReady = g3State.GetPolygonReady();
       if (indexInPolygon == 0 || polygonReady == 1) {
         polygonReady = 0;
         g3State.SetPolygonReady(polygonReady);

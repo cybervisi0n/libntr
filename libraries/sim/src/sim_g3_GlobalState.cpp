@@ -298,6 +298,7 @@ void GlobalState::FlushDrawCall() {
     if(mCurrentDrawCall->IsTransparent()) {
         // Copy current draw call to mTransparentDrawCalls, these will render at the end of the frame
         mTransparentDrawCalls.push_back(std::make_shared<DrawCall>(*mCurrentDrawCall));
+        mCurrentDrawCall->ClearVerts();
         return;
     }
 

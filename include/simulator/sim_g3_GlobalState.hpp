@@ -127,8 +127,8 @@ class GlobalState {
   inline void SetNextTexCoordS(float texCoord) { mNextTexCoordS = texCoord; }
   inline void SetNextTexCoordT(float texCoord) { mNextTexCoordT = texCoord; }
   inline void SetPolygonVertex(int index, const FixedPointVertex& vertex) { mPolygonVerts[index] = vertex; }
-  inline void SetVramTex(GXVRamTex tex) { mVramTex = tex; } // TODO: Add C Bridge
-  inline void SetVramTexPalette(GXVRamTexPltt texPalette) { mVramTexPalette = texPalette; } // TODO: add C bridge
+  inline void SetVramTex(GXVRamTex tex) { mVramTex = tex; }
+  inline void SetVramTexPalette(GXVRamTexPltt texPalette) { mVramTexPalette = texPalette; }
 
  private:
   void UpdateClipMatrix();
