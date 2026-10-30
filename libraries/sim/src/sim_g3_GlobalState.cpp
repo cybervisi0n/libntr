@@ -135,8 +135,8 @@ void GlobalState::FlushDrawCall() {
 
 
     if(mCurrentDrawCall->IsTransparent()) {
-        // TODO Copy current draw call to array of transparent drawcalls
-
+        // Copy current draw call to mTransparentDrawCalls
+        mTransparentDrawCalls.push_back(std::make_shared<DrawCall>(*mCurrentDrawCall));
         return;
     }
 

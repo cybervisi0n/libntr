@@ -55,6 +55,7 @@ struct PolygonAttr {
 class DrawCall {
  public:
   DrawCall();
+  DrawCall(const DrawCall& source);
   ~DrawCall();
 
   void AddVertex(const RenderVertex& vert);

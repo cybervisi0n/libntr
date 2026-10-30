@@ -14,6 +14,17 @@ DrawCall::DrawCall() {
     mRenderVertsCount = 0;
 }
 
+DrawCall::DrawCall(const DrawCall& source) {
+    mRenderVerts = new RenderVertex[source.mRenderVertsCount];
+    mRenderVertsCount = source.mRenderVertsCount;
+    memcpy(mRenderVerts, source.mRenderVerts, sizeof(RenderVertex) * mRenderVertsCount);
+    mRenderVertsCapacity = mRenderVertsCount;
+    mTexImageParam = source.mTexImageParam;
+    mTexture = source.mTexture;
+    mPolygonAttr = source.mPolygonAttr;
+    mTexPaletteBase = source.mTexPaletteBase;
+}
+
 DrawCall::~DrawCall() {
     delete[] mRenderVerts;
 }
