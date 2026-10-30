@@ -40,7 +40,7 @@ MtxFx44 MultiplyMtxFx44(MtxFx44 a, MtxFx44 b) {
             curSum = 0;
             for(int k=0; k < 4; k++)
             {
-                curSum = curSum + FX_Mul(a.m[i][k], a.m[k][j]);
+                curSum = curSum + FX_Mul(a.m[i][k], b.m[k][j]);
             }
             result.m[i][j] = curSum;
         }

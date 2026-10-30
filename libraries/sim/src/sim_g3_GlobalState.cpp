@@ -541,7 +541,7 @@ void GlobalState::SetPositionMatrix(const MtxFx44& matrix) {
 
 
 void GlobalState::UpdateClipMatrix() {
-    mCurrentClipMatrix = Util::MultiplyMtxFx44(mCurrentProjectionMatrix, mCurrentPositionMatrix);
+    mCurrentClipMatrix = Util::MultiplyMtxFx44(mCurrentPositionMatrix, mCurrentProjectionMatrix);
 
     memcpy( (void*)&s_reg_G3X_CLIPMTX_RESULT_0, &mCurrentClipMatrix, sizeof( MtxFx44 ) );
 }
