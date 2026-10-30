@@ -32,382 +32,96 @@ GlRenderer::GlRenderer() {}
 GlRenderer::~GlRenderer() {}
 
 void GlRenderer::Init() {
-	glGenVertexArrays(1, &mVertexArray);
-	glBindVertexArray(mVertexArray);
+    glGenVertexArrays(1, &mVertexArray);
+    glBindVertexArray(mVertexArray);
 
-	glGenBuffers(1, &mVertexBuffer);
+    glGenBuffers(1, &mVertexBuffer);
 
-	glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(s_G3DrawVerts), NULL, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
 
-	glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)offsetof(RenderVertex, x));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)offsetof(RenderVertex, x));
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)offsetof(RenderVertex, s));
-	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)offsetof(RenderVertex, r));
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)offsetof(RenderVertex, r));
 
-	glBindVertexArray(0);
-	glDisableVertexAttribArray(0);
+    glBindVertexArray(0);
+    glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(2);
+    glDisableVertexAttribArray(2);
 }
 
 void GlRenderer::Draw(std::shared_ptr<DrawCall> drawCall) {
-	size_t vertsCount = drawCall->GetRenderVertsCount();
-	if( vertsCount != 0 )
-	{
-		glBindVertexArray(mVertexArray);
-		glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
+    size_t vertsCount = drawCall->GetRenderVertsCount();
+    if( vertsCount != 0 )
+    {
+        glBindVertexArray(mVertexArray);
+        glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
 
-		if(mVertexBufferCount >= vertsCount) {
-			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(RenderVertex) * vertsCount, drawCall->GetRenderVerts());
-		} else {
-			glBufferData(GL_ARRAY_BUFFER, sizeof(RenderVertex) * vertsCount, drawCall->GetRenderVerts(), GL_DYNAMIC_DRAW);
-			mVertexBufferCount = vertsCount;
-		}
+        if(mVertexBufferCount >= vertsCount) {
+            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(RenderVertex) * vertsCount, drawCall->GetRenderVerts());
+        } else {
+            glBufferData(GL_ARRAY_BUFFER, sizeof(RenderVertex) * vertsCount, drawCall->GetRenderVerts(), GL_DYNAMIC_DRAW);
+            mVertexBufferCount = vertsCount;
+        }
 
-		// Handle texture
-		if(drawCall->GetTexture() == nullptr) {
-			//glProgramUniform1i(g3shaderProgramID, glGetUniformLocation(g3shaderProgramID, "useTexture") , 0);	
-		} else {
-			drawCall->GetTexture()->Activate();
+        // Handle texture
+        if(drawCall->GetTexture() == nullptr) {
+            glProgramUniform1i(mShaderProgramId, glGetUniformLocation(mShaderProgramId, "useTexture") , 0);	
+        } else {
+            drawCall->GetTexture()->Activate();
 
-			auto texImageParam = drawCall->GetTexImageParam();
+            auto texImageParam = drawCall->GetTexImageParam();
 
-			if(texImageParam.repeatS) {
-				if(texImageParam.flipS)
-				{
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-				} else {
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-				}
-			} else {
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-			}
+            if(texImageParam.repeatS) {
+                if(texImageParam.flipS)
+                {
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+                } else {
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                }
+            } else {
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+            }
 
-			if(texImageParam.repeatT) {
-				if(texImageParam.flipT)
-				{
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-				} else {
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-				}
-			} else {
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-			}
-			
-			//GLint texUnitLoc = glGetUniformLocation(g3shaderProgramID, "myTexture");
-			//set texture 0 in the shader
-			//glProgramUniform1i(g3shaderProgramID, texUnitLoc , 0);
+            if(texImageParam.repeatT) {
+                if(texImageParam.flipT)
+                {
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+                } else {
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                }
+            } else {
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+            }
+            
+            GLint texUnitLoc = glGetUniformLocation(mShaderProgramId, "myTexture");
+            //set texture 0 in the shader
+            glProgramUniform1i(mShaderProgramId, texUnitLoc , 0);
 
-			//Enable texture in the shader
-			//glProgramUniform1i(g3shaderProgramID, glGetUniformLocation(g3shaderProgramID, "useTexture") , 1);
-		}
+            //Enable texture in the shader
+            glProgramUniform1i(mShaderProgramId, glGetUniformLocation(mShaderProgramId, "useTexture") , 1);
+        }
 
-		glDrawArrays(GL_TRIANGLES, 0, vertsCount);
-	}
+        GLint polygonModeLoc = glGetUniformLocation(mShaderProgramId, "polygonMode");
+        glProgramUniform1i(mShaderProgramId, polygonModeLoc , drawCall->GetPolygonAttr().polygonMode);
+
+        // Fog uniforms
+        GLint useFogLoc = glGetUniformLocation(mShaderProgramId, "useFog");
+        glProgramUniform1i(mShaderProgramId, useFogLoc , drawCall->GetFogEnabled());
+        if(drawCall->GetFogEnabled()) {
+            GLint fogColorLoc = glGetUniformLocation(mShaderProgramId, "fogColor");
+            glProgramUniform1fv(mShaderProgramId, fogColorLoc, 4, drawCall->GetFogColor());
+            GLint fogDepthBoundaryLoc = glGetUniformLocation(mShaderProgramId, "fogDepthBoundary");
+            glProgramUniform1fv(mShaderProgramId, fogDepthBoundaryLoc, 32, drawCall->GetFogDepthTable());
+
+            GLint fogDensityLoc = glGetUniformLocation(mShaderProgramId, "fogDensity");
+            glProgramUniform1fv(mShaderProgramId, fogDensityLoc, 32, drawCall->GetFogDensityTable());
+        }
+
+        glDrawArrays(GL_TRIANGLES, 0, vertsCount);
+    }
 }
 
-
 }
-
-
-
-#if 0
-
-typedef struct {
-	float zIdx;
-	GLuint textureId;
-	G3SIM_PolygonAttr_t polygonAttr;
-	G3SIM_TexImageParam_t texImageParam;
-	G3SIM_Vertex_t * verts;
-	u32 vertsCount;
-} g3_draw_item_t;
-
-G3SIM_Vertex_t s_G3DrawVerts[G3_DRAW_MAX_VERTS];
-
-// GPU Texture Cache
-static SIM::G3::TextureCache sTextureCache;
-
-//The item list is used for drawing translucent things sorted by Z position
-static g3_draw_item_t s_G3DrawItemList[G3_DRAW_MAX_ITEMS];
-static u32 s_G3DrawItemListCount = 0;
-
-static u32 s_G3DrawCurVertIdx = 0;
-static GLuint s_G3DrawVertexArray;
-static GLuint s_G3DrawVertexBuffer;
-
-extern G3SIM_TexImageParam_t s_texImageParam;
-extern G3SIM_PolygonAttr_t s_curPolygonAttr;
-extern GLuint g3shaderProgramID;
-
-void G3SIM_AddVtx(G3SIM_Vertex_t * vtx)
-{
-	memcpy(&s_G3DrawVerts[s_G3DrawCurVertIdx], vtx, sizeof(G3SIM_Vertex_t));
-
-	s_G3DrawCurVertIdx = s_G3DrawCurVertIdx + 1;
-
-	SIM_assert(s_G3DrawCurVertIdx < G3_DRAW_MAX_VERTS);
-	return;
-}
-
-void G3SIM_DrawArray()
-{
-	if( s_G3DrawCurVertIdx != 0 )
-	{
-		glBindVertexArray(s_G3DrawVertexArray);
-		glBindBuffer(GL_ARRAY_BUFFER, s_G3DrawVertexBuffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(G3SIM_Vertex_t) * s_G3DrawCurVertIdx, s_G3DrawVerts);
-		glDrawArrays(GL_TRIANGLES,0,s_G3DrawCurVertIdx);
-	}
-	return;
-}
-
-void G3SIM_FlushArray()
-{
-	if(s_G3DrawCurVertIdx == 0) {
-		// No verts to draw
-		return;
-	}
-
-	#ifdef SDK_TRACY_ENABLE
-	TracyCZone(FlushArrayZone, 1);
-	#endif
-
-	u8 * texBuf = nullptr;
-	std::shared_ptr<SIM::G3::Texture> texture = nullptr;
-
-	if( s_texImageParam.textureFormat != GX_TEXFMT_NONE )
-	{
-		GLuint g3TextureId;
-		u8 * vramTex = (u8*)(getTextureVramBank() + s_texImageParam.textureOffset);
-		u8 * vramPltt = (u8*)(getTexPlttVramBank() + s_texPlttBase);
-		u16 * colorAddr = (u16*)vramPltt;
-
-		//Calculate the texture + palette CRC
-		u32 paletteCRC = SIM_crc32buf(vramPltt, 512);
-		u32 vramTexBufSize = 0;
-
-		if(s_texImageParam.textureFormat == GX_TEXFMT_PLTT4) {
-			vramTexBufSize = (s_texImageParam.textureSSize * s_texImageParam.textureTSize) >> 2;
-		} else if(s_texImageParam.textureFormat == GX_TEXFMT_PLTT16) {
-			vramTexBufSize = (s_texImageParam.textureSSize * s_texImageParam.textureTSize) >> 1;
-		} else {
-			vramTexBufSize = (s_texImageParam.textureSSize * s_texImageParam.textureTSize);
-		}
-
-		u32 textureCRC = SIM_crc32buf(vramTex, vramTexBufSize);
-		texture = sTextureCache.GetTexture(textureCRC, paletteCRC);
-		if(texture == nullptr) {
-			// decode texture and create it in the cache
-			//Convert the DS texture data into a format opengl can understand
-			u8 * outTexBuf = new u8[4*s_texImageParam.textureSSize * s_texImageParam.textureTSize];
-			memset((void*)outTexBuf, 0, 4*s_texImageParam.textureSSize * s_texImageParam.textureTSize);
-
-
-			switch( s_texImageParam.textureFormat ){
-				case GX_TEXFMT_A3I5:
-					SIM::G3::DecodeTexA3I5(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
-					break;
-				case GX_TEXFMT_PLTT4:
-					SIM::G3::DecodeTex4(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
-					break;
-				case GX_TEXFMT_PLTT16:
-					SIM::G3::DecodeTex16(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
-					break;
-				case GX_TEXFMT_PLTT256:
-					SIM::G3::DecodeTex256(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
-					break;
-				case GX_TEXFMT_COMP4x4:
-					SIM_assert_always();
-					//TODO
-					break;
-				case GX_TEXFMT_A5I3:
-					SIM::G3::DecodeTexA5I3(vramTex, colorAddr, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
-					break;
-				case GX_TEXFMT_DIRECT:
-					SIM::G3::DecodeTexDirect(vramTex, outTexBuf, s_texImageParam.textureSSize, s_texImageParam.textureTSize);
-					break;
-			}
-
-			// This creates a GL texture and uploads it to the GPU with glTexImage2D
-			texture = std::make_shared<SIM::G3::Texture>(s_texImageParam.textureTSize, s_texImageParam.textureSSize, outTexBuf);
-
-			sTextureCache.AddTexture(textureCRC, paletteCRC, texture);
-
-			// Texture buffer can be freed now, it has been sent to the GPU
-			delete[] outTexBuf;
-		}
-
-		texture->Activate();
-
-		if(s_texImageParam.repeatS) {
-			if(s_texImageParam.flipS)
-			{
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-			} else {
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			}
-		} else {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		}
-
-		if(s_texImageParam.repeatT) {
-			if(s_texImageParam.flipT)
-			{
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-			} else {
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			}
-		} else {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		}
-
-
-		GLint texUnitLoc = glGetUniformLocation(g3shaderProgramID, "myTexture");
-		//set texture 0 in the shader
-		glProgramUniform1i(g3shaderProgramID, texUnitLoc , 0);
-
-		//Enable texture in the shader
-		glProgramUniform1i(g3shaderProgramID, glGetUniformLocation(g3shaderProgramID, "useTexture") , 1);
-	}
-	else
-	{
-		//Disable texture in the shader
-		glProgramUniform1i(g3shaderProgramID, glGetUniformLocation(g3shaderProgramID, "useTexture") , 0);							
-	}
-
-	// Set the polygon mode in the shader
-	GLint polygonModeLoc = glGetUniformLocation(g3shaderProgramID, "polygonMode");
-	glProgramUniform1i(g3shaderProgramID, polygonModeLoc , s_curPolygonAttr.polygonMode);
-
-	// Set the fog attributes in the shader
-	GLint useFogLoc = glGetUniformLocation(g3shaderProgramID, "useFog");
-	int useFog = getbit(s_reg_G3X_DISP3DCNT, 7);
-	if(!s_curPolygonAttr.fogEnable) {
-		useFog = 0;
-	}
-	glProgramUniform1i(g3shaderProgramID, useFogLoc , useFog);
-	if(useFog) {
-		// Fog color
-		GLint fogColorLoc = glGetUniformLocation(g3shaderProgramID, "fogColor");
-		u32 fogRed = s_reg_G3X_FOG_COLOR & 0b11111;
-		u32 fogGreen = (s_reg_G3X_FOG_COLOR >> 5) & 0b11111;
-		u32 fogBlue = (s_reg_G3X_FOG_COLOR >> 10) & 0b11111;
-		u32 fogAlpha = (s_reg_G3X_FOG_COLOR >> 16) & 0b11111;
-		float fogRedF = (float)fogRed / 32.0f;
-		float fogGreenF = (float)fogGreen / 32.0f;
-		float fogBlueF = (float)fogBlue / 32.0f;
-		float fogAlphaF = (float)fogAlpha / 32.0f;
-		glProgramUniform4f(g3shaderProgramID, fogColorLoc, fogRedF, fogGreenF, fogBlueF, fogAlphaF);
-
-
-		u32 fogShift = (s_reg_G3X_DISP3DCNT >> 8) & 0b1111;
-		u32 fogStep = 0x400 >> fogShift;
-
-		//Fog depth boundaries
-		u32 fogOffset = s_reg_G3X_FOG_OFFSET;
-
-		float fogDepthBoundary[32];
-		float fogDensity[32];
-		u8 * fogTablePtr = (u8*)&s_reg_G3X_FOG_TABLE_0;
-		for(int i=0; i < 32; i++) {
-			fogDepthBoundary[i] = ((float)(fogOffset + fogStep*(i+1)) / 32767.0f) * 2.0f - 1.0f;
-			fogDensity[i] = (float)fogTablePtr[i] / 127.0f;
-		}
-
-		GLint fogDepthBoundaryLoc = glGetUniformLocation(g3shaderProgramID, "fogDepthBoundary");
-		glProgramUniform1fv(g3shaderProgramID, fogDepthBoundaryLoc, 32, fogDepthBoundary);
-
-		GLint fogDensityLoc = glGetUniformLocation(g3shaderProgramID, "fogDensity");
-		glProgramUniform1fv(g3shaderProgramID, fogDensityLoc, 32, fogDensity);
-	}
-
-
-
-	// If this is a translucent draw, save it for the end of the frame to render it last
-	if(
-		( s_texImageParam.textureFormat == GX_TEXFMT_A3I5 
-	   || s_texImageParam.textureFormat == GX_TEXFMT_A5I3
-	   || s_curPolygonAttr.alpha < 0.99f )
-	 && s_G3DrawCurVertIdx != 0) {
-		g3_draw_item_t * item = &s_G3DrawItemList[s_G3DrawItemListCount];
-
-		memset(item, 0, sizeof(g3_draw_item_t));
-
-
-		if(s_texImageParam.textureFormat != GX_TEXFMT_NONE) {
-			//Allocate and store off the texture
-			item->textureId = texture->GetTextureID();
-		} else {
-			item->textureId = 0;
-		}
-
-		//Copy over the polygonattr
-		memcpy(&item->polygonAttr, &s_curPolygonAttr, sizeof(G3SIM_PolygonAttr_t));
-
-		//Copy over the texImageParam
-		memcpy(&item->texImageParam, &s_texImageParam, sizeof(G3SIM_TexImageParam_t));
-
-		//Allocate and copy the verts
-		item->verts = (G3SIM_Vertex_t*)(malloc(sizeof(G3SIM_Vertex_t) * s_G3DrawCurVertIdx));
-		item->vertsCount = s_G3DrawCurVertIdx;
-		memcpy(item->verts, s_G3DrawVerts, sizeof(G3SIM_Vertex_t) * s_G3DrawCurVertIdx);
-
-		s_G3DrawItemListCount++;
-	} else {
-		G3SIM_DrawArray();
-	}
-
-	G3SIM_DrawCleanUp();
-	#ifdef SDK_TRACY_ENABLE
-	TracyCZoneEnd(FlushArrayZone);
-	#endif
-}
-
-void G3SIM_DrawItems()
-{
-	//TODO sort the items by Z coordinate
-
-
-	//Draws all the translucent objects that were deferred to the end of the frame.
-	for(int i=0; i<s_G3DrawItemListCount; i++) {
-		g3_draw_item_t * item = &s_G3DrawItemList[i];
-		if(item->textureId != 0){
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, item->textureId);
-			//Enable texture in the shader
-			glProgramUniform1i(g3shaderProgramID, glGetUniformLocation(g3shaderProgramID, "useTexture") , 1);
-		} else {
-			glProgramUniform1i(g3shaderProgramID, glGetUniformLocation(g3shaderProgramID, "useTexture") , 0);
-		}
-
-		if(item->texImageParam.flipS)
-		{
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-		} else {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		}
-
-		if(item->texImageParam.flipT)
-		{
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-		} else {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		}
-
-		// Set the polygon mode in the shader
-		GLint polygonModeLoc = glGetUniformLocation(g3shaderProgramID, "polygonMode");
-		glProgramUniform1i(g3shaderProgramID, polygonModeLoc, item->polygonAttr.polygonMode);
-
-		glBindVertexArray(s_G3DrawVertexArray);
-		glBindBuffer(GL_ARRAY_BUFFER, s_G3DrawVertexBuffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(G3SIM_Vertex_t) * item->vertsCount, item->verts);
-		glDrawArrays(GL_TRIANGLES,0, item->vertsCount);
-
-		free(item->verts);
-	}
-	s_G3DrawItemListCount = 0;
-}
-#endif

@@ -60,6 +60,7 @@ class GlobalState {
   void InitGlRenderer();
 
   void FlushDrawCall();
+  void DrawTransparentItems();
 
   // Matrix stack operations
   void PushMatrix();
@@ -99,6 +100,7 @@ class GlobalState {
   inline GXVRamTexPltt GetVramTexPalette() { return mVramTexPalette; }
   void * GetTexturePointer();
   void * GetTexturePalettePointer();
+  inline std::shared_ptr<GlRenderer> GetGlRenderer() { return mGlRenderer; }
 
   inline void SetMatrixMode(GXMtxMode mode) { mCurrentMatrixMode = mode; }
   void SetCurrentMatrix(const MtxFx44& matrix);

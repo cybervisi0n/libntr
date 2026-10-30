@@ -8,6 +8,8 @@
 #include <nitro/fx/fx.h>
 #include <nitro/fx/fx_const.h>
 
+#define getbit(x,n) ( ( (x) >> (n) ) & 1 )
+
 static SIM::G3::GlobalState sG3GlobalState;
 
 namespace SIM::G3 {
@@ -133,15 +135,56 @@ void GlobalState::FlushDrawCall() {
         mCurrentDrawCall->SetTexture(nullptr);
     }
 
+    // Process fog
+    bool useFog = getbit(s_reg_G3X_DISP3DCNT, 7) != 0;
+    mCurrentDrawCall->SetFogEnabled(useFog);
+    if(useFog) {
+		// Fog color
+		u32 fogRed = s_reg_G3X_FOG_COLOR & 0b11111;
+		u32 fogGreen = (s_reg_G3X_FOG_COLOR >> 5) & 0b11111;
+		u32 fogBlue = (s_reg_G3X_FOG_COLOR >> 10) & 0b11111;
+		u32 fogAlpha = (s_reg_G3X_FOG_COLOR >> 16) & 0b11111;
+		float fogRedF = (float)fogRed / 32.0f;
+		float fogGreenF = (float)fogGreen / 32.0f;
+		float fogBlueF = (float)fogBlue / 32.0f;
+		float fogAlphaF = (float)fogAlpha / 32.0f;
+        mCurrentDrawCall->SetFogColor(fogRedF, fogGreenF, fogBlueF, fogAlphaF);
+
+		u32 fogShift = (s_reg_G3X_DISP3DCNT >> 8) & 0b1111;
+		u32 fogStep = 0x400 >> fogShift;
+
+		//Fog depth boundaries
+		u32 fogOffset = s_reg_G3X_FOG_OFFSET;
+
+		float fogDepthBoundary[32];
+		float fogDensity[32];
+		u8 * fogTablePtr = (u8*)&s_reg_G3X_FOG_TABLE_0;
+		for(int i=0; i < 32; i++) {
+			fogDepthBoundary[i] = ((float)(fogOffset + fogStep*(i+1)) / 32767.0f) * 2.0f - 1.0f;
+			fogDensity[i] = (float)fogTablePtr[i] / 127.0f;
+		}
+
+        mCurrentDrawCall->SetFogDepthTable(fogDepthBoundary);
+        mCurrentDrawCall->SetFogDensityTable(fogDensity);
+    }
+
 
     if(mCurrentDrawCall->IsTransparent()) {
-        // Copy current draw call to mTransparentDrawCalls
+        // Copy current draw call to mTransparentDrawCalls, these will render at the end of the frame
         mTransparentDrawCalls.push_back(std::make_shared<DrawCall>(*mCurrentDrawCall));
         return;
     }
 
     mGlRenderer->Draw(mCurrentDrawCall);
     mCurrentDrawCall->ClearVerts();
+}
+
+void GlobalState::DrawTransparentItems() {
+    for(auto drawCall : mTransparentDrawCalls) {
+        mGlRenderer->Draw(drawCall);
+    }
+
+    mTransparentDrawCalls.clear();
 }
 
 

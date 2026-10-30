@@ -141,7 +141,7 @@ static GLint s_objTexUnits[] = {4, 5, 6, 7, 8};
 static GLint s_objWindowTexUnit = 9;
 
 // Shader Programs
-GLuint g3shaderProgramID;
+static GLuint g3shaderProgramID;
 static GLuint g2shaderProgramID;
 
 // VAOs
@@ -948,10 +948,12 @@ void *SIM_Render(void *arg) {
   u16 keys;
   u32 i;
 
-  SIM::G3::GetGlobalState().FlushDrawCall();
+  auto& g3State = SIM::G3::GetGlobalState();
+  g3State.FlushDrawCall();
 
   // Draw the translucent 3D stuff
   //G3SIM_DrawItems(); // TODO Add this to GlobalState
+
 
   do {
 #ifdef SDK_TRACY_ENABLE
@@ -1545,6 +1547,7 @@ int main(int argc, char *argv[]) {
 
   SIM_RenderInit(NULL);
   SIM::G3::GetGlobalState().InitGlRenderer();
+  SIM::G3::GetGlobalState().GetGlRenderer()->SetShaderProgramId(g3shaderProgramID);
 
 // Init Sockets (only needed on windows)
 #ifdef SDK_BUILD_WIN64

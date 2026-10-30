@@ -66,13 +66,27 @@ class DrawCall {
   const RenderVertex * GetRenderVerts() { return mRenderVerts; }
   inline size_t GetRenderVertsCount() { return mRenderVertsCount; }
   inline PolygonAttr GetPolygonAttr() { return mPolygonAttr; }
-  inline void SetPolygonAttr(const PolygonAttr& attr) { mPolygonAttr = attr; }
   inline TexImageParam GetTexImageParam() { return mTexImageParam; }
   inline u32 GetTexPaletteBase() { return mTexPaletteBase; }
+  inline std::shared_ptr<Texture> GetTexture() { return mTexture; }
+  inline float * GetFogDepthTable() { return mFogDepthTable; }
+  inline float * GetFogDensityTable() { return mFogDensityTable; }
+  inline bool GetFogEnabled() { return mFogEnabled; }
+  inline float * GetFogColor() { return mFogColor; }
+
   inline void SetTexImageParam(const TexImageParam& param) { mTexImageParam = param; }
   inline void SetTexPaletteBase(const u32 texPaletteBase) { mTexPaletteBase = texPaletteBase; }
-  inline std::shared_ptr<Texture> GetTexture() { return mTexture; }
+  inline void SetPolygonAttr(const PolygonAttr& attr) { mPolygonAttr = attr; }
   inline void SetTexture(std::shared_ptr<Texture> texture) { mTexture = texture; }
+  inline void SetFogColor(float r, float g, float b, float a) {
+    mFogColor[0] = r;
+    mFogColor[1] = g;
+    mFogColor[2] = b;
+    mFogColor[3] = a;
+  }
+  void SetFogDepthTable(float * depthTable);
+  void SetFogDensityTable(float * densityTable);
+  inline void SetFogEnabled(bool enable) { mFogEnabled = enable; }
 
  private:
   RenderVertex * mRenderVerts;
@@ -82,6 +96,10 @@ class DrawCall {
   std::shared_ptr<Texture> mTexture = nullptr;
   size_t mRenderVertsCount;
   size_t mRenderVertsCapacity;
+  bool mFogEnabled = false;
+  float mFogColor[4] = {};
+  float mFogDepthTable[32] = {};
+  float mFogDensityTable[32] = {};
 };
 
 }

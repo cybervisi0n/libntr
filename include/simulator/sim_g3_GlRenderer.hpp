@@ -18,20 +18,16 @@ class GlRenderer {
 
   void Init();
 
+  inline void SetShaderProgramId(unsigned int id) { mShaderProgramId = id; }
+
   void Draw(std::shared_ptr<DrawCall> drawCall);
 
  private:
   unsigned int mVertexArray;
   unsigned int mVertexBuffer;
+  unsigned int mShaderProgramId;
   int mVertexBufferCount = 0;
 };
-
-//void G3SIM_AddVtx(SIM::G3::RenderVertex * vtx); -> Moves to DrawCall
-//void G3SIM_DrawArray(); // Becomes GlRenderer::Draw()
-//void G3SIM_DrawCleanUp(); // resets the render vertex count -> move to DrawCall
-//void G3SIM_DrawInit();  // move to GlRenderer::Init
-//void G3SIM_FlushArray(); // Move to globalState
-//void G3SIM_DrawItems(); // Move to globalstate (it keeps an array of DrawCalls for transparent draws)
 
 }
 

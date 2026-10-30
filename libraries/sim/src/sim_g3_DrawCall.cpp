@@ -59,6 +59,14 @@ bool DrawCall::IsTransparent() {
     return false;
 }
 
+void DrawCall::SetFogDepthTable(float * depthTable) {
+    memcpy(mFogDepthTable, depthTable, 32 * sizeof(float));
+}
+
+void DrawCall::SetFogDensityTable(float * densityTable) {
+    memcpy(mFogDensityTable, densityTable, 32 * sizeof(float));
+}
+
 
 
 }
