@@ -2,6 +2,7 @@
 
 #include "simulator/drawmsg.h"
 #include "simulator/sim_g3_CommandHandler.hpp"
+#include "simulator/sim_g3_GlobalState.hpp"
 #include "simulator/g3_draw.h"
 
 #include <cstring>
@@ -462,9 +463,10 @@ void HandleCommandMessage(draw_msg_t *msg) {
     if (s_G3numInPoly == 0 || s_G3drawPoly == 1) {
       s_G3drawPoly = 0;
       GLfloat myVerts[(3 * 6) + (2 * 6)];
-      if (s_primType == GX_BEGIN_TRIANGLES ||
-          s_primType == GX_BEGIN_TRIANGLE_STRIP) {
-        if (s_primType == GX_BEGIN_TRIANGLE_STRIP &&
+      auto primType = GetGlobalState().GetPrimitiveType();
+      if (primType == GX_BEGIN_TRIANGLES ||
+          primType == GX_BEGIN_TRIANGLE_STRIP) {
+        if (primType == GX_BEGIN_TRIANGLE_STRIP &&
             !(s_G3triStripTriNum & 1)) {
           // Swap the last 2 verts
           G3SIM_FxVtx_t temp;
@@ -476,7 +478,7 @@ void HandleCommandMessage(draw_msg_t *msg) {
 
         SubmitPolygon(s_g3PolygonVerts, 3);
 
-        if (s_primType == GX_BEGIN_TRIANGLE_STRIP &&
+        if (primType == GX_BEGIN_TRIANGLE_STRIP &&
             !(s_G3triStripTriNum & 1)) {
           // Swap the last 2 verts
           G3SIM_FxVtx_t temp;
@@ -487,7 +489,7 @@ void HandleCommandMessage(draw_msg_t *msg) {
           memcpy(&s_g3PolygonVerts[2], &temp, sizeof(G3SIM_FxVtx_t));
         }
 
-        if (s_primType == GX_BEGIN_TRIANGLE_STRIP) {
+        if (primType == GX_BEGIN_TRIANGLE_STRIP) {
           // Copy the last two verts from the last polygon
           memcpy(&s_g3PolygonVerts[0], &s_g3PolygonVerts[1],
                  sizeof(G3SIM_FxVtx_t));
@@ -495,8 +497,8 @@ void HandleCommandMessage(draw_msg_t *msg) {
                  sizeof(G3SIM_FxVtx_t));
         }
       }
-      if (s_primType == GX_BEGIN_QUADS || s_primType == GX_BEGIN_QUAD_STRIP) {
-        if (s_primType == GX_BEGIN_QUAD_STRIP) {
+      if (primType == GX_BEGIN_QUADS || primType == GX_BEGIN_QUAD_STRIP) {
+        if (primType == GX_BEGIN_QUAD_STRIP) {
           G3SIM_FxVtx_t temp;
           memcpy(&temp, &s_g3PolygonVerts[2], sizeof(G3SIM_FxVtx_t));
           memcpy(&s_g3PolygonVerts[2], &s_g3PolygonVerts[3],
@@ -506,7 +508,7 @@ void HandleCommandMessage(draw_msg_t *msg) {
 
         SubmitPolygon(s_g3PolygonVerts, 4);
 
-        if (s_primType == GX_BEGIN_QUAD_STRIP) {
+        if (primType == GX_BEGIN_QUAD_STRIP) {
           // Copy the last two verts from the last polygon
           s_g3PolygonVerts[0].x = s_g3PolygonVerts[3].x;
           s_g3PolygonVerts[0].y = s_g3PolygonVerts[3].y;

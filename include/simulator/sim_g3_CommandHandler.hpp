@@ -91,15 +91,11 @@ extern const char * G2SIM_FragmentShader;
 
 
 //Global Variables
-extern GXMtxMode s_curMtxMode;
-extern GXBegin s_primType;
 extern G3SIM_FxVtx_t s_g3PolygonVerts[4];
 extern u8 s_G3numInPoly;
 extern u8 s_G3drawPoly;
 extern G3SIM_TexImageParam_t s_texImageParam;
 extern u32 s_texPlttBase;
-extern GLfloat s_g3NextTexCoordS;
-extern GLfloat s_g3NextTexCoordT;
 extern u32 s_G3triStripTriNum;
 extern u32 s_G3quadStripTriNum;
 extern u8 s_g3CurColor[3];

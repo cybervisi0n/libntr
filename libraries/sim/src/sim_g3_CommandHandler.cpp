@@ -27,22 +27,6 @@
 #include "tracy/TracyC.h"
 #endif
 
-//Constants
-
-
-GXMtxMode s_curMtxMode = GX_MTXMODE_PROJECTION;
-GXBegin s_primType = GX_BEGIN_TRIANGLES;
-
-G3SIM_MatrixStack_t s_projectionStack = {0};
-G3SIM_MatrixStack_t s_positionStack = {0};
-G3SIM_MatrixStack_t s_vectorStack = {0};
-G3SIM_MatrixStack_t s_textureStack = {0};
-
-static G3SIM_Matrix_t currentProjectionMatrix = {0};
-static G3SIM_Matrix_t currentPositionMatrix = {0};
-static G3SIM_Matrix_t currentVectorMatrix = {0};
-static G3SIM_Matrix_t currentTextureMatrix = {0};
-
 static G3SIM_Matrix_t currentClipMatrix = {0};
 
 u8 s_G3numInPoly = 0;
@@ -224,35 +208,6 @@ static void calculateVtxFx(fx32 * x, fx32 * y, fx32 * z, fx32 * w)
     *y = newVec[1];
     *z = newVec[2];
     *w = newVec[3];
-}
-
-static void calculateVtx(float * x, float * y, float * z, float * w)
-{
-    float myW = 1.0f;
-
-    float oldVec[4];
-    float newVec[4];
-    float curSum;
-
-    oldVec[0] = *x;
-    oldVec[1] = *y;
-    oldVec[2] = *z;
-    oldVec[3] = 1.0f;
-
-    for( int i=0; i < 4; i++ )
-    {
-        curSum = 0.0f;
-        for(int j=0; j < 4; j++ )
-        {
-            curSum = curSum + (oldVec[j] * FX_FX32_TO_F32(currentClipMatrix.nums[j][i]));
-        }
-        newVec[i] = curSum;
-    }
-    *x = newVec[0];
-    *y = newVec[1];
-    *z = newVec[2];
-    *w = newVec[3];
-    return;
 }
 
 //Begin vertices
@@ -1171,18 +1126,18 @@ void TexCoord(u32 data)
         texCoordVector[2] = 1.0f / 16.0f;
         texCoordVector[3] = 1.0f / 16.0f;
 
-        G3SIM_Matrix_t * textureMtx = &currentTextureMatrix;
+        MtxFx44 textureMtx = g3State.GetTextureMatrix();
 
 
-        g3State.SetNextTexCoordS((texCoordVector[0] * FX_FX32_TO_F32(textureMtx->nums[0][0]))
-                          + (texCoordVector[1] * FX_FX32_TO_F32(textureMtx->nums[1][0]))
-                          + (texCoordVector[2] * FX_FX32_TO_F32(textureMtx->nums[2][0]))
-                          + (texCoordVector[3] * FX_FX32_TO_F32(textureMtx->nums[3][0])));
+        g3State.SetNextTexCoordS((texCoordVector[0] * FX_FX32_TO_F32(textureMtx.m[0][0]))
+                          + (texCoordVector[1] * FX_FX32_TO_F32(textureMtx.m[1][0]))
+                          + (texCoordVector[2] * FX_FX32_TO_F32(textureMtx.m[2][0]))
+                          + (texCoordVector[3] * FX_FX32_TO_F32(textureMtx.m[3][0])));
 
-        g3State.SetNextTexCoordT((texCoordVector[0] * FX_FX32_TO_F32(textureMtx->nums[0][1]))
-                          + (texCoordVector[1] * FX_FX32_TO_F32(textureMtx->nums[1][1]))
-                          + (texCoordVector[2] * FX_FX32_TO_F32(textureMtx->nums[2][1]))
-                          + (texCoordVector[3] * FX_FX32_TO_F32(textureMtx->nums[3][1])));
+        g3State.SetNextTexCoordT((texCoordVector[0] * FX_FX32_TO_F32(textureMtx.m[0][1]))
+                          + (texCoordVector[1] * FX_FX32_TO_F32(textureMtx.m[1][1]))
+                          + (texCoordVector[2] * FX_FX32_TO_F32(textureMtx.m[2][1]))
+                          + (texCoordVector[3] * FX_FX32_TO_F32(textureMtx.m[3][1])));
     } else {
         g3State.SetNextTexCoordS(((float)s)/16.0f);
         g3State.SetNextTexCoordT(s_g3NextTexCoordT = ((float)t)/16.0f);
