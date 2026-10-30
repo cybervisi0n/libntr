@@ -34,14 +34,13 @@ extern "C" int NitroSpMain(void *arg);
 #include <simulator/drawmsg.h>
 #include <simulator/queue.h>
 #include <simulator/simvariables.h>
-#include <simulator/g3_draw.h>
 #include <simulator/sim_g3_CommandHandler.hpp>
 #include <simulator/sim_gui.hpp>
 
 #include <math.h>
 #include <time.h>
 
-#include "screenquads.h"
+#include "screenquads.hpp"
 
 #ifdef SDK_BUILD_WIN64
 #include <windows.h>
@@ -88,8 +87,6 @@ u8 s_SIM_DBG_OAMenable = 1;
 u8 s_SIM_DBG_BGSenable[4] = {1, 1, 1, 1};
 u8 s_SIM_DBG_OAMSenable = 1;
 
-u8 s_SIM_useWBuffer = 0;
-
 static struct timespec s_SIM_lastFrameEnd;
 static u64 sRenderFrameTime;
 static u64 sFullFrameTime;
@@ -125,9 +122,6 @@ GXVRamTex s_SIM_GXVRamTex;
 GXVRamTexPltt s_SIM_GXVRamTexPltt;
 GXVRamBGExtPltt s_SIM_GXBgExtPltt;
 GXVRamSubBGExtPltt s_SIM_GXSubBgExtPltt;
-
-// 4MB! can we reduce this?
-u8 s_SIM_g3tex[4 * 1024 * 1024];
 
 // FBOs
 static GLuint g3FrameBuffer;
@@ -238,20 +232,20 @@ static void DrawScreenQuad() {
 #endif
   glBindVertexArray(g2vertexArray);
   glBindBuffer(GL_ARRAY_BUFFER, g2vertexBuffer);
-  G3SIM_Vertex_t *quadArray = sim_GetScreenQuadArray(s_SIM_config.screenLayout,
+  SIM::G3::RenderVertex *quadArray = SIM::GetScreenQuadArray(s_SIM_config.screenLayout,
                                                      s_SIM_config.swapScreens);
-  int arrayCount = sim_GetScreenQuadVertexCount(s_SIM_config.screenLayout,
+  int arrayCount = SIM::GetScreenQuadVertexCount(s_SIM_config.screenLayout,
                                                 s_SIM_config.swapScreens);
 
-  glBufferData(GL_ARRAY_BUFFER, sizeof(G3SIM_Vertex_t) * arrayCount, quadArray,
+  glBufferData(GL_ARRAY_BUFFER, sizeof(SIM::G3::RenderVertex) * arrayCount, quadArray,
                GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(G3SIM_Vertex_t),
-                        (void *)offsetof(G3SIM_Vertex_t, x));
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(G3SIM_Vertex_t),
-                        (void *)offsetof(G3SIM_Vertex_t, s));
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(SIM::G3::RenderVertex),
+                        (void *)offsetof(SIM::G3::RenderVertex, x));
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(SIM::G3::RenderVertex),
+                        (void *)offsetof(SIM::G3::RenderVertex, s));
 
   glDrawArrays(GL_TRIANGLES, 0, arrayCount);
 #ifdef SDK_TRACY_ENABLE
@@ -954,10 +948,10 @@ void *SIM_Render(void *arg) {
   u16 keys;
   u32 i;
 
-  G3SIM_FlushArray();
+  SIM::G3::GetGlobalState().FlushDrawCall();
 
   // Draw the translucent 3D stuff
-  G3SIM_DrawItems();
+  //G3SIM_DrawItems(); // TODO Add this to GlobalState
 
   do {
 #ifdef SDK_TRACY_ENABLE
@@ -1347,7 +1341,7 @@ void *SIM_Render(void *arg) {
     s_numG3CommandsThisFrame = 0;
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    s_curPolygonAttr.alpha = 1.0f;
+    //s_curPolygonAttr.alpha = 1.0f;
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -1550,7 +1544,7 @@ int main(int argc, char *argv[]) {
   SIM::G3::GetGlobalState().Init();
 
   SIM_RenderInit(NULL);
-  G3SIM_DrawInit();
+  SIM::G3::GetGlobalState().InitGlRenderer();
 
 // Init Sockets (only needed on windows)
 #ifdef SDK_BUILD_WIN64

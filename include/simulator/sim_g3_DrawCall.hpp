@@ -60,6 +60,8 @@ class DrawCall {
   void AddVertex(const RenderVertex& vert);
   void ClearVerts();
 
+  bool IsTransparent();
+
   const RenderVertex * GetRenderVerts() { return mRenderVerts; }
   inline size_t GetRenderVertsCount() { return mRenderVertsCount; }
   inline PolygonAttr GetPolygonAttr() { return mPolygonAttr; }
@@ -69,6 +71,7 @@ class DrawCall {
   inline void SetTexImageParam(const TexImageParam& param) { mTexImageParam = param; }
   inline void SetTexPaletteBase(const u32 texPaletteBase) { mTexPaletteBase = texPaletteBase; }
   inline std::shared_ptr<Texture> GetTexture() { return mTexture; }
+  inline void SetTexture(std::shared_ptr<Texture> texture) { mTexture = texture; }
 
  private:
   RenderVertex * mRenderVerts;

@@ -8,6 +8,7 @@
 #else
 #include <simulator/glad/glad.h>
 #endif
+#include "simulator/sim_g3_GlobalState.hpp"
 
 #ifndef SIM_G3_HANDLER_H
 #define SIM_G3_HANDLER_H
@@ -91,14 +92,8 @@ extern const char * G2SIM_FragmentShader;
 
 
 //Global Variables
-extern G3SIM_FxVtx_t s_g3PolygonVerts[4];
-extern u8 s_G3numInPoly;
-extern u8 s_G3drawPoly;
 extern G3SIM_TexImageParam_t s_texImageParam;
 extern u32 s_texPlttBase;
-extern u32 s_G3triStripTriNum;
-extern u32 s_G3quadStripTriNum;
-extern u8 s_g3CurColor[3];
 extern G3SIM_PolygonAttr_t s_curPolygonAttr;
 
 //Procedures
@@ -109,12 +104,6 @@ namespace SIM::G3 {
 void Begin(GXBegin type);
 void BoxTest(s16 x, s16 y, s16 z, s16 width, s16 height, s16 depth);
 void Color(u16 color);
-void DecodeTex4(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
-void DecodeTex16(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
-void DecodeTex256(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
-void DecodeTexA3I5(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
-void DecodeTexA5I3(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t);
-void DecodeTexDirect(u8* vramTex, u8* out, u32 s, u32 t);
 void DiffAmb(u32 data);
 void Identity();
 void LightColor(u32 data);
@@ -141,7 +130,7 @@ void TexPlttBase(u32 data);
 void Vtx(s16 x, s16 y, s16 z);
 
 //Not GPU commands
-void SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts);
+void SubmitPolygon(FixedPointVertex * fxVerts, int numVerts);
 }
 
 

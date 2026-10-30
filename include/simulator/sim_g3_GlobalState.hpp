@@ -4,7 +4,10 @@
 #include <nitro/types.h>
 #include <nitro/fx/fx.h>
 #include <nitro/gx/g3.h>
+#include <nitro/gx/gx_vramcnt.h>
 #include "simulator/sim_g3_DrawCall.hpp"
+#include "simulator/sim_g3_GlRenderer.hpp"
+#include "simulator/sim_g3_TextureCache.hpp"
 
 #include <array>
 #include <vector>
@@ -54,6 +57,9 @@ class GlobalState {
   ~GlobalState();
 
   void Init();
+  void InitGlRenderer();
+
+  void FlushDrawCall();
 
   // Matrix stack operations
   void PushMatrix();
@@ -88,6 +94,11 @@ class GlobalState {
   inline bool GetSwapBuffersCalledThisFrame() { return mSwapBuffersCalledThisFrame; }
   inline float GetNextTexCoordS() { return mNextTexCoordS; }
   inline float GetNextTexCoordT() { return mNextTexCoordT; }
+  inline FixedPointVertex GetPolygonVertex(int index) { return mPolygonVerts[index]; }
+  inline GXVRamTex GetVramTex() { return mVramTex; }
+  inline GXVRamTexPltt GetVramTexPalette() { return mVramTexPalette; }
+  void * GetTexturePointer();
+  void * GetTexturePalettePointer();
 
   inline void SetMatrixMode(GXMtxMode mode) { mCurrentMatrixMode = mode; }
   void SetCurrentMatrix(const MtxFx44& matrix);
@@ -112,6 +123,8 @@ class GlobalState {
   inline void SetNextTexCoordS(float texCoord) { mNextTexCoordS = texCoord; }
   inline void SetNextTexCoordT(float texCoord) { mNextTexCoordT = texCoord; }
   inline void SetPolygonVertex(int index, const FixedPointVertex& vertex) { mPolygonVerts[index] = vertex; }
+  inline void SetVramTex(GXVRamTex tex) { mVramTex = tex; } // TODO: Add C Bridge
+  inline void SetVramTexPalette(GXVRamTexPltt texPalette) { mVramTexPalette = texPalette; } // TODO: add C bridge
 
  private:
   void UpdateClipMatrix();
@@ -154,12 +167,15 @@ class GlobalState {
   
   std::shared_ptr<DrawCall> mCurrentDrawCall = nullptr;
   std::vector<std::shared_ptr<DrawCall>> mTransparentDrawCalls = {};
-  
+  std::shared_ptr<GlRenderer> mGlRenderer = nullptr;
 
   float mNextTexCoordS = 0.0f;
   float mNextTexCoordT = 0.0f;
 
-  
+  TextureCache mTextureCache;
+
+  GXVRamTex mVramTex;
+  GXVRamTexPltt mVramTexPalette;
 };
 
 GlobalState& GetGlobalState();

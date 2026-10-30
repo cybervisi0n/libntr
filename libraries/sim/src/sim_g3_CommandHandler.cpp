@@ -20,56 +20,13 @@
 #include <simulator/sim_g3_CommandHandler.hpp>
 #include <simulator/sim_g3_GlobalState.hpp>
 #include <simulator/sim_g3_Utilities.hpp>
-#include <simulator/g3_draw.h>
 #include <simulator/sim.h>
 
 #ifdef SDK_TRACY_ENABLE
 #include "tracy/TracyC.h"
 #endif
 
-static G3SIM_Matrix_t currentClipMatrix = {0};
-
-u8 s_G3numInPoly = 0;
-u8 s_G3drawPoly = 0;
-u32 s_G3triStripTriNum = 0;
-u32 s_G3quadStripTriNum = 0;
-
-GLfloat s_g3NextTexCoordS;
-GLfloat s_g3NextTexCoordT;
-
-G3SIM_FxVtx_t s_g3PolygonVerts[4];
-
-u8 s_g3CurColor[3] = {0};
-u8 s_g3DiffuseColor[3] = {0};
-u8 s_g3AmbientColor[3] = {0};
-u8 s_g3SpecularColor[3] = {0};
-u8 s_g3EmissionColor[3] = {0};
-G3SIM_PolygonAttr_t s_curPolygonAttr;
-
-static u8 s_swapBuffersCalledThisFrame;
-
-G3SIM_TexImageParam_t s_texImageParam;
-u32 s_texPlttBase;
-
-extern u8 s_SIM_useWBuffer;
-
 static void CommonDebugCommandHandling(draw_command_type_t aCommand);
-
-static float GetVtxPosition(G3SIM_Vertex_t * vtx, int comp)
-{
-    switch(comp){
-        case 0:
-            return vtx->x;
-        case 1:
-            return vtx->y;
-        case 2:
-            return vtx->z;
-        case 3:
-            return vtx->w;
-        default:
-            return 0.0f;
-    }
-}
 
 
 void ClipSegment(fx32* outbuf, fx32 * vin, fx32 * vout, int comp, s32 plane, BOOL attribs)
@@ -320,296 +277,6 @@ void Color(u16 color)
 
     SIM_u16ToRGB(color, &rgbColor.r, &rgbColor.g, &rgbColor.b);
     GetGlobalState().SetVertexColor(rgbColor);
-}
-
-void DecodeTex4(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
-    u32 texOffset = 0;
-    u8 color1;
-    u8 color2;
-    u8 color3;
-    u8 color4;
-    u16 palColor;
-
-    u8 r;
-    u8 g;
-    u8 b;
-    for(int i=0; i < s; i++)
-    {
-        for(int j=0; j < t / 4; j++)
-        {
-            color1 = (*vramTex) & 0b00000011;
-			color2 = ((*vramTex) & 0b00001100) >> 2;
-            color3 = ((*vramTex) & 0b00110000) >> 4;
-            color4 = ((*vramTex) & 0b11000000) >> 6;
-
-            palColor = colorAddr[color1];
-            SIM_u16ToRGB( palColor, &r, &g, &b );
-			out[texOffset] = r;
-			texOffset++;
-			out[texOffset] = g;
-			texOffset++;
-			out[texOffset] = b;
-			texOffset++;
-            if(s_texImageParam.color0 == 1 && color1 == 0)
-            {
-                out[texOffset] = 0;
-            }else{
-                out[texOffset] = 255;
-            }
-			texOffset++;
-
-            palColor = colorAddr[color2];
-            SIM_u16ToRGB( palColor, &r, &g, &b );
-			out[texOffset] = r;
-			texOffset++;
-			out[texOffset] = g;
-			texOffset++;
-			out[texOffset] = b;
-			texOffset++;
-            if(s_texImageParam.color0 == 1 && color2 == 0)
-            {
-                out[texOffset] = 0;
-            }else{
-                out[texOffset] = 255;
-            }
-			texOffset++;
-
-            palColor = colorAddr[color3];
-            SIM_u16ToRGB( palColor, &r, &g, &b );
-			out[texOffset] = r;
-			texOffset++;
-			out[texOffset] = g;
-			texOffset++;
-			out[texOffset] = b;
-			texOffset++;
-            if(s_texImageParam.color0 == 1 && color3 == 0)
-            {
-                out[texOffset] = 0;
-            }else{
-                out[texOffset] = 255;
-            }
-			texOffset++;
-
-            palColor = colorAddr[color4];
-            SIM_u16ToRGB( palColor, &r, &g, &b );
-			out[texOffset] = r;
-			texOffset++;
-			out[texOffset] = g;
-			texOffset++;
-			out[texOffset] = b;
-			texOffset++;
-            if(s_texImageParam.color0 == 1 && color4 == 0)
-            {
-                out[texOffset] = 0;
-            }else{
-                out[texOffset] = 255;
-            }
-			texOffset++;
-
-            vramTex++;
-        }
-    }
-}
-
-void DecodeTex16(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
-    //4 bit per pixel (16 colour)
-	u32 texOffset = 0;
-    if( vramTex == NULL )
-    {
-        //This probably should not happen
-        return;
-    }
-	for( int i=0; i < s; i++ )
-	{
-		for( int j=0; j < t / 2; j++ )
-		{
-			u8 color1 = (*vramTex) & 0b00001111;
-			u8 color2 = ((*vramTex) & 0b11110000) >> 4;
-			u16 palColor1;
-			u16 palColor2;
-			palColor1 = colorAddr[color1];
-			palColor2 = colorAddr[color2];
-
-			u8 r;
-			u8 g;
-			u8 b;
-
-			SIM_u16ToRGB( palColor1, &r, &g, &b );
-			out[texOffset] = r;
-			texOffset++;
-			out[texOffset] = g;
-			texOffset++;
-			out[texOffset] = b;
-			texOffset++;
-            if(s_texImageParam.color0 == 1 && color1 == 0)
-            {
-                out[texOffset] = 0;
-            }else{
-                out[texOffset] = 255;
-            }
-			texOffset++;
-
-			//Color 2
-			SIM_u16ToRGB( palColor2, &r, &g, &b );
-			out[texOffset] = r;
-			texOffset++;
-			out[texOffset] = g;
-			texOffset++;
-			out[texOffset] = b;
-			texOffset++;
-            if(s_texImageParam.color0 == 1 && color2 == 0)
-            {
-                out[texOffset] = 0;
-            }else{
-                out[texOffset] = 255;
-            }
-			texOffset++;
-			vramTex++;
-		}
-	}
-}
-
-void DecodeTex256(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t){
-	u32 texOffset = 0;
-	for( int i=0; i < s; i++ )
-	{
-		for( int j=0; j < t; j++ )
-		{
-			u8 color = (*vramTex);
-			u16 palColor;
-			palColor = colorAddr[color];
-
-			u8 r;
-			u8 g;
-			u8 b;
-
-			SIM_u16ToRGB( palColor, &r, &g, &b );
-			out[texOffset] = r;
-			texOffset++;
-			out[texOffset] = g;
-			texOffset++;
-			out[texOffset] = b;
-			texOffset++;
-            if(s_texImageParam.color0 == 1 && color == 0)
-            {
-                out[texOffset] = 0;
-            }else{
-                out[texOffset] = 255;
-            }
-			texOffset++;
-			vramTex++;
-		}
-	}
-}
-
-void DecodeTexA3I5(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t)
-{
-    #ifdef SDK_TRACY_ENABLE
-    TracyCZone(ctx, 1);
-    #endif
-    u32 texOffset = 0;
-    u8 colorIdx;
-    u8 alpha;
-
-    u8 r;
-    u8 g;
-    u8 b;
-
-    u16 color;
-    for(int i=0; i < s; i++)
-    {
-        for(int j=0; j < t; j++)
-        {
-            colorIdx = (*vramTex) & 0b00011111;
-            alpha = ((*vramTex) & 0b11100000) >> 5;
-            //See GBATek A3I5
-            alpha = (alpha*4) + (alpha/2);
-            color = colorAddr[colorIdx];
-            SIM_u16ToRGB( color, &r, &g, &b );
-			out[texOffset] = r;
-			texOffset++;
-			out[texOffset] = g;
-			texOffset++;
-			out[texOffset] = b;
-			texOffset++;
-			out[texOffset] = alpha * 8;
-			texOffset++;
-            vramTex++;
-        }
-    }
-    #ifdef SDK_TRACY_ENABLE
-    TracyCZoneEnd(ctx);
-    #endif
-}
-
-void DecodeTexA5I3(u8* vramTex, u16* colorAddr, u8* out, u32 s, u32 t)
-{
-    #ifdef SDK_TRACY_ENABLE
-    TracyCZone(ctx, 1);
-    #endif
-    u32 texOffset = 0;
-    u8 colorIdx;
-    u8 alpha;
-
-    u8 r;
-    u8 g;
-    u8 b;
-
-    u16 color;
-    for(int i=0; i < s; i++)
-    {
-        for(int j=0; j < t; j++)
-        {
-            colorIdx = (*vramTex) & 0b00000111;
-            alpha = ((*vramTex) & 0b11111000) >> 3;
-            color = colorAddr[colorIdx];
-            SIM_u16ToRGB( color, &r, &g, &b );
-			out[texOffset] = r;
-			texOffset++;
-			out[texOffset] = g;
-			texOffset++;
-			out[texOffset] = b;
-			texOffset++;
-			out[texOffset] = alpha*8;
-			texOffset++;
-            vramTex++;
-        }
-    }
-    #ifdef SDK_TRACY_ENABLE
-    TracyCZoneEnd(ctx);
-    #endif
-}
-
-void DecodeTexDirect(u8* vramTex, u8* out, u32 s, u32 t)
-{
-    #ifdef SDK_TRACY_ENABLE
-    TracyCZone(ctx, 1);
-    #endif
-    u16 * colorAddr = (u16*)vramTex;
-    u8 r;
-    u8 g;
-    u8 b;
-    u32 texOffset = 0;
-    for(int i=0; i < s; i++)
-    {
-        for(int j = 0; j < t; j++ )
-        {
-            u16 color = *colorAddr;
-            SIM_u16ToRGB( color, &r, &g, &b );
-			out[texOffset] = r;
-			texOffset++;
-			out[texOffset] = g;
-			texOffset++;
-			out[texOffset] = b;
-			texOffset++;
-			out[texOffset] = 255;
-			texOffset++;
-            colorAddr++;
-        }
-    }
-    #ifdef SDK_TRACY_ENABLE
-    TracyCZoneEnd(ctx);
-    #endif
 }
 
 void DiffAmb(u32 data)
@@ -940,7 +607,7 @@ void Normal(u32 data)
 
     for(int lightNum=0; lightNum<4; lightNum++) {
         auto lightColor = g3State.GetLightColor(lightNum);
-        if((s_curPolygonAttr.lightFlag >> lightNum) & 1)
+        if((g3State.GetCurrentDrawCall()->GetPolygonAttr().lightFlag >> lightNum) & 1)
         {
             // Light is enabled
 
@@ -1026,10 +693,10 @@ void PolygonAttrCommand(u32 data)
     || useFog != attr.fogEnable)
     {
         // Flush the vertex buffer
-        G3SIM_FlushArray();
+        g3State.FlushDrawCall();
     }
 
-    if(depthTest != s_curPolygonAttr.depthTest)
+    if(depthTest != g3State.GetCurrentDrawCall()->GetPolygonAttr().depthTest)
     {
         if(depthTest){
             glDepthFunc(GL_LEQUAL);
@@ -1119,7 +786,7 @@ void TexCoord(u32 data)
 
     //Multiply by the texture matrix
     //See GBATek section on Texture Matrix
-    if(s_texImageParam.texCordTransform == 1) {
+    if(g3State.GetCurrentDrawCall()->GetTexImageParam().texCordTransform == 1) {
         float texCoordVector[4];
         texCoordVector[0] = (float)s / 16.0f;
         texCoordVector[1] = (float)t / 16.0f;
@@ -1140,7 +807,7 @@ void TexCoord(u32 data)
                           + (texCoordVector[3] * FX_FX32_TO_F32(textureMtx.m[3][1])));
     } else {
         g3State.SetNextTexCoordS(((float)s)/16.0f);
-        g3State.SetNextTexCoordT(s_g3NextTexCoordT = ((float)t)/16.0f);
+        g3State.SetNextTexCoordT(((float)t)/16.0f);
     }
 }
 
@@ -1257,10 +924,11 @@ void Vtx(s16 x, s16 y, s16 z)
     }
 }
 
-void SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts) {
-    G3SIM_Vertex_t glVerts[6];
+void SubmitPolygon(FixedPointVertex * fxVerts, int numVerts) {
+    RenderVertex glVerts[6];
     u8 addPolygon = TRUE;
     int numFinalVerts = numVerts;
+    auto& g3State = GetGlobalState();
 
     if(numVerts < 3 || numVerts > 4) {
         SIM_assert_always();
@@ -1268,7 +936,7 @@ void SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts) {
     }
 
     for(int i=0; i < numVerts; i++) {
-        G3SIM_FxVtx_t * curVtx = &fxVerts[i];
+        FixedPointVertex * curVtx = &fxVerts[i];
     
         // Truncate W to 24 bits
         curVtx->w &= 0x00FFFFFF;
@@ -1299,7 +967,7 @@ void SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts) {
     // Get the W size and remove the polygon if W is 0
     u32 wsize = 0;
     for(int i=0; i < 4; i++) {
-        G3SIM_FxVtx_t * curVtx = &fxVerts[i];
+        FixedPointVertex * curVtx = &fxVerts[i];
         u32 w = curVtx->w;
         if(w == 0){
             addPolygon = FALSE;
@@ -1311,7 +979,7 @@ void SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts) {
 
     // Normalize W
     for(int i=0; i < 4; i++) {
-        G3SIM_FxVtx_t * curVtx = &fxVerts[i];
+        FixedPointVertex * curVtx = &fxVerts[i];
         
         s32 w, wshifted;
         
@@ -1331,7 +999,7 @@ void SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts) {
         	z = 0x7FFE00;
         }
         
-        if(s_SIM_useWBuffer) {
+        if(g3State.GetUseWBuffering()) {
         	z = wshifted;
         }
         
@@ -1348,11 +1016,11 @@ void SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts) {
     // If we have a quad, convert it into 2 triangles
     if(numVerts == 4) {
         //make a copy of the quad
-        G3SIM_Vertex_t quad[4];
-        memcpy(quad, glVerts, sizeof(G3SIM_Vertex_t) * 4);
+        RenderVertex quad[4];
+        memcpy(quad, glVerts, sizeof(RenderVertex) * 4);
 
         //Convert to 2 triangles
-        #define CopyVertex(srcIdx, destIdx) memcpy(&glVerts[destIdx], &quad[srcIdx], sizeof(G3SIM_Vertex_t))
+        #define CopyVertex(srcIdx, destIdx) memcpy(&glVerts[destIdx], &quad[srcIdx], sizeof(RenderVertex))
         CopyVertex(0, 0);
         CopyVertex(1, 1);
         CopyVertex(2, 2);
@@ -1377,7 +1045,8 @@ void SubmitPolygon(G3SIM_FxVtx_t * fxVerts, int numVerts) {
 
     if(addPolygon) {
         for(int i=0; i < numFinalVerts; i++) {
-            G3SIM_AddVtx(&glVerts[i]);
+            // TODO
+            //G3SIM_AddVtx(&glVerts[i]);
         }
     }
 

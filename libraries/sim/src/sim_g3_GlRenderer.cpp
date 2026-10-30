@@ -1,4 +1,4 @@
-#include <simulator/g3_draw.h>
+#include <simulator/sim_g3_GlRenderer.hpp>
 
 #include <simulator/sim_g3_CommandHandler.hpp>
 #include <simulator/assert.h>
@@ -23,9 +23,98 @@
 #include "tracy/TracyC.h"
 #endif
 
-#define G3_DRAW_MAX_ITEMS 1000
-
 #define getbit(x,n) ( ( (x) >> (n) ) & 1 )
+
+namespace SIM::G3 {
+
+GlRenderer::GlRenderer() {}
+
+GlRenderer::~GlRenderer() {}
+
+void GlRenderer::Init() {
+	glGenVertexArrays(1, &mVertexArray);
+	glBindVertexArray(mVertexArray);
+
+	glGenBuffers(1, &mVertexBuffer);
+
+	glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(s_G3DrawVerts), NULL, GL_DYNAMIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)offsetof(RenderVertex, x));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)offsetof(RenderVertex, s));
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)offsetof(RenderVertex, r));
+
+	glBindVertexArray(0);
+	glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(2);
+}
+
+void GlRenderer::Draw(std::shared_ptr<DrawCall> drawCall) {
+	size_t vertsCount = drawCall->GetRenderVertsCount();
+	if( vertsCount != 0 )
+	{
+		glBindVertexArray(mVertexArray);
+		glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
+
+		if(mVertexBufferCount >= vertsCount) {
+			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(RenderVertex) * vertsCount, drawCall->GetRenderVerts());
+		} else {
+			glBufferData(GL_ARRAY_BUFFER, sizeof(RenderVertex) * vertsCount, drawCall->GetRenderVerts(), GL_DYNAMIC_DRAW);
+			mVertexBufferCount = vertsCount;
+		}
+
+		// Handle texture
+		if(drawCall->GetTexture() == nullptr) {
+			//glProgramUniform1i(g3shaderProgramID, glGetUniformLocation(g3shaderProgramID, "useTexture") , 0);	
+		} else {
+			drawCall->GetTexture()->Activate();
+
+			auto texImageParam = drawCall->GetTexImageParam();
+
+			if(texImageParam.repeatS) {
+				if(texImageParam.flipS)
+				{
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+				} else {
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				}
+			} else {
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+			}
+
+			if(texImageParam.repeatT) {
+				if(texImageParam.flipT)
+				{
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+				} else {
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+				}
+			} else {
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+			}
+			
+			//GLint texUnitLoc = glGetUniformLocation(g3shaderProgramID, "myTexture");
+			//set texture 0 in the shader
+			//glProgramUniform1i(g3shaderProgramID, texUnitLoc , 0);
+
+			//Enable texture in the shader
+			//glProgramUniform1i(g3shaderProgramID, glGetUniformLocation(g3shaderProgramID, "useTexture") , 1);
+		}
+
+		glDrawArrays(GL_TRIANGLES, 0, vertsCount);
+	}
+}
+
+
+}
+
+
+
+#if 0
 
 typedef struct {
 	float zIdx;
@@ -52,69 +141,6 @@ static GLuint s_G3DrawVertexBuffer;
 extern G3SIM_TexImageParam_t s_texImageParam;
 extern G3SIM_PolygonAttr_t s_curPolygonAttr;
 extern GLuint g3shaderProgramID;
-extern u8 s_SIM_g3tex[4*1024*1024];
-extern GXVRamTex s_SIM_GXVRamTex;
-extern GXVRamTexPltt s_SIM_GXVRamTexPltt;
-
-static void* getTextureVramBank();
-static void* getTexPlttVramBank();
-
-static void* getTextureVramBank()
-{
-	void * vramBank = NULL;
-	switch( s_SIM_GXVRamTex ){
-		case GX_VRAM_TEX_0_A:
-		case GX_VRAM_TEX_01_AB:
-		case GX_VRAM_TEX_012_ABC:
-		case GX_VRAM_TEX_0123_ABCD:
-		case GX_VRAM_TEX_01_AC:
-		case GX_VRAM_TEX_01_AD:
-		case GX_VRAM_TEX_012_ABD:
-		case GX_VRAM_TEX_012_ACD:
-			vramBank = (void *)HW_LCDC_VRAM_A;
-			break;
-		case GX_VRAM_TEX_0_B:
-		case GX_VRAM_TEX_01_BC:
-		case GX_VRAM_TEX_012_BCD:
-		case GX_VRAM_TEX_01_BD:
-			vramBank = (void *)HW_LCDC_VRAM_B;
-			break;
-		case GX_VRAM_TEX_0_C:
-		case GX_VRAM_TEX_01_CD:
-			vramBank = (void *)HW_LCDC_VRAM_C;
-			break;
-		case GX_VRAM_TEX_0_D:
-			vramBank = (void *)HW_LCDC_VRAM_A;
-			break;
-		default:
-			//?
-			break;
-	}
-	
-	return vramBank;
-}
-
-static void* getTexPlttVramBank()
-{
-	void * vramBank = NULL;
-	switch( s_SIM_GXVRamTexPltt ) {
-		case GX_VRAM_TEXPLTT_NONE:
-		case GX_VRAM_TEXPLTT_0123_E:
-		case GX_VRAM_TEXPLTT_01234_EF:
-		case GX_VRAM_TEXPLTT_012345_EFG:
-			vramBank = (void *)HW_LCDC_VRAM_E;
-			break;
-		case GX_VRAM_TEXPLTT_0_F:
-		case GX_VRAM_TEXPLTT_01_FG:
-			vramBank = (void *)HW_LCDC_VRAM_F;
-			break;
-		case GX_VRAM_TEXPLTT_0_G:
-			vramBank = (void *)HW_LCDC_VRAM_G;
-			break;
-	}
-	
-	return vramBank;
-}
 
 void G3SIM_AddVtx(G3SIM_Vertex_t * vtx)
 {
@@ -136,35 +162,6 @@ void G3SIM_DrawArray()
 		glDrawArrays(GL_TRIANGLES,0,s_G3DrawCurVertIdx);
 	}
 	return;
-}
-
-void G3SIM_DrawCleanUp()
-{
-	s_G3DrawCurVertIdx = 0;
-}
-
-void G3SIM_DrawInit()
-{
-	glGenVertexArrays(1, &s_G3DrawVertexArray);
-	glBindVertexArray(s_G3DrawVertexArray);
-
-	glGenBuffers(1, &s_G3DrawVertexBuffer);
-
-	glBindBuffer(GL_ARRAY_BUFFER, s_G3DrawVertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(s_G3DrawVerts), NULL, GL_DYNAMIC_DRAW);
-
-
-	glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(G3SIM_Vertex_t), (void*)offsetof(G3SIM_Vertex_t, x));
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(G3SIM_Vertex_t), (void*)offsetof(G3SIM_Vertex_t, s));
-	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(G3SIM_Vertex_t), (void*)offsetof(G3SIM_Vertex_t, r));
-
-	glBindVertexArray(0);
-	glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(2);
 }
 
 void G3SIM_FlushArray()
@@ -413,3 +410,4 @@ void G3SIM_DrawItems()
 	}
 	s_G3DrawItemListCount = 0;
 }
+#endif

@@ -411,6 +411,7 @@ static inline void GX_VRAMCNT_SetTEX_ (GXVRamTex tex)
 {
     #ifdef SDK_PORT
     s_SIM_GXVRamTex = tex;
+	// TODO: add C bridge for global state
     #endif
 	if (tex == GX_VRAM_TEX_NONE) {
 		texOff_();

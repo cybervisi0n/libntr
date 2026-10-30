@@ -2,6 +2,8 @@
 
 #include <cstring>
 
+#include <nitro/gx/g3.h>
+
 namespace SIM::G3 {
 
 static constexpr auto InitialRenderVertsCapacity = 512;
@@ -33,6 +35,17 @@ void DrawCall::AddVertex(const RenderVertex& vert) {
 void DrawCall::ClearVerts() {
     // Set count to 0 without freeing/reallocating
     mRenderVertsCount = 0;
+}
+
+bool DrawCall::IsTransparent() {
+    if(mTexImageParam.textureFormat == GX_TEXFMT_A3I5
+    || mTexImageParam.textureFormat == GX_TEXFMT_A5I3
+    || mPolygonAttr.alpha < 0.99f
+    ) {
+        return true;
+    }
+
+    return false;
 }
 
 

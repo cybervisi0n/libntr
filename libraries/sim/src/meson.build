@@ -11,7 +11,6 @@ libsim_srcs = files(
     'imgui/imgui_tables.cpp',
     'imgui/imgui_widgets.cpp',
     'ImGuiFileDialog/ImGuiFileDialog.cpp',
-    'g3_draw.cpp',
     'queue.c',
     'sim_assert.c',
     'sim_audio.cpp',
@@ -22,6 +21,7 @@ libsim_srcs = files(
     'sim_g3_CommandProcessor.cpp',
     'sim_g3_DrawCall.cpp',
     'sim_g3_GlobalState.cpp',
+    'sim_g3_GlRenderer.cpp',
     'sim_g3_Texture.cpp',
     'sim_g3_TextureCache.cpp',
     'sim_g3_Utilities.cpp',
@@ -32,7 +32,7 @@ libsim_srcs = files(
     'sim_main.cpp',
     'sim_net.cpp',
     'sim_RomExtractor.cpp',
-    'sim_screenquads.c',
+    'sim_screenquads.cpp',
     'sim_shaders.cpp',
     'sim_vars.c'
 )
