@@ -86,7 +86,7 @@ class GlobalState {
   inline RGBBytes GetAmbientColor() { return mAmbientColor; }
   inline RGBBytes GetSpecularColor() { return mSpecularColor; }
   inline RGBBytes GetEmissionColor() { return mEmissionColor; }
-  inline RGBBytes GetLightColor(int lightId) { mLightColor[lightId]; }
+  inline RGBBytes GetLightColor(int lightId) { return mLightColor[lightId]; }
   inline FloatVec3 GetLightVector(int lightId) { return mLightVector[lightId]; }
   inline int GetCurrentIndexInPolygon() { return mCurrentIndexInPolygon; }
   inline bool GetPolygonReady() { return mPolygonReady; }

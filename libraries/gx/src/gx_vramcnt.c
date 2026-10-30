@@ -23,6 +23,7 @@
 
 #ifdef SDK_PORT
 #include <simulator/sim.h>
+#include <simulator/sim_g3_c_bridge.h>
 #endif
 
 typedef enum {
@@ -410,8 +411,7 @@ static inline void texOff_ (void)
 static inline void GX_VRAMCNT_SetTEX_ (GXVRamTex tex)
 {
     #ifdef SDK_PORT
-    s_SIM_GXVRamTex = tex;
-	// TODO: add C bridge for global state
+    SIM_G3_SetVramTex(tex);
     #endif
 	if (tex == GX_VRAM_TEX_NONE) {
 		texOff_();
@@ -896,7 +896,7 @@ static inline void GxSetBankForTexPltt (GXVRamTexPltt texPltt)
 {
 	GX_VRAM_TEXPLTT_ASSERT(texPltt);
     #ifdef SDK_PORT
-    s_SIM_GXVRamTexPltt = texPltt;
+	SIM_G3_SetVramTexPltt(texPltt);
     #endif
 
 	gGXState.vramCnt.lcdc = (u16)(~texPltt & (gGXState.vramCnt.lcdc | gGXState.vramCnt.texPltt));

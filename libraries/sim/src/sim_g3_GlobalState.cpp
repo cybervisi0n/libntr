@@ -194,10 +194,11 @@ void GlobalState::FlushDrawCall() {
 	std::shared_ptr<Texture> texture = nullptr;
     auto texImageParam = mCurrentDrawCall->GetTexImageParam();
 
-    if(texImageParam.textureFormat != GX_TEXFMT_NONE) {
+	u8 * vramTex = (u8*)((u64)GetTexturePointer() + texImageParam.textureOffset);
+	u8 * vramPltt = (u8*)((u64)GetTexturePalettePointer() + mCurrentDrawCall->GetTexPaletteBase());
+
+    if(texImageParam.textureFormat != GX_TEXFMT_NONE && vramTex != nullptr) {
 		GLuint g3TextureId;
-		u8 * vramTex = (u8*)((u64)GetTexturePointer() + texImageParam.textureOffset);
-		u8 * vramPltt = (u8*)((u64)GetTexturePalettePointer() + mCurrentDrawCall->GetTexPaletteBase());
 		u16 * colorAddr = (u16*)vramPltt;
 
 		//Calculate the texture + palette CRC
