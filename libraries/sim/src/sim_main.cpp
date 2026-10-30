@@ -1343,7 +1343,10 @@ void *SIM_Render(void *arg) {
     s_numG3CommandsThisFrame = 0;
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    //s_curPolygonAttr.alpha = 1.0f;
+    auto polygonAttr = SIM::G3::GetGlobalState().GetCurrentDrawCall()->GetPolygonAttr();
+    polygonAttr.alpha = 1.0f;
+    SIM::G3::GetGlobalState().GetCurrentDrawCall()->SetPolygonAttr(polygonAttr);
+    
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);

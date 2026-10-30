@@ -59,6 +59,8 @@ class GlobalState {
   void Init();
   void InitGlRenderer();
 
+  void SubmitPolygon(int numVerts);
+
   void FlushDrawCall();
   void DrawTransparentItems();
 

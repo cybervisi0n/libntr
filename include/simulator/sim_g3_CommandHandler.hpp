@@ -13,14 +13,6 @@
 #ifndef SIM_G3_HANDLER_H
 #define SIM_G3_HANDLER_H
 
-//Type definitions
-typedef struct G3SIM_Matrix_t { fx32 nums[4][4]; } G3SIM_Matrix_t;
-
-typedef struct {
-    G3SIM_Matrix_t mtxs[32];
-    u8 stackPtr;
-} G3SIM_MatrixStack_t;
-
 typedef struct {
     u8 ops[4];
 } G3SIM_CommandBlock_t;
@@ -90,12 +82,6 @@ extern const char * G3SIM_FragmentShader;
 extern const char * G2SIM_VertexShader;
 extern const char * G2SIM_FragmentShader;
 
-
-//Global Variables
-extern G3SIM_TexImageParam_t s_texImageParam;
-extern u32 s_texPlttBase;
-extern G3SIM_PolygonAttr_t s_curPolygonAttr;
-
 //Procedures
 
 //GPU Commands
@@ -128,9 +114,6 @@ void TexCoord(u32 data);
 void TexImageParamCommand(u32 data);
 void TexPlttBase(u32 data);
 void Vtx(s16 x, s16 y, s16 z);
-
-//Not GPU commands
-void SubmitPolygon(FixedPointVertex * fxVerts, int numVerts);
 }
 
 

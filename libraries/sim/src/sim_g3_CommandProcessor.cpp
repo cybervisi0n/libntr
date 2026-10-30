@@ -478,7 +478,7 @@ void HandleCommandMessage(draw_msg_t *msg) {
             g3State.SetPolygonVertex(2, temp);
           }
 
-          //SubmitPolygon(s_g3PolygonVerts, 3); // TODO refactor (this will probably become member of GlobalState)
+          g3State.SubmitPolygon(3);
 
           if (primType == GX_BEGIN_TRIANGLE_STRIP &&
               !(g3State.GetTriStripTriangleIndex() & 1)) {
@@ -501,7 +501,7 @@ void HandleCommandMessage(draw_msg_t *msg) {
             g3State.SetPolygonVertex(3, temp);
           }
 
-          //SubmitPolygon(s_g3PolygonVerts, 4); // TODO refactor
+          g3State.SubmitPolygon(4);
 
           if (primType == GX_BEGIN_QUAD_STRIP) {
             // Copy the last two verts from the last polygon
