@@ -41,6 +41,9 @@ void AppNetInit() {
 void AppNetMain(bool *openState) {
     ImGui::Begin("Multiplayer", openState);
 
+    #ifdef SDK_BUILD_PROSPERO
+    ImGui::Text("Not currently supported on PS5");
+    #else
     ImGui::PushID(1);
     ImGui::Text("Host:");
     ImGui::SameLine(0.0f, 1.0f);
@@ -117,6 +120,7 @@ void AppNetMain(bool *openState) {
         }
         ImGui::EndTable();
     }
+    #endif
 
     ImGui::End();
 }

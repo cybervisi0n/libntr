@@ -1,5 +1,6 @@
 #include <nitro/os/common/arena.h>
 #include <nitro/spi/ARM9/tp.h>
+#define HW_MAIN_MEM_SYSTEM_SIZE         0x400
 
 u32 SDK_AUTOLOAD_DTCM_START[2];
 

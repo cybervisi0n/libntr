@@ -1,10 +1,6 @@
 #include <nitro.h>
 #include <simulator/sim.h>
-#ifdef SDK_BUILD_NX
-#include <glad/glad.h>
-#else
-#include <simulator/glad/glad.h>
-#endif
+#include <simulator/sim_opengl.h>
 
 #ifdef SDK_TRACY_ENABLE
 #include "tracy/TracyC.h"
@@ -526,7 +522,7 @@ static void DrawBGLine_Text(u32 line, u32 bgnum, u8 mosaic, u8 isSub) {
 
         if (isSub) {
           curpal =
-              (u16 *)(getBgExtPlttVramBank(isSub) + (extpalslot * SlotSize) +
+              (u16 *)((uPtr)getBgExtPlttVramBank(isSub) + (extpalslot * SlotSize) +
                       ((curtile >> 12) * PaletteSize));
         } else {
           curpal = (u16 *)getBgExtPlttVramBank(isSub);
@@ -563,7 +559,7 @@ static void DrawBGLine_Text(u32 line, u32 bgnum, u8 mosaic, u8 isSub) {
 
           if (isSub) {
             curpal =
-                (u16 *)(getBgExtPlttVramBank(isSub) + (extpalslot * SlotSize) +
+                (u16 *)((uPtr)getBgExtPlttVramBank(isSub) + (extpalslot * SlotSize) +
                         ((curtile >> 12) * PaletteSize));
           } else {
             curpal = (u16 *)getBgExtPlttVramBank(isSub);
@@ -1256,12 +1252,12 @@ static void DrawBGLine_Extended(u32 line, u32 bgnum, u8 mosaic, u8 isSub) {
             const u32 SlotSize = PaletteSize * 16;
 
             if (isSub) {
-              curpal = (u16 *)(getBgExtPlttVramBank(isSub) +
+              curpal = (u16 *)((uPtr)getBgExtPlttVramBank(isSub) +
                                (extpalslot * SlotSize) +
                                ((curtile >> 12) * PaletteSize));
             } else {
               curpal =
-                  (u16 *)(getBgExtPlttVramBank(isSub) + (bgnum * SlotSize) +
+                  (u16 *)((uPtr)getBgExtPlttVramBank(isSub) + (bgnum * SlotSize) +
                           ((curtile >> 12) * PaletteSize));
             }
           } else {

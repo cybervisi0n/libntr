@@ -25,6 +25,10 @@ void MTX_FrustumW(fx32 t, fx32 b, fx32 l, fx32 r, fx32 n, fx32 f, fx32 scaleW, M
 void MTX_PerspectiveW(fx32 fovySin, fx32 fovyCos, fx32 aspect, fx32 n, fx32 f, fx32 scaleW, MtxFx44 * mtx);
 void MTX_OrthoW(fx32 t, fx32 b, fx32 l, fx32 r, fx32 n, fx32 f, fx32 scaleW, MtxFx44 * mtx);
 
+#ifndef SDK_BUILD_ARM
+#define register
+#endif
+
 void MTX_Identity44_(register MtxFx44 * pDst);
 void MTX_Copy44To33_(register const MtxFx44 * pSrc, register MtxFx33 * pDst);
 void MTX_Copy44To43_(register const MtxFx44 * pSrc, register MtxFx43 * pDst);
@@ -33,6 +37,10 @@ void MTX_Scale44_(register MtxFx44 * pDst, register fx32 x, register fx32 y, reg
 void MTX_RotX44_(register MtxFx44 * pDst, register fx32 sinVal, register fx32 cosVal);
 void MTX_RotY44_(register MtxFx44 * pDst, register fx32 sinVal, register fx32 cosVal);
 void MTX_RotZ44_(register MtxFx44 * pDst, register fx32 sinVal, register fx32 cosVal);
+
+#ifndef SDK_BUILD_ARM
+#undef register
+#endif
 
 SDK_INLINE void MTX_Identity44 (MtxFx44 * pDst)
 {

@@ -24,6 +24,10 @@ int MTX_Inverse33(const MtxFx33 * pSrc, MtxFx33 * pDst);
 void MTX_Concat33(const MtxFx33 * a, const MtxFx33 * b, MtxFx33 * ab);
 void MTX_MultVec33(const VecFx32 * vec, const MtxFx33 * m, VecFx32 * dst);
 
+#ifndef SDK_BUILD_ARM
+#define register
+#endif
+
 void MTX_Identity33_(register MtxFx33 * pDst);
 void MTX_Copy33To43_(const register MtxFx33 * pSrc, register MtxFx43 * pDst);
 void MTX_Copy33To44_(const register MtxFx33 * pSrc, register MtxFx44 * pDst);
@@ -32,6 +36,10 @@ void MTX_Scale33_(register MtxFx33 * pDst, register fx32 x, register fx32 y, reg
 void MTX_RotX33_(register MtxFx33 * pDst, register fx32 sinVal, register fx32 cosVal);
 void MTX_RotY33_(register MtxFx33 * pDst, register fx32 sinVal, register fx32 cosVal);
 void MTX_RotZ33_(register MtxFx33 * pDst, register fx32 sinVal, register fx32 cosVal);
+
+#ifndef SDK_BUILD_ARM
+#undef register
+#endif
 
 SDK_INLINE void MTX_Identity33 (MtxFx33 * pDst)
 {

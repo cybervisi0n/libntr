@@ -150,6 +150,20 @@ if (build_target == 'nx')
     ]
 endif
 
+if (build_target == 'prospero')
+    nitrosdk_args += [
+        '-DSDK_PORT',
+        '-DSDK_X86',
+        '-DSDK_BUILD_PROSPERO',
+        '-DSDK_64BIT',
+        '-D_NITRO',
+        '-w',
+        '-I' + meson.global_source_root() + '/prospero-deps/include',
+        '-I' + meson.global_source_root() + '/prospero-deps/ps5-payload-sdk/target/user/homebrew/include'
+    ]
+
+endif
+
 nitrosdk_arm7_args = []
 
 if(build_target == 'arm')
@@ -180,6 +194,18 @@ add_project_arguments(nitrosdk_args,
     language: 'cpp',
     native: (build_target == 'linux' or build_target == 'win64')
 )
+
+############################################################
+###                  PROSPERO SUPPORT                    ###
+############################################################
+# External static libraries
+if(build_target == 'prospero')
+    prospero_lib_dirs = [
+        meson.global_source_root() + '/prospero-deps/ps5-payload-sdk/target/lib',
+        meson.global_source_root() + '/prospero-deps/ps5-payload-sdk/target/user/homebrew/lib',
+        meson.global_source_root() + '/prospero-deps/lib'
+    ]
+endif
 
 ############################################################
 ###                  GENERATED HEADERS                   ###

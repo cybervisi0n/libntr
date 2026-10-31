@@ -1,4 +1,6 @@
+#ifndef SDK_BUILD_PROSPERO
 #include <enet/enet.h>
+#endif
 #include <nitro.h>
 #include <simulator/sim.h>
 #include <simulator/config/sim_config.h>
@@ -47,6 +49,7 @@ static void SendMyPlayer();
 static void InitPacketHeader(SIM_Net_PacketHeader_t * header);
 static BOOL CheckPacketHeader(SIM_Net_PacketHeader_t * header);
 
+#ifndef SDK_BUILD_PROSPERO
 static void ProcessHostEvent(ENetEvent * event);
 static void ProcessClientEvent(ENetEvent * event);
 
@@ -54,6 +57,7 @@ static void ProcessMPParentEvent(ENetEvent * event);
 static void ProcessMPChildEvent(ENetEvent * event);
 
 static void ReceiveMPData(ENetEvent * event);
+#endif
 
 static void HostUpdatePlayerList();
 
@@ -72,6 +76,8 @@ void SIM_Net_Init()
 
 void SIM_Net_Process()
 {
+    #ifndef SDK_BUILD_PROSPERO
+    // TODO: add PS5 support for ENet
     if(net.enetHost == NULL) {
         return;
     }
@@ -90,6 +96,7 @@ void SIM_Net_Process()
         TracyCZoneEnd(ctx);
         #endif
     }
+    #endif
 }
 
 void SIM_Net_SendBeaconIndication()
@@ -102,6 +109,10 @@ void SIM_Net_SendBeaconIndication()
 
 BOOL SIM_Net_StartHost()
 {
+    #ifdef SDK_BUILD_PROSPERO
+    // TODO: add PS5 support for ENet
+    return FALSE;
+    #else
     if(net.state != SIM_NET_STATE_DISCONNECTED) {
         return FALSE;
     }
@@ -125,10 +136,14 @@ BOOL SIM_Net_StartHost()
     net.playerCount = 1;
     net.state = SIM_NET_STATE_HOST;
     return TRUE;
+    #endif
 }
 
 BOOL SIM_Net_StartClient(char * ipAddress)
 {
+    #ifdef SDK_BUILD_PROSPERO
+    return FALSE;
+    #else
     if(net.state != SIM_NET_STATE_DISCONNECTED) {
         return FALSE;
     }
@@ -217,6 +232,7 @@ BOOL SIM_Net_StartClient(char * ipAddress)
     myPeer->data = &net.playerList[0];
     net.state = SIM_NET_STATE_CLIENT;
     return TRUE;
+    #endif
 }
 
 int SIM_Net_GetAID()
@@ -266,6 +282,10 @@ void SIM_Net_SetMPState(SIM_Net_MPState_t state)
 
 BOOL SIM_Net_JoinMP(u8 * bssid, u8 * ssid)
 {
+    #ifdef SDK_BUILD_PROSPERO
+    // TODO: Add PS5 support for ENet
+    return FALSE;
+    #else
     // Find the connected player with matching mac address (bssid)
     int idNo = -1;
     for(int i=0; i < SIM_NET_MAX_PLAYERS; i++) {
@@ -305,10 +325,15 @@ BOOL SIM_Net_JoinMP(u8 * bssid, u8 * ssid)
 
 
     return TRUE;
+    #endif
 }
 
 BOOL SIM_Net_DisconnectMP(u16 aidBitmap, u16 * resultBitmap)
 {
+    #ifdef SDK_BUILD_PROSPERO
+    // TODO: Add ENet support for PS5
+    return FALSE;
+    #else
     BOOL result = FALSE;
     SIM_Net_DisconnectPacket_t disconnectPacket = {};
     InitPacketHeader(&disconnectPacket.common.header);
@@ -359,10 +384,15 @@ BOOL SIM_Net_DisconnectMP(u16 aidBitmap, u16 * resultBitmap)
     }
 
     return TRUE;
+    #endif
 }
 
 BOOL SIM_Net_SendMPData(u16 aidBitmap, u8 port, u8 * data, int dataLen)
 {
+    #ifdef SDK_BUILD_PROSPERO
+    // TODO: Add ENet support for PS5
+    return FALSE;
+    #else
     int mpDataPacketSize = dataLen + sizeof(SIM_Net_MpDataPacket_t);
     SIM_Net_MpDataPacket_t * mpDataPacket = (SIM_Net_MpDataPacket_t *)malloc(mpDataPacketSize);
     memset(mpDataPacket, 0, mpDataPacketSize);
@@ -409,6 +439,7 @@ BOOL SIM_Net_SendMPData(u16 aidBitmap, u8 port, u8 * data, int dataLen)
     free(mpDataPacket);
     //return (numSent > 0);
     return TRUE;
+    #endif
 }
 
 int SIM_Net_Scan(WMBssDesc * bssDescOut)
@@ -473,6 +504,8 @@ static void InitMyPlayer()
 // If a host, update in the player list and broadcast the playerlist
 static void SendMyPlayer()
 {
+    #ifndef SDK_BUILD_PROSPERO
+    //TODO: Add PS5 support for ENet
     if(net.state == SIM_NET_STATE_CLIENT) {
         SIM_Net_PlayerInfoPacket_t playerInfoPacket = {0};
         InitPacketHeader(&playerInfoPacket.common.header);
@@ -497,6 +530,7 @@ static void SendMyPlayer()
         SDL_UnlockMutex(net.playerListMutex);
         HostUpdatePlayerList();
     }
+    #endif
 }
 
 static void InitPacketHeader(SIM_Net_PacketHeader_t * header)
@@ -516,6 +550,7 @@ static BOOL CheckPacketHeader(SIM_Net_PacketHeader_t * header)
     return TRUE;
 }
 
+#ifndef SDK_BUILD_PROSPERO
 static void ProcessHostEvent(ENetEvent * event)
 {
     switch(event->type) {
@@ -906,10 +941,12 @@ static void ReceiveMPData(ENetEvent * event)
 
     WMSP_Indicate(&indicate);
 }
+#endif
 
 
 static void HostUpdatePlayerList()
 {
+    #ifndef SDK_BUILD_PROSPERO
     SIM_Net_PlayerListPacket_t playerListPkt = {};
 
     InitPacketHeader(&playerListPkt.common.header);
@@ -918,4 +955,5 @@ static void HostUpdatePlayerList()
     memcpy(playerListPkt.playerList, net.playerList, sizeof(playerListPkt.playerList));
     ENetPacket * pkt = enet_packet_create(&playerListPkt, sizeof(SIM_Net_PlayerListPacket_t), ENET_PACKET_FLAG_RELIABLE);
     enet_host_broadcast(net.enetHost, SIM_NET_CHANNEL_MGMT, pkt);
+    #endif
 }

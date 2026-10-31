@@ -9,17 +9,68 @@ if(build_target == 'linux' or build_target == 'win64')
 sdl2_lib = meson.get_compiler('c').find_library('SDL2')
 elif(build_target == 'nx')
 sdl2_lib = meson.get_compiler('c').find_library('SDL2', dirs: '/opt/devkitpro/portlibs/switch/lib/')
+elif(build_target == 'prospero')
+sdl2_lib = meson.get_compiler('c').find_library('SDL2', dirs: prospero_lib_dirs)
 endif
 sdl2_dep = declare_dependency(dependencies: [sdl2_lib])
 
 if(build_target == 'linux' or build_target == 'win64')
 enet_lib = meson.get_compiler('c').find_library('enet')
+enet_dep = declare_dependency(dependencies: [enet_lib])
 elif(build_target == 'nx')
 enet_lib = meson.get_compiler('c').find_library('enet', dirs: '/opt/devkitpro/portlibs/switch/lib/')
-endif
 enet_dep = declare_dependency(dependencies: [enet_lib])
+endif
 
-libsim_dependencies = [sdl2_dep, enet_dep]
+
+libsim_dependencies = [sdl2_dep]
+if(build_target == 'linux' or build_target == 'win64' or build_target == 'nx')
+    libsim_dependencies += enet_dep
+endif
+
+# PS5 external libraries
+if(build_target == 'prospero')
+    prospero_libs = declare_dependency(
+        dependencies: [
+            # SCE Core libraries
+            meson.get_compiler('cpp').find_library('kernel', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('SceAudioOut', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('SceImeDialog', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('SceKeyboard', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('ScePad', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('SceSystemService', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('SceUserService', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('SceVideoOut', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('SceAgc', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('SceAgcDriver', dirs: prospero_lib_dirs),
+
+            # OpenGL libraries
+            meson.get_compiler('cpp').find_library('blake3', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('compiler', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('gallium', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('glapi_bridge', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('glapi', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('glcpp', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('glsl_util', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('glsl', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('mesa_util_c11', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('mesa_util_simd', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('mesa_util_clflush', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('mesa_util_clflushopt', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('mesa_util', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('mesa', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('mesa_sse41', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('nir', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('ps5_opengl_core33', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('psbc.ps5', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('softpipe', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('vtn', dirs: prospero_lib_dirs),
+        ]
+    )
+    libsim_dependencies += prospero_libs
+endif
+
+
 libsim_args = [ ]
 
 if(build_target == 'win64')

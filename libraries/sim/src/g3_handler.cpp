@@ -2,11 +2,7 @@
 #include <pthread.h>
 #include <SDL2/SDL.h>
 
-#ifdef SDK_BUILD_NX
-#include <glad/glad.h>
-#else
-#include <simulator/glad/glad.h>
-#endif
+#include <simulator/sim_opengl.h>
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -4,7 +4,11 @@
 #include <nitro.h>
 #include <nitro/types.h>
 
+#ifndef SDK_BUILD_PROSPERO
+//TODO: Add PS5 support for enet
 #include <enet/enet.h>
+#endif
+
 #include <SDL2/SDL.h>
 
 #define SIM_NET_PORT 2009
@@ -60,11 +64,20 @@ typedef enum {
 typedef struct {
     BOOL initialized;
     SIM_Net_State_t state;
+    #ifdef SDK_BUILD_PROSPERO
+    void * enetHost;
+    #else
     ENetHost * enetHost;
+    #endif
     int playerCount;
     SDL_mutex * playerListMutex;
     SIM_Net_Player_t playerList[SIM_NET_MAX_PLAYERS];
+    #ifdef SDK_BUILD_PROSPERO
+    // TODO: add ENet support for PS5
+    void * peerList[SIM_NET_MAX_PLAYERS];
+    #else
     ENetPeer * peerList[SIM_NET_MAX_PLAYERS];
+    #endif
     SIM_Net_Player_t curPlayer;
     u16 aidBitmask;
     SDL_sem * joinReqSemaphore;

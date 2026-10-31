@@ -48,8 +48,16 @@ extern "C" {
 #define OS_PR7_ACCESS_RW     (HW_C5_PERMIT_RW << HW_C5_PR7_SFT)
 #define OS_PR7_ACCESS_RO     (HW_C5_PERMIT_RO << HW_C5_PR7_SFT)
 
-void OS_EnableICacheForProtectionRegion(register u32 flags);
-void OS_DisableICacheForProtectionRegion(register u32 flags);
+void OS_EnableICacheForProtectionRegion(
+	#ifdef SDK_BUILD_ARM
+	register 
+	#endif
+	u32 flags);
+void OS_DisableICacheForProtectionRegion(
+	#ifdef SDK_BUILD_ARM
+	register 
+	#endif
+	u32 flags);
 
 u32 OS_GetICacheEnableFlagsForProtectionRegion(void);
 

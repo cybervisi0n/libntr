@@ -184,8 +184,8 @@ void G3SIM_FlushArray()
 	if( s_texImageParam.textureFormat != GX_TEXFMT_NONE )
 	{
 		GLuint g3TextureId;
-		u8 * vramTex = (u8*)(getTextureVramBank() + s_texImageParam.textureOffset);
-		u8 * vramPltt = (u8*)(getTexPlttVramBank() + s_texPlttBase);
+		u8 * vramTex = (u8*)((uPtr)getTextureVramBank() + s_texImageParam.textureOffset);
+		u8 * vramPltt = (u8*)((uPtr)getTexPlttVramBank() + s_texPlttBase);
 		u16 * colorAddr = (u16*)vramPltt;
 
 		//Calculate the texture + palette CRC

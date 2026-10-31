@@ -140,6 +140,10 @@ static inline void MI_CpuClear(void *dest, u32 size) {
 }
 #endif
 
+#ifndef SDK_BUILD_ARM
+#define register
+#endif
+
 void MI_Copy16B(register const void * pSrc, register void * pDest);
 void MI_Copy32B(register const void * pSrc, register void * pDest);
 void MI_Copy36B(register const void * pSrc, register void * pDest);
@@ -151,6 +155,10 @@ void MI_Zero32B(register void * pDest);
 void MI_Zero36B(register void * pDest);
 void MI_Zero48B(register void * pDest);
 void MI_Zero64B(register void * pDest);
+
+#ifndef SDK_BUILD_ARM
+#undef register
+#endif
 
 #ifdef __cplusplus
 }

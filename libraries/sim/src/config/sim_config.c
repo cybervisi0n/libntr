@@ -11,7 +11,11 @@
 
 #include <stdlib.h>
 
+#ifdef SDK_BUILD_PROSPERO
+#define SIM_CONFIG_FILE_PATH "/app0/sim_config.ini"
+#else
 #define SIM_CONFIG_FILE_PATH "./sim_config.ini"
+#endif
 
 static int IniHandler(void* user, const char* section, const char* name,
                    const char* value);

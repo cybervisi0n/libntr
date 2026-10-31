@@ -25,6 +25,10 @@ void MTX_Concat43(const MtxFx43 * a, const MtxFx43 * b, MtxFx43 * ab);
 void MTX_MultVec43(const VecFx32 * vec, const MtxFx43 * m, VecFx32 * dst);
 void MTX_LookAt(const VecFx32 * camPos, const VecFx32 * camUp, const VecFx32 * target, MtxFx43 * mtx);
 
+#ifndef SDK_BUILD_ARM
+#define register
+#endif
+
 void MTX_Identity43_(register MtxFx43 * pDst);
 void MTX_Copy43To44_(register const MtxFx43 * pSrc, register MtxFx44 * pDst);
 void MTX_Transpose43_(register const MtxFx43 * pSrc, register MtxFx43 * pDst);
@@ -32,6 +36,10 @@ void MTX_Scale43_(register MtxFx43 * pDst, register fx32 x, register fx32 y, reg
 void MTX_RotX43_(register MtxFx43 * pDst, register fx32 sinVal, register fx32 cosVal);
 void MTX_RotY43_(register MtxFx43 * pDst, register fx32 sinVal, register fx32 cosVal);
 void MTX_RotZ43_(register MtxFx43 * pDst, register fx32 sinVal, register fx32 cosVal);
+
+#ifndef SDK_BUILD_ARM
+#undef register
+#endif
 
 SDK_INLINE void MTX_Identity43 (MtxFx43 * pDst)
 {

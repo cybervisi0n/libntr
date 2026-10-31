@@ -16,10 +16,18 @@ int MTX_Inverse22(const MtxFx22 * pSrc, MtxFx22 * pDst);
 void MTX_Concat22(const MtxFx22 * a, const MtxFx22 * b, MtxFx22 * ab);
 void MTX_ScaleApply22(const MtxFx22 * pSrc, MtxFx22 * pDst, fx32 x, fx32 y);
 
+#ifndef SDK_BUILD_ARM
+#define register
+#endif
+
 void MTX_Identity22_(register MtxFx22 * pDst);
 void MTX_Transpose22_(const register MtxFx22 * pSrc, register MtxFx22 * pDst);
 void MTX_Scale22_(register MtxFx22 * pDst, register fx32 x, register fx32 y);
 void MTX_Rot22_(register MtxFx22 * pDst, register fx32 sinVal, register fx32 cosVal);
+
+#ifndef SDK_BUILD_ARM
+#undef register
+#endif
 
 SDK_INLINE void MTX_Identity22 (MtxFx22 * pDst)
 {

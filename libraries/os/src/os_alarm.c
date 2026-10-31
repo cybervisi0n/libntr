@@ -17,7 +17,7 @@ static void OSi_AlarmHandler(void * arg);
 static void OSi_ArrangeTimer(void);
 
 #ifdef SDK_PORT
-#ifdef SDK_BUILD_WIN64
+#if defined(SDK_BUILD_WIN64) || defined(SDK_BUILD_PROSPERO)
 static unsigned int OS_SDLTimerCallback(unsigned int interval, void * param)
 #else
 static u32 OS_SDLTimerCallback(u32 interval, void * param)

@@ -1,8 +1,8 @@
 #include "simulator/sim_g3_CommandProcessor.hpp"
 
 #include "simulator/drawmsg.h"
-#include "simulator/g3_handler.h"
-#include "simulator/g3_draw.h"
+#include "simulator/sim_g3_CommandHandler.hpp"
+#include "simulator/sim_g3_GlobalState.hpp"
 
 #include <cstring>
 #include <cstdlib>
@@ -367,54 +367,54 @@ void HandleCommandMessage(draw_msg_t *msg) {
   case DRAW_CMD_G3_DUMMY:
     break;
   case DRAW_CMD_G3_BEGIN:
-    G3SIM_Begin(static_cast<GXBegin>(msg->data.numU8));
+    Begin(static_cast<GXBegin>(msg->data.numU8));
     break;
   case DRAW_CMD_G3_MTXMODE:
-    G3SIM_MtxMode(static_cast<GXMtxMode>(msg->data.numU8));
+    MtxMode(static_cast<GXMtxMode>(msg->data.numU8));
     break;
   case DRAW_CMD_G3_IDENTITY:
-    G3SIM_Identity();
+    Identity();
     break;
   case DRAW_CMD_G3_PUSHMTX:
-    G3SIM_MtxPush();
+    MtxPush();
     break;
   case DRAW_CMD_G3_POPMTX:
-    G3SIM_MtxPop(msg->data.numU8);
+    MtxPop(msg->data.numU8);
     break;
   case DRAW_CMD_G3_STOREMTX:
-    G3SIM_MtxStore(msg->data.numU8);
+    MtxStore(msg->data.numU8);
     break;
   case DRAW_CMD_G3_RESTOREMTX:
-    G3SIM_MtxRestore(msg->data.numU8);
+    MtxRestore(msg->data.numU8);
     break;
   case DRAW_CMD_G3_LOADMTX44:
-    G3SIM_MtxLoad44(&msg->data.mtx44);
+    MtxLoad44(&msg->data.mtx44);
     break;
   case DRAW_CMD_G3_LOADMTX43:
-    G3SIM_MtxLoad43(&msg->data.mtx43);
+    MtxLoad43(&msg->data.mtx43);
     break;
   case DRAW_CMD_G3_MTXMULT33:
-    G3SIM_MtxMult33(&msg->data.mtx33);
+    MtxMult33(&msg->data.mtx33);
     break;
   case DRAW_CMD_G3_MTXMULT43:
-    G3SIM_MtxMult43(&msg->data.mtx43);
+    MtxMult43(&msg->data.mtx43);
     break;
   case DRAW_CMD_G3_MTXMULT44:
-    G3SIM_MtxMult44(&msg->data.mtx44);
+    MtxMult44(&msg->data.mtx44);
     break;
   case DRAW_CMD_G3_SCALE:
-    G3SIM_MtxScale(msg->data.scale);
+    MtxScale(msg->data.scale);
     break;
   case DRAW_CMD_G3_TRANSLATE:
-    G3SIM_MtxTranslate(msg->data.scale);
+    MtxTranslate(msg->data.scale);
     break;
   case DRAW_CMD_G3_COLOR:
-    G3SIM_Color(msg->data.numU16);
+    Color(msg->data.numU16);
     break;
   case DRAW_CMD_G3_TEXIMAGEPARAM:
 
-    G3SIM_FlushArray();
-    G3SIM_TexImageParam(msg->data.numU32);
+    GetGlobalState().FlushDrawCall();
+    TexImageParamCommand(msg->data.numU32);
     break;
   case DRAW_CMD_G3_VTXXY:
     msg->type = DRAW_CMD_G3_VTX16;
@@ -458,94 +458,84 @@ void HandleCommandMessage(draw_msg_t *msg) {
     prevXYZ.x = msg->data.xyz.x;
     prevXYZ.y = msg->data.xyz.y;
     prevXYZ.z = msg->data.xyz.z;
-    G3SIM_Vtx(msg->data.xyz.x, msg->data.xyz.y, msg->data.xyz.z);
-    if (s_G3numInPoly == 0 || s_G3drawPoly == 1) {
-      s_G3drawPoly = 0;
-      GLfloat myVerts[(3 * 6) + (2 * 6)];
-      if (s_primType == GX_BEGIN_TRIANGLES ||
-          s_primType == GX_BEGIN_TRIANGLE_STRIP) {
-        if (s_primType == GX_BEGIN_TRIANGLE_STRIP &&
-            !(s_G3triStripTriNum & 1)) {
-          // Swap the last 2 verts
-          G3SIM_FxVtx_t temp;
-          memcpy(&temp, &s_g3PolygonVerts[1], sizeof(G3SIM_FxVtx_t));
-          memcpy(&s_g3PolygonVerts[1], &s_g3PolygonVerts[2],
-                 sizeof(G3SIM_FxVtx_t));
-          memcpy(&s_g3PolygonVerts[2], &temp, sizeof(G3SIM_FxVtx_t));
+    {
+      auto& g3State = GetGlobalState();
+      int indexInPolygon = g3State.GetCurrentIndexInPolygon();
+      bool polygonReady = g3State.GetPolygonReady();
+      Vtx(msg->data.xyz.x, msg->data.xyz.y, msg->data.xyz.z);
+      indexInPolygon = g3State.GetCurrentIndexInPolygon();
+      polygonReady = g3State.GetPolygonReady();
+      if (indexInPolygon == 0 || polygonReady == 1) {
+        polygonReady = 0;
+        g3State.SetPolygonReady(polygonReady);
+        GLfloat myVerts[(3 * 6) + (2 * 6)];
+        auto primType = GetGlobalState().GetPrimitiveType();
+        if (primType == GX_BEGIN_TRIANGLES ||
+            primType == GX_BEGIN_TRIANGLE_STRIP) {
+          if (primType == GX_BEGIN_TRIANGLE_STRIP &&
+              !(g3State.GetTriStripTriangleIndex() & 1)) {
+            // Swap the last 2 verts
+            FixedPointVertex temp = g3State.GetPolygonVertex(1);
+            g3State.SetPolygonVertex(1, g3State.GetPolygonVertex(2));
+            g3State.SetPolygonVertex(2, temp);
+          }
+
+          g3State.SubmitPolygon(3);
+
+          if (primType == GX_BEGIN_TRIANGLE_STRIP &&
+              !(g3State.GetTriStripTriangleIndex() & 1)) {
+            // Swap the last 2 verts again
+            FixedPointVertex temp = g3State.GetPolygonVertex(1);
+            g3State.SetPolygonVertex(1, g3State.GetPolygonVertex(2));
+            g3State.SetPolygonVertex(2, temp);
+          }
+
+          if (primType == GX_BEGIN_TRIANGLE_STRIP) {
+            // Copy the last two verts from the last polygon
+            g3State.SetPolygonVertex(0, g3State.GetPolygonVertex(1));
+            g3State.SetPolygonVertex(1, g3State.GetPolygonVertex(2));
+          }
         }
+        if (primType == GX_BEGIN_QUADS || primType == GX_BEGIN_QUAD_STRIP) {
+          if (primType == GX_BEGIN_QUAD_STRIP) {
+            FixedPointVertex temp = g3State.GetPolygonVertex(2);
+            g3State.SetPolygonVertex(2, g3State.GetPolygonVertex(3));
+            g3State.SetPolygonVertex(3, temp);
+          }
 
-        G3SIM_SubmitPolygon(s_g3PolygonVerts, 3);
+          g3State.SubmitPolygon(4);
 
-        if (s_primType == GX_BEGIN_TRIANGLE_STRIP &&
-            !(s_G3triStripTriNum & 1)) {
-          // Swap the last 2 verts
-          G3SIM_FxVtx_t temp;
-
-          memcpy(&temp, &s_g3PolygonVerts[1], sizeof(G3SIM_FxVtx_t));
-          memcpy(&s_g3PolygonVerts[1], &s_g3PolygonVerts[2],
-                 sizeof(G3SIM_FxVtx_t));
-          memcpy(&s_g3PolygonVerts[2], &temp, sizeof(G3SIM_FxVtx_t));
-        }
-
-        if (s_primType == GX_BEGIN_TRIANGLE_STRIP) {
-          // Copy the last two verts from the last polygon
-          memcpy(&s_g3PolygonVerts[0], &s_g3PolygonVerts[1],
-                 sizeof(G3SIM_FxVtx_t));
-          memcpy(&s_g3PolygonVerts[1], &s_g3PolygonVerts[2],
-                 sizeof(G3SIM_FxVtx_t));
-        }
-      }
-      if (s_primType == GX_BEGIN_QUADS || s_primType == GX_BEGIN_QUAD_STRIP) {
-        if (s_primType == GX_BEGIN_QUAD_STRIP) {
-          G3SIM_FxVtx_t temp;
-          memcpy(&temp, &s_g3PolygonVerts[2], sizeof(G3SIM_FxVtx_t));
-          memcpy(&s_g3PolygonVerts[2], &s_g3PolygonVerts[3],
-                 sizeof(G3SIM_FxVtx_t));
-          memcpy(&s_g3PolygonVerts[3], &temp, sizeof(G3SIM_FxVtx_t));
-        }
-
-        G3SIM_SubmitPolygon(s_g3PolygonVerts, 4);
-
-        if (s_primType == GX_BEGIN_QUAD_STRIP) {
-          // Copy the last two verts from the last polygon
-          s_g3PolygonVerts[0].x = s_g3PolygonVerts[3].x;
-          s_g3PolygonVerts[0].y = s_g3PolygonVerts[3].y;
-          s_g3PolygonVerts[0].z = s_g3PolygonVerts[3].z;
-          s_g3PolygonVerts[0].w = s_g3PolygonVerts[3].w;
-
-          s_g3PolygonVerts[1].x = s_g3PolygonVerts[2].x;
-          s_g3PolygonVerts[1].y = s_g3PolygonVerts[2].y;
-          s_g3PolygonVerts[1].z = s_g3PolygonVerts[2].z;
-          s_g3PolygonVerts[1].w = s_g3PolygonVerts[2].w;
-
-          memcpy(&s_g3PolygonVerts[0], &s_g3PolygonVerts[3],
-                 sizeof(G3SIM_FxVtx_t));
-          memcpy(&s_g3PolygonVerts[1], &s_g3PolygonVerts[2],
-                 sizeof(G3SIM_FxVtx_t));
+          if (primType == GX_BEGIN_QUAD_STRIP) {
+            // Copy the last two verts from the last polygon
+            g3State.SetPolygonVertex(0, g3State.GetPolygonVertex(3));
+            g3State.SetPolygonVertex(1, g3State.GetPolygonVertex(2));
+          }
         }
       }
     }
+
+
     break;
   case DRAW_CMD_G3_LIGHTCOLOR:
-    G3SIM_LightColor(msg->data.numU32);
+    LightColor(msg->data.numU32);
     break;
   case DRAW_CMD_G3_LIGHTVECTOR:
-    G3SIM_LightVector(msg->data.numU32);
+    LightVector(msg->data.numU32);
     break;
   case DRAW_CMD_G3_NORMAL:
-    G3SIM_Normal(msg->data.numU32);
+    Normal(msg->data.numU32);
     break;
   case DRAW_CMD_G3_TEXCOORD:
-    G3SIM_TexCoord(msg->data.numU32);
+    TexCoord(msg->data.numU32);
     break;
   case DRAW_CMD_G3_POLYGONATTR:
-    G3SIM_PolygonAttr(msg->data.numU32);
+    PolygonAttrCommand(msg->data.numU32);
     break;
   case DRAW_CMD_G3_DIFF_AMB:
-    G3SIM_DiffAmb(msg->data.numU32);
+    DiffAmb(msg->data.numU32);
     break;
   case DRAW_CMD_G3_SPEC_EMI:
-    G3SIM_SpecEmi(msg->data.numU32);
+    SpecEmi(msg->data.numU32);
     break;
   case DRAW_CMD_G3_DIRECT0:
     msg->type = DecodeG3Op(msg->data.numU32);
@@ -559,18 +549,17 @@ void HandleCommandMessage(draw_msg_t *msg) {
     break;
   case DRAW_CMD_G3_SWAPBUFFERS: {
     u8 depthBufferMode = (msg->data.numU32 & 2) >> 1;
-    G3SIM_SwapBuffers(
-        depthBufferMode); // TODO: add flush attributes here for Z/W-buffering!
+    SwapBuffers(depthBufferMode); // TODO: add flush attributes here for Z/W-buffering!
   } break;
   case DRAW_CMD_G3_VIEWPORT:
     // TODO
     break;
   case DRAW_CMD_G3_TEXPLTTBASE:
-    G3SIM_FlushArray();
-    G3SIM_TexPlttBase(msg->data.numU32);
+    GetGlobalState().FlushDrawCall();
+    TexPlttBase(msg->data.numU32);
     break;
   case DRAW_CMD_G3_BOXTEST:
-    G3SIM_BoxTest(msg->data.boxtest.x, msg->data.boxtest.y, msg->data.boxtest.z,
+    BoxTest(msg->data.boxtest.x, msg->data.boxtest.y, msg->data.boxtest.z,
                   msg->data.boxtest.width, msg->data.boxtest.height,
                   msg->data.boxtest.depth);
     break;
@@ -587,7 +576,7 @@ void HandleCommandMessage(draw_msg_t *msg) {
       u8 paramSize;
       u8 paramSigned;
       while (curOffset < msg->size) {
-        paramPtr = (void *)cmdBlockPtr + 4;
+        paramPtr = (void *)((uPtr)cmdBlockPtr + 4);
         curOffset += 4;
         for (int i = 0; i < 4; i++) {
           tempMsg.type = DecodeG3Op(cmdBlockPtr->ops[i]);
@@ -629,7 +618,7 @@ void HandleCommandMessage(draw_msg_t *msg) {
             default:
               break;
             }
-            paramPtr += paramSize;
+            paramPtr = (void*)((uPtr)paramPtr + paramSize);
             curOffset += paramSize;
           }
 

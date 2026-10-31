@@ -1,6 +1,6 @@
 #include "simulator/sim_g3_Texture.hpp"
 
-#include "simulator/glad/glad.h"
+#include "simulator/sim_opengl.h"
 
 namespace SIM::G3 {
 

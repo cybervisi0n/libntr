@@ -1,22 +1,19 @@
 extern "C" void NitroMain();
 extern "C" int NitroSpMain(void *arg);
 #define SDL_MAIN_HANDLED
-#define _POSIX_C_SOURCE 199309L
 
 #include <string>
+#define _POSIX_C_SOURCE 199309L
 #include <pthread.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
 
-#ifdef SDK_BUILD_NX
-#include <glad/glad.h>
-#else
-#include <simulator/glad/glad.h>
-#endif
+#include <simulator/sim_opengl.h>
 #include <simulator/sim.h>
 #include <simulator/sim_audio.h>
 #include <simulator/sim_net.h>
 #include <simulator/sim_shaders.hpp>
+#include <simulator/sim_g3_GlobalState.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,14 +30,13 @@ extern "C" int NitroSpMain(void *arg);
 #include <simulator/drawmsg.h>
 #include <simulator/queue.h>
 #include <simulator/simvariables.h>
-#include <simulator/g3_draw.h>
-#include <simulator/g3_handler.h>
+#include <simulator/sim_g3_CommandHandler.hpp>
 #include <simulator/sim_gui.hpp>
 
 #include <math.h>
 #include <time.h>
 
-#include "screenquads.h"
+#include "screenquads.hpp"
 
 #ifdef SDK_BUILD_WIN64
 #include <windows.h>
@@ -87,8 +83,6 @@ u8 s_SIM_DBG_OAMenable = 1;
 u8 s_SIM_DBG_BGSenable[4] = {1, 1, 1, 1};
 u8 s_SIM_DBG_OAMSenable = 1;
 
-u8 s_SIM_useWBuffer = 0;
-
 static struct timespec s_SIM_lastFrameEnd;
 static u64 sRenderFrameTime;
 static u64 sFullFrameTime;
@@ -120,13 +114,8 @@ u8 objWindowsTex[4 * SIM_NDS_SCREEN_WIDTH * SIM_NDS_SCREEN_HEIGHT * 2];
 u32 OBJLine[2][256];
 u8 OBJWindow[2][256];
 
-GXVRamTex s_SIM_GXVRamTex;
-GXVRamTexPltt s_SIM_GXVRamTexPltt;
 GXVRamBGExtPltt s_SIM_GXBgExtPltt;
 GXVRamSubBGExtPltt s_SIM_GXSubBgExtPltt;
-
-// 4MB! can we reduce this?
-u8 s_SIM_g3tex[4 * 1024 * 1024];
 
 // FBOs
 static GLuint g3FrameBuffer;
@@ -146,7 +135,7 @@ static GLint s_objTexUnits[] = {4, 5, 6, 7, 8};
 static GLint s_objWindowTexUnit = 9;
 
 // Shader Programs
-GLuint g3shaderProgramID;
+static GLuint g3shaderProgramID;
 static GLuint g2shaderProgramID;
 
 // VAOs
@@ -237,20 +226,20 @@ static void DrawScreenQuad() {
 #endif
   glBindVertexArray(g2vertexArray);
   glBindBuffer(GL_ARRAY_BUFFER, g2vertexBuffer);
-  G3SIM_Vertex_t *quadArray = sim_GetScreenQuadArray(s_SIM_config.screenLayout,
+  SIM::G3::RenderVertex *quadArray = SIM::GetScreenQuadArray(s_SIM_config.screenLayout,
                                                      s_SIM_config.swapScreens);
-  int arrayCount = sim_GetScreenQuadVertexCount(s_SIM_config.screenLayout,
+  int arrayCount = SIM::GetScreenQuadVertexCount(s_SIM_config.screenLayout,
                                                 s_SIM_config.swapScreens);
 
-  glBufferData(GL_ARRAY_BUFFER, sizeof(G3SIM_Vertex_t) * arrayCount, quadArray,
+  glBufferData(GL_ARRAY_BUFFER, sizeof(SIM::G3::RenderVertex) * arrayCount, quadArray,
                GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(G3SIM_Vertex_t),
-                        (void *)offsetof(G3SIM_Vertex_t, x));
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(G3SIM_Vertex_t),
-                        (void *)offsetof(G3SIM_Vertex_t, s));
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(SIM::G3::RenderVertex),
+                        (void *)offsetof(SIM::G3::RenderVertex, x));
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(SIM::G3::RenderVertex),
+                        (void *)offsetof(SIM::G3::RenderVertex, s));
 
   glDrawArrays(GL_TRIANGLES, 0, arrayCount);
 #ifdef SDK_TRACY_ENABLE
@@ -378,14 +367,21 @@ void *SIM_RenderInit(void *arg) {
 
   window = SDL_CreateWindow(
       windowTitle.c_str(), 100, 100, windowWidth, windowHeight,
-      SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+      SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL
+      #if defined(SDK_BUILD_WIN64) || defined(SDK_BUILD_LINUX)
+      | SDL_WINDOW_RESIZABLE
+      #endif
+    );
   context = SDL_GL_CreateContext(window);
 
   if(s_SIM_config.fullScreen) {
     SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
   }
 
+  #ifndef SDK_BUILD_PROSPERO
+  //OpenGL is static linked on PS5
   gladLoadGLLoader(SDL_GL_GetProcAddress);
+  #endif
 
   glViewport(0, 0, windowWidth, windowHeight);
 
@@ -953,10 +949,10 @@ void *SIM_Render(void *arg) {
   u16 keys;
   u32 i;
 
-  G3SIM_FlushArray();
+  auto& g3State = SIM::G3::GetGlobalState();
+  g3State.FlushDrawCall();
+  g3State.DrawTransparentItems();
 
-  // Draw the translucent 3D stuff
-  G3SIM_DrawItems();
 
   do {
 #ifdef SDK_TRACY_ENABLE
@@ -1346,7 +1342,10 @@ void *SIM_Render(void *arg) {
     s_numG3CommandsThisFrame = 0;
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    s_curPolygonAttr.alpha = 1.0f;
+    auto polygonAttr = SIM::G3::GetGlobalState().GetCurrentDrawCall()->GetPolygonAttr();
+    polygonAttr.alpha = 1.0f;
+    SIM::G3::GetGlobalState().GetCurrentDrawCall()->SetPolygonAttr(polygonAttr);
+    
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -1432,6 +1431,11 @@ int main(int argc, char *argv[]) {
   while (!TracyCIsStarted) {
     SDL_Delay(1);
   }
+#endif
+
+#ifdef SDK_BUILD_PROSPERO
+  // Add a delay to start up the debugger
+  SDL_Delay(5000);
 #endif
 
   // TODO: This broke the linux AppImage build
@@ -1546,8 +1550,11 @@ int main(int argc, char *argv[]) {
   SetConsoleOutputCP(65001);
 #endif
 
+  SIM::G3::GetGlobalState().Init();
+
   SIM_RenderInit(NULL);
-  G3SIM_DrawInit();
+  SIM::G3::GetGlobalState().InitGlRenderer();
+  SIM::G3::GetGlobalState().GetGlRenderer()->SetShaderProgramId(g3shaderProgramID);
 
 // Init Sockets (only needed on windows)
 #ifdef SDK_BUILD_WIN64
