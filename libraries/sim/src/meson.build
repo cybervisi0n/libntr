@@ -3,6 +3,7 @@ libsim_srcs = files(
     'config/ini.c',
     'config/sim_config.c',
     'fireflower/nds-extract.cpp',
+    'fireflower/nds-reorder.cpp',
     'imgui/imgui.cpp',
     'imgui/imgui_demo.cpp',
     'imgui/imgui_draw.cpp',
