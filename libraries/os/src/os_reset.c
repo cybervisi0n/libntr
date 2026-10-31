@@ -5,6 +5,10 @@
 
 #include <nitro/code32.h>
 
+#ifdef SDK_PORT
+#include <simulator/sim_NitroMainThread.h>
+#endif
+
 extern void SDK_IRQ_STACKSIZE(void);
 
 #define OS_PXI_COMMAND_RESET      0x10
@@ -189,6 +193,10 @@ static void OSi_SendToPxi (u16 data)
         *(u32 *)HW_RESET_PARAMETER_BUF = parameter;
 
         OSi_SendToPxi(OS_PXI_COMMAND_RESET);
+
+        #ifdef SDK_PORT
+        SIM_ExitNitroMain();
+        #endif
 
         #if SDK_VERSION_MAJOR == 4
         #ifndef SDK_PORT
