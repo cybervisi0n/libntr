@@ -1498,9 +1498,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  SND_ExChannelInit();
-  SND_SeqInit();
-
   // Set up OS NVRAM Config
   SIM_Config_SetOSNVRAMConfig(&s_SIM_config);
 

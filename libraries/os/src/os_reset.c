@@ -195,6 +195,7 @@ static void OSi_SendToPxi (u16 data)
         OSi_SendToPxi(OS_PXI_COMMAND_RESET);
 
         #ifdef SDK_PORT
+        OS_ShutdownArena();
         SIM_ExitNitroMain();
         #endif
 
