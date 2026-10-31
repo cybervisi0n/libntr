@@ -78,8 +78,6 @@ const char * SIM_GetLibntrGitHash();
 const char * SIM_GetProjectGitHash();
 SDL_Window * SIM_GetSDLWindow();
 
-extern GXVRamTex s_SIM_GXVRamTex;
-extern GXVRamTexPltt s_SIM_GXVRamTexPltt;
 extern GXVRamBGExtPltt s_SIM_GXBgExtPltt;
 extern GXVRamSubBGExtPltt s_SIM_GXSubBgExtPltt;
 

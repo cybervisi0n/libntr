@@ -1,6 +1,8 @@
-#include "screenquads.h"
+#include "screenquads.hpp"
 
-static G3SIM_Vertex_t s_VerticalScreenQuad[] = {
+namespace SIM {
+
+static G3::RenderVertex s_VerticalScreenQuad[] = {
     {
         .x = -1.0f,
         .y = -1.0f,
@@ -45,7 +47,7 @@ static G3SIM_Vertex_t s_VerticalScreenQuad[] = {
     }
 };
 
-static G3SIM_Vertex_t s_HorizontalScreenQuad[] = {
+static G3::RenderVertex s_HorizontalScreenQuad[] = {
     //Top Screen
     {
         .x = -1.0f,
@@ -134,7 +136,7 @@ static G3SIM_Vertex_t s_HorizontalScreenQuad[] = {
     }
 };
 
-static G3SIM_Vertex_t s_VerticalScreenQuadSwapped[] = {
+static G3::RenderVertex s_VerticalScreenQuadSwapped[] = {
     // Bottom Screen
     {
         .x = -1.0f,
@@ -223,7 +225,7 @@ static G3SIM_Vertex_t s_VerticalScreenQuadSwapped[] = {
     }
 };
 
-static G3SIM_Vertex_t s_HorizontalScreenQuadSwapped[] = {
+static G3::RenderVertex s_HorizontalScreenQuadSwapped[] = {
     // Bottom Screen
     {
         .x = -1.0f,
@@ -312,7 +314,7 @@ static G3SIM_Vertex_t s_HorizontalScreenQuadSwapped[] = {
     }
 };
 
-static G3SIM_Vertex_t s_LargeScreenQuad[] = {
+static G3::RenderVertex s_LargeScreenQuad[] = {
     //Top Screen
     {
         .x = -1.0f,
@@ -401,7 +403,7 @@ static G3SIM_Vertex_t s_LargeScreenQuad[] = {
     }
 };
 
-static G3SIM_Vertex_t s_LargeScreenQuadSwapped[] = {
+static G3::RenderVertex s_LargeScreenQuadSwapped[] = {
     // Bottom Screen
     {
         .x = -1.0f,
@@ -490,7 +492,7 @@ static G3SIM_Vertex_t s_LargeScreenQuadSwapped[] = {
     }
 };
 
-G3SIM_Vertex_t * sim_GetScreenQuadArray(SIM_config_screen_layout_type layout, BOOL isSwapped)
+G3::RenderVertex * GetScreenQuadArray(SIM_config_screen_layout_type layout, bool isSwapped)
 {
     switch(layout) {
         default:
@@ -503,7 +505,7 @@ G3SIM_Vertex_t * sim_GetScreenQuadArray(SIM_config_screen_layout_type layout, BO
     }
 }
 
-int sim_GetScreenQuadVertexCount(SIM_config_screen_layout_type layout, BOOL isSwapped)
+int GetScreenQuadVertexCount(SIM_config_screen_layout_type layout, bool isSwapped)
 {
     switch(layout) {
         default:
@@ -513,4 +515,6 @@ int sim_GetScreenQuadVertexCount(SIM_config_screen_layout_type layout, BOOL isSw
         case SIM_CONFIG_SCREEN_LAYOUT_LARGE:
             return 12;
     }
+}
+
 }

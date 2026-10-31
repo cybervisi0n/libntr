@@ -37,8 +37,15 @@ void MTX_Copy33To43_(const MtxFx33* pSrc, MtxFx43* pDst)
 
 void MTX_Copy33To44_(const MtxFx33* pSrc, MtxFx44* pDst)
 {
-    SIM_assert_always_msg("Not implemented");
-    return;
+    pDst->_00 = pSrc->_00;
+    pDst->_01 = pSrc->_01;
+    pDst->_02 = pSrc->_02;
+    pDst->_10 = pSrc->_10;
+    pDst->_11 = pSrc->_11;
+    pDst->_12 = pSrc->_12;
+    pDst->_20 = pSrc->_20;
+    pDst->_21 = pSrc->_21;
+    pDst->_22 = pSrc->_22;
 }
 
 void MTX_Transpose33_(const MtxFx33* pSrc, MtxFx33* pDst)
