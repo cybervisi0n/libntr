@@ -112,7 +112,8 @@ void GlRenderer::Draw(std::shared_ptr<DrawCall> drawCall) {
         glProgramUniform1i(mShaderProgramId, useFogLoc , drawCall->GetFogEnabled());
         if(drawCall->GetFogEnabled()) {
             GLint fogColorLoc = glGetUniformLocation(mShaderProgramId, "fogColor");
-            glProgramUniform1fv(mShaderProgramId, fogColorLoc, 4, drawCall->GetFogColor());
+            float * fogColor = drawCall->GetFogColor();
+            glProgramUniform4f(mShaderProgramId, fogColorLoc, fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
             GLint fogDepthBoundaryLoc = glGetUniformLocation(mShaderProgramId, "fogDepthBoundary");
             glProgramUniform1fv(mShaderProgramId, fogDepthBoundaryLoc, 32, drawCall->GetFogDepthTable());
 

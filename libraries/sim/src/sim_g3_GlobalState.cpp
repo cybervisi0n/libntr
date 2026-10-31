@@ -322,8 +322,10 @@ void GlobalState::PushMatrix() {
         mVectorStack[mPositionVectorMatrixStackPointer] = mCurrentVectorMatrix;
         mPositionVectorMatrixStackPointer++;
     } else if(mCurrentMatrixMode == GX_MTXMODE_PROJECTION) {
+        mProjectionStack[mProjectionMatrixStackPointer] = mCurrentProjectionMatrix;
         mProjectionMatrixStackPointer++;
     } else if(mCurrentMatrixMode == GX_MTXMODE_TEXTURE) {
+        mTextureStack[mTextureMatrixStackPointer] = mCurrentTextureMatrix;
         mTextureMatrixStackPointer++;
     }
 }

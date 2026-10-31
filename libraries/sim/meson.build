@@ -99,7 +99,7 @@ libsim = library('sim',
     include_directories: [nitrosdk_includes, libsim_includes],
     pic: build_target == 'nx',
     c_args: libsim_args,
-    cpp_args: [libsim_args, '-std=c++20'],
+    cpp_args: [libsim_args, '-O2', '-std=c++20'],
     sources: [libsim_srcs, fx_const_h, git_info_h],
     dependencies: libsim_dependencies,
     native: (build_target == 'linux' or build_target == 'win64')
