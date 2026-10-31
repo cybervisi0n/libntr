@@ -6,6 +6,8 @@
 
 namespace fs = std::filesystem;
 
+int SIM_ROMReorder(std::string fsOutputPath);
+
 
 #define FSTREAM_VALID(x) \
 			if(!x.good()){ \
@@ -565,6 +567,7 @@ int SIM_NDSExtract(std::string ndsFilePath){
 
 	std::cout << DINFO << "Done" << std::endl;
 
+    SIM_ROMReorder(fsOutputPath.string());
 
 	return 0;
 
