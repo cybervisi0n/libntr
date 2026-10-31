@@ -2,12 +2,14 @@
 
 #include <cstring>
 #include <pthread.h>
+#include <unistd.h>
 
 #include <nitro/gx/gx_load.h>
 #include <nitro/ioreg.h>
 #include <nitro/hw/X86/mmap_shared.h>
 #include <nitro/snd/common/work.h>
 
+#include "simulator/sim.h"
 #include "simulator/sim_RenderContextManager.hpp"
 
 extern "C" void NitroMain();
@@ -76,5 +78,11 @@ int RunNitroMain(void * arg) {
 void SIM_ExitNitroMain() {
     SIM::ReleaseRenderContext();
 
+    #if 0
     pthread_exit(nullptr);
+    #endif
+
+
+
+    execl(SIM_GetExeName(), SIM_GetExeName(), nullptr);
 }

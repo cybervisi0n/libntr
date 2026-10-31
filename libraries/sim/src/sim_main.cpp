@@ -294,6 +294,8 @@ void SIM_SetInternalResolution(int internalRes) {
 static bool sChangeInternalResAfterRender = false;
 static int sPendingInternalRes = 1;
 
+static const char * sExeName = "";
+
 void SIM_SetInternalResolutionAfterRender(int internalRes) {
   sChangeInternalResAfterRender = true;
   sPendingInternalRes = internalRes;
@@ -1413,6 +1415,10 @@ const char * SIM_GetProjectGitHash() {
   return SIM_PROJECT_GIT_HASH;
 }
 
+const char * SIM_GetExeName() {
+  return sExeName;
+}
+
 #ifdef _WIN32
 int main(int argc, char *argv[]);
 
@@ -1441,6 +1447,8 @@ int main(int argc, char *argv[]) {
   // Add a delay to start up the debugger
   SDL_Delay(5000);
 #endif
+
+  sExeName = argv[0];
 
   // TODO: This broke the linux AppImage build
   //chdir(SDL_GetBasePath());
