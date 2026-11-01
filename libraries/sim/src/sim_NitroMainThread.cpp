@@ -14,6 +14,10 @@
 
 extern "C" void NitroMain();
 
+#ifdef SDK_BUILD_PROSPERO
+extern "C" int sceSystemServiceLoadExec(const char *path, const char **args);
+#endif
+
 namespace SIM {
 
 // Initializes Nitro memory and runs NitroMain()
@@ -87,5 +91,9 @@ void SIM_ExitNitroMain() {
 
     #ifndef SDK_BUILD_PROSPERO
     execl(SIM_GetExeName(), SIM_GetExeName(), nullptr);
+    #endif
+
+    #ifdef SDK_BUILD_PROSPERO
+    sceSystemServiceLoadExec("/app0/eboot.bin", NULL);
     #endif
 }
