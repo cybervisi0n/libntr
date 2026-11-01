@@ -53,6 +53,10 @@ extern "C" int NitroSpMain(void *arg);
 #include "switch.h"
 #endif
 
+#ifdef SDK_BUILD_PROSPERO
+#include "ps5_heap.h"
+#endif
+
 #ifdef SDK_TRACY_ENABLE
 #include "tracy/TracyC.h"
 #endif
@@ -1265,8 +1269,11 @@ void *SIM_Render(void *arg) {
       s_tpData.touch = 0;
     }
 
+    // PROSPERO_TODO
+    #ifndef SDK_BUILD_PROSPERO
     SIM::GUI::NewFrame();
     SIM::GUI::Main();
+    #endif
 
     memset(bgtex, 0,
            sizeof(u8) * 4 * SIM_NDS_SCREEN_WIDTH * SIM_NDS_SCREEN_HEIGHT * 2);
@@ -1301,7 +1308,10 @@ void *SIM_Render(void *arg) {
     s_HW_INTR_CHECK_BUF |= 1;
     *((u32 *)HW_VBLANK_COUNT_BUF) = *((u32 *)HW_VBLANK_COUNT_BUF) + 1;
 
+    // PROSPERO_TODO
+    #ifndef SDK_BUILD_PROSPERO
     SIM::GUI::Render();
+    #endif
 
     // Calculate frametime
     struct timespec curTime;
@@ -1446,6 +1456,8 @@ int main(int argc, char *argv[]) {
 #ifdef SDK_BUILD_PROSPERO
   // Add a delay to start up the debugger
   SDL_Delay(5000);
+
+  ps5_heap_initialize();
 #endif
 
   sExeName = argv[0];

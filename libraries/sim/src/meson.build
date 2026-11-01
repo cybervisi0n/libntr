@@ -43,3 +43,7 @@ libsim_srcs = files(
 if(build_target == 'linux' or build_target == 'win64')
 libsim_srcs += files('glad.c')
 endif
+
+if(build_target == 'prospero')
+libsim_srcs += files('ps5_heap.cpp')
+endif
