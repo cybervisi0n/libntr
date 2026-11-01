@@ -1454,9 +1454,6 @@ int main(int argc, char *argv[]) {
 #endif
 
 #ifdef SDK_BUILD_PROSPERO
-  // Add a delay to start up the debugger
-  SDL_Delay(5000);
-
   ps5_heap_initialize();
 #endif
 
