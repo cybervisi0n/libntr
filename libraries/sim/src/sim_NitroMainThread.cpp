@@ -78,6 +78,7 @@ int RunNitroMain(void * arg) {
 void SIM_ExitNitroMain() {
     SIM::ReleaseRenderContext();
 
+    // It was originally planned to handle resetting by restarting NitroMain's thread, but that left statics still initialized and caused bugs
     #if 0
     pthread_exit(nullptr);
     #endif

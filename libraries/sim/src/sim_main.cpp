@@ -1549,12 +1549,9 @@ int main(int argc, char *argv[]) {
   }
 
   SIM::ReleaseRenderContext();
-  SDL_Thread * nitroMainThread = nullptr;
-  
-  while(true) {
-    nitroMainThread = SDL_CreateThread(SIM::RunNitroMain, "NitroMain", nitroMainThread);
-    SDL_WaitThread(nitroMainThread, nullptr);
-  }
-  
+
+  // For now, NitroMain is running on the main thread, but the infrastructure is in place to run it on a separate thread
+  SIM::RunNitroMain(nullptr);
+
   return 0;
 }
