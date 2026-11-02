@@ -22,6 +22,7 @@ Select the build target with the 'build_target' meson option.
  * linux (x86_64 Linux PC)
  * win64 (x86_64 Windows PC)
  * nx (Switch via libnx)
+ * prospero (PS5)
 
 ## DSi Support (BETA)
 libntr supports building TWL applications. Set the meson options:
