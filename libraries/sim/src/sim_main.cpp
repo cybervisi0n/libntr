@@ -17,6 +17,7 @@ extern "C" int NitroSpMain(void *arg);
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <nitro/gx/g3.h>
 #include <nitro/gx/gx_load.h>
@@ -37,6 +38,8 @@ extern "C" int NitroSpMain(void *arg);
 
 #include <math.h>
 #include <time.h>
+
+#include "nds-extract.hpp"
 
 #include "screenquads.hpp"
 
@@ -1476,7 +1479,11 @@ int main(int argc, char *argv[]) {
 
   // Read the first 0x160 bytes of the rom and put it in the HW_ROM_HEADER_BUF
   FILE *romFile;
+  #ifdef SDK_BUILD_PROSPERO
+  romFile = fopen("/app0/header.bin", "r");
+  #else
   romFile = fopen("header.bin", "r");
+  #endif
 
   if (romFile != NULL) {
     // Read the fields of the struct

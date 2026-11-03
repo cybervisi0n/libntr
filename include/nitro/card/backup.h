@@ -18,6 +18,12 @@ extern  "C"
 {
 #endif
 
+#ifdef SDK_BUILD_PROSPERO
+#define SAVE_BIN_FILE_PATH "/app0/save.bin"
+#else
+#define SAVE_BIN_FILE_PATH "save.bin"
+#endif
+
 #if SDK_VERSION_MAJOR == 5
 #define CARD_BACKUP_TYPE_DEVICE_SHIFT 0
 #define CARD_BACKUP_TYPE_DEVICE_MASK 0xFF
@@ -115,10 +121,10 @@ u32 CARD_GetBackupPageSize(void);
   {
     #ifdef SDK_PORT
     FILE * backupFilePtr;
-    backupFilePtr = fopen("save.bin", "rb");
+    backupFilePtr = fopen(SAVE_BIN_FILE_PATH, "rb");
     if(!backupFilePtr) {
       // File does not exist. Create the file
-      backupFilePtr = fopen("save.bin", "wb");
+      backupFilePtr = fopen(SAVE_BIN_FILE_PATH, "wb");
 
       // Zero out the file with the len
       u8 * buf = (u8*)malloc(len + src);
@@ -128,7 +134,7 @@ u32 CARD_GetBackupPageSize(void);
       free(buf);
 
       // Reopen file
-      backupFilePtr = fopen("save.bin", "rb");
+      backupFilePtr = fopen(SAVE_BIN_FILE_PATH, "rb");
     }
     fseek(backupFilePtr, src, SEEK_SET);
     fread(dst, 1, len, backupFilePtr);
@@ -165,7 +171,7 @@ u32 CARD_GetBackupPageSize(void);
   {
     #ifdef SDK_PORT
     FILE * backupFilePtr;
-    backupFilePtr = fopen("save.bin", "rb+");
+    backupFilePtr = fopen(SAVE_BIN_FILE_PATH, "rb+");
     fseek(backupFilePtr, dst, SEEK_SET);
     fwrite(src, 1, len, backupFilePtr);
     fclose(backupFilePtr);
@@ -212,7 +218,7 @@ u32 CARD_GetBackupPageSize(void);
   {
     #ifdef SDK_PORT
     FILE * backupFilePtr;
-    backupFilePtr = fopen("save.bin", "rb+");
+    backupFilePtr = fopen(SAVE_BIN_FILE_PATH, "rb+");
     fseek(backupFilePtr, dst, SEEK_SET);
     fwrite(src, 1, len, backupFilePtr);
     fclose(backupFilePtr);
