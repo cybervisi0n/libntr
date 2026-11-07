@@ -346,13 +346,14 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->internalResolutionScale = 2;
     aConfig->windowHeight = 1080;
     aConfig->windowWidth = 1920;
+    aConfig->screenLayout = SIM_CONFIG_SCREEN_LAYOUT_LARGE;
 #else
     aConfig->internalResolutionScale = 10;
     aConfig->windowHeight = 0;
     aConfig->windowWidth = 0;
+    aConfig->screenLayout = SIM_CONFIG_SCREEN_LAYOUT_VERTICAL;
 #endif
     aConfig->fullScreen = FALSE;
-    aConfig->screenLayout = SIM_CONFIG_SCREEN_LAYOUT_VERTICAL;
     aConfig->swapScreens = FALSE;
     aConfig->vsyncInterval = 1;
     aConfig->capFrameRate = TRUE;
