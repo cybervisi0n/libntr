@@ -17,6 +17,7 @@ extern "C" int NitroSpMain(void *arg);
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <nitro/gx/g3.h>
 #include <nitro/gx/gx_load.h>
@@ -32,9 +33,13 @@ extern "C" int NitroSpMain(void *arg);
 #include <simulator/simvariables.h>
 #include <simulator/sim_g3_CommandHandler.hpp>
 #include <simulator/sim_gui.hpp>
+#include <simulator/sim_RenderContextManager.hpp>
+#include <simulator/sim_NitroMainThread.hpp>
 
 #include <math.h>
 #include <time.h>
+
+#include "nds-extract.hpp"
 
 #include "screenquads.hpp"
 
@@ -49,6 +54,10 @@ extern "C" int NitroSpMain(void *arg);
 
 #ifdef SDK_BUILD_NX
 #include "switch.h"
+#endif
+
+#ifdef SDK_BUILD_PROSPERO
+#include "ps5_heap.h"
 #endif
 
 #ifdef SDK_TRACY_ENABLE
@@ -292,6 +301,8 @@ void SIM_SetInternalResolution(int internalRes) {
 static bool sChangeInternalResAfterRender = false;
 static int sPendingInternalRes = 1;
 
+static const char * sExeName = "";
+
 void SIM_SetInternalResolutionAfterRender(int internalRes) {
   sChangeInternalResAfterRender = true;
   sPendingInternalRes = internalRes;
@@ -373,6 +384,8 @@ void *SIM_RenderInit(void *arg) {
       #endif
     );
   context = SDL_GL_CreateContext(window);
+
+  SIM::InitRenderContextManager(window, context);
 
   if(s_SIM_config.fullScreen) {
     SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
@@ -1259,8 +1272,11 @@ void *SIM_Render(void *arg) {
       s_tpData.touch = 0;
     }
 
+    // PROSPERO_TODO
+    #ifndef SDK_BUILD_PROSPERO
     SIM::GUI::NewFrame();
     SIM::GUI::Main();
+    #endif
 
     memset(bgtex, 0,
            sizeof(u8) * 4 * SIM_NDS_SCREEN_WIDTH * SIM_NDS_SCREEN_HEIGHT * 2);
@@ -1295,7 +1311,10 @@ void *SIM_Render(void *arg) {
     s_HW_INTR_CHECK_BUF |= 1;
     *((u32 *)HW_VBLANK_COUNT_BUF) = *((u32 *)HW_VBLANK_COUNT_BUF) + 1;
 
+    // PROSPERO_TODO
+    #ifndef SDK_BUILD_PROSPERO
     SIM::GUI::Render();
+    #endif
 
     // Calculate frametime
     struct timespec curTime;
@@ -1409,6 +1428,10 @@ const char * SIM_GetProjectGitHash() {
   return SIM_PROJECT_GIT_HASH;
 }
 
+const char * SIM_GetExeName() {
+  return sExeName;
+}
+
 #ifdef _WIN32
 int main(int argc, char *argv[]);
 
@@ -1434,9 +1457,10 @@ int main(int argc, char *argv[]) {
 #endif
 
 #ifdef SDK_BUILD_PROSPERO
-  // Add a delay to start up the debugger
-  SDL_Delay(5000);
+  ps5_heap_initialize();
 #endif
+
+  sExeName = argv[0];
 
   // TODO: This broke the linux AppImage build
   //chdir(SDL_GetBasePath());
@@ -1453,29 +1477,13 @@ int main(int argc, char *argv[]) {
     SIM_Config_SaveConfigFile(&s_SIM_config);
   }
 
-  // Initialize Nitro registers
-  s_reg_PAD_KEYINPUT = 0x3ff;
-  *(vu16 *)HW_BUTTON_XY_BUF = 0b0111110000000000;
-
-  memset(s_HW_OAM, 0, sizeof(s_HW_OAM));
-  memset(s_HW_DB_OAM, 0, sizeof(s_HW_DB_OAM));
-
-  s_reg_GX_VRAMCNT_A = 0;
-  s_reg_GX_VRAMCNT_B = 0;
-  s_reg_GX_VRAMCNT_C = 0;
-  s_reg_GX_VRAMCNT_D = 0;
-  s_reg_GX_VRAMCNT_E = 0;
-  s_reg_GX_VRAMCNT_F = 0;
-  s_reg_GX_VRAMCNT_G = 0;
-  s_reg_GX_VRAMCNT_H = 0;
-  s_reg_GX_VRAMCNT_I = 0;
-
-  WIN_Init_sTexStartAddrTable();
-  WIN_Init_sTexPlttStartAddrTable();
-
   // Read the first 0x160 bytes of the rom and put it in the HW_ROM_HEADER_BUF
   FILE *romFile;
+  #ifdef SDK_BUILD_PROSPERO
+  romFile = fopen("/app0/header.bin", "r");
+  #else
   romFile = fopen("header.bin", "r");
+  #endif
 
   if (romFile != NULL) {
     // Read the fields of the struct
@@ -1513,30 +1521,6 @@ int main(int argc, char *argv[]) {
       s_mosaicTable[i][j] = offset;
     }
   }
-
-  SND_ExChannelInit();
-  SND_SeqInit();
-
-  // Zero out some shared memory
-  memset(s_HW_BG_PLTT, 0, sizeof(s_HW_BG_PLTT));
-  memset(s_HW_OBJ_PLTT, 0, sizeof(s_HW_OBJ_PLTT));
-  memset(s_HW_DB_BG_PLTT, 0, sizeof(s_HW_DB_BG_PLTT));
-  memset(s_HW_DB_OBJ_PLTT, 0, sizeof(s_HW_DB_OBJ_PLTT));
-  memset(s_HW_BG_VRAM, 0, sizeof(s_HW_BG_VRAM));
-  memset(s_HW_DB_BG_VRAM, 0, sizeof(s_HW_DB_BG_VRAM));
-  memset(s_HW_OBJ_VRAM, 0, sizeof(s_HW_OBJ_VRAM));
-  memset(s_HW_DB_OBJ_VRAM, 0, sizeof(s_HW_DB_OBJ_VRAM));
-
-  // Zero out some registers
-  s_reg_G2_BG0CNT = 0;
-  s_reg_G2_BG1CNT = 0;
-  s_reg_G2_BG2CNT = 0;
-  s_reg_G2_BG3CNT = 0;
-
-  s_reg_G2S_DB_BG0CNT = 0;
-  s_reg_G2S_DB_BG1CNT = 0;
-  s_reg_G2S_DB_BG2CNT = 0;
-  s_reg_G2S_DB_BG3CNT = 0;
 
   // Set up OS NVRAM Config
   SIM_Config_SetOSNVRAMConfig(&s_SIM_config);
@@ -1580,6 +1564,10 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  NitroMain();
+  SIM::ReleaseRenderContext();
+
+  // For now, NitroMain is running on the main thread, but the infrastructure is in place to run it on a separate thread
+  SIM::RunNitroMain(nullptr);
+
   return 0;
 }

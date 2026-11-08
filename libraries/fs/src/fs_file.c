@@ -43,6 +43,15 @@ const char *fsi_assert_arc_unloaded = "archive is still now loaded";
 const char *fsi_assert_arc_not_rom = "cannot modify \"rom\" archive";
 #endif
 
+#ifdef SDK_BUILD_PROSPERO
+typedef struct notify_request {
+  char useless1[45];
+  char message[3075];
+} notify_request_t;
+
+int sceKernelSendNotificationRequest(int, notify_request_t*, size_t, int);
+#endif
+
 #define FS_FILE_OPEN_DEBUG FALSE
 
 static BOOL is_init = FALSE;
@@ -516,6 +525,15 @@ BOOL FS_OpenFile (FSFile *p_file, const char *path)
 		path = path + 1;
 	}
 	p_file->pcFilePtr = NULL;
+
+  #ifdef SDK_BUILD_PROSPERO
+  const char * path2 = path;
+  char ps5Path[512];
+  ps5Path[511] = 0;
+  snprintf(ps5Path, 511, "/app0/%s", path2);
+  path = ps5Path;
+  #endif
+
 	p_file->pcFilePtr = fopen(path, "rb");
 	if(p_file->pcFilePtr == NULL) {
 		// Try opening with lowercase path
@@ -550,11 +568,22 @@ BOOL FS_OpenFile (FSFile *p_file, const char *path)
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "ROM Extraction Required", "ROM filesystem is missing. Select 'OK' and choose a NDS ROM file in the next step.", NULL);
         #endif
 
+        #ifdef SDK_BUILD_PROSPERO
+        notify_request_t req = {};
+
+        sprintf(req.message, "libntr: Failed to open file '%s'", path);
+
+        sceKernelSendNotificationRequest(0, &req, sizeof req, 0);
+
+        return FALSE;
+        #else
         SIM_ShowRomExtractionDialog();
 
         // try again, because the ROM should be extracted at this point
         // yes, this is recursive, so if the user is dumb enough to keep extracting the wrong ROM and does this enough times, it will crash
         return FS_OpenFile(p_file, path);
+        #endif
+
 	}
 	#else
 	return (FS_ConvertPathToFileID(&id, path) && FS_OpenFileFast(p_file, id));

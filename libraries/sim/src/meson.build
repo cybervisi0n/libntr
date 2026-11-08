@@ -17,6 +17,7 @@ libsim_srcs = files(
     'sim_audio.cpp',
     'sim_crc32.c',
     'sim_debug.cpp',
+    'sim_NitroMainThread.cpp',
     'sim_g2.cpp',
     'sim_g3_c_bridge.cpp',
     'sim_g3_CommandHandler.cpp',
@@ -33,6 +34,7 @@ libsim_srcs = files(
     'sim_gui_pad.cpp',
     'sim_main.cpp',
     'sim_net.cpp',
+    'sim_RenderContextManager.cpp',
     'sim_RomExtractor.cpp',
     'sim_screenquads.cpp',
     'sim_shaders.cpp',
@@ -41,4 +43,8 @@ libsim_srcs = files(
 
 if(build_target == 'linux' or build_target == 'win64')
 libsim_srcs += files('glad.c')
+endif
+
+if(build_target == 'prospero')
+libsim_srcs += files('ps5_heap.cpp')
 endif

@@ -1,9 +1,5 @@
-#ifdef SDK_BUILD_NX
-#include <glad/glad.h>
-#else
-#include <simulator/glad/glad.h>
-#endif
 #include <nitro/types.h>
+#include <simulator/sim_opengl.h>
 #include <simulator/sim_g3_DrawCall.hpp>
 
 #ifndef LIBNTR_SIM_G3_GL_RENDERER_HPP

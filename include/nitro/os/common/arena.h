@@ -45,6 +45,10 @@ void    OS_InitArena7();
     void OS_InitArenaEx(void);
 #endif
 
+#ifdef SDK_PORT
+void OS_ShutdownArena();
+#endif
+
 void * OS_GetArenaInfo(void);
 
 void * OS_GetArenaHi(OSArenaId id);

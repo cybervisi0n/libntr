@@ -108,6 +108,12 @@ extern void SDK_IRQ_STACKSIZE(void);
 
 static BOOL OSi_Initialized = FALSE;
 
+#ifdef SDK_PORT
+void OS_ShutdownArena() {
+    OSi_Initialized = FALSE;
+}
+#endif
+
 #if defined(SDK_ARM9) || defined(SDK_PORT)
     #ifdef SDK_4M
         BOOL OSi_MainExArenaEnabled = FALSE;

@@ -24,7 +24,7 @@ extern "C" {
 typedef unsigned char u8;
 typedef unsigned short int u16;
 
-#if defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_NX)
+#if defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_NX) || defined(SDK_BUILD_PROSPERO)
 typedef unsigned int u32;
 #else
 typedef unsigned long u32;
@@ -38,7 +38,7 @@ typedef unsigned long u32;
 
 typedef signed char s8;
 typedef signed short int s16;
-#if defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_NX)
+#if defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_NX) || defined(SDK_BUILD_PROSPERO)
 typedef signed int s32;
 #else
 typedef signed long s32;
