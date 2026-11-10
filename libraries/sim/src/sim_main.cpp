@@ -1273,7 +1273,7 @@ void *SIM_Render(void *arg) {
     }
 
     // PROSPERO_TODO
-    #ifndef SDK_BUILD_PROSPERO
+    #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_NX)
     SIM::GUI::NewFrame();
     SIM::GUI::Main();
     #endif
@@ -1312,7 +1312,7 @@ void *SIM_Render(void *arg) {
     *((u32 *)HW_VBLANK_COUNT_BUF) = *((u32 *)HW_VBLANK_COUNT_BUF) + 1;
 
     // PROSPERO_TODO
-    #ifndef SDK_BUILD_PROSPERO
+    #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_NX)
     SIM::GUI::Render();
     #endif
 
