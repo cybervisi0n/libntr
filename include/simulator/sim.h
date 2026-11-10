@@ -78,6 +78,8 @@ const char * SIM_GetLibntrGitHash();
 const char * SIM_GetProjectGitHash();
 SDL_Window * SIM_GetSDLWindow();
 const char * SIM_GetExeName();
+const u32 * SIM_GetTouchPanelCoords();
+void SIM_SetFastForward(BOOL fastForward);
 
 extern GXVRamBGExtPltt s_SIM_GXBgExtPltt;
 extern GXVRamSubBGExtPltt s_SIM_GXSubBgExtPltt;

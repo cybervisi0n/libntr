@@ -14,6 +14,7 @@ extern "C" int NitroSpMain(void *arg);
 #include <simulator/sim_net.h>
 #include <simulator/sim_shaders.hpp>
 #include <simulator/sim_g3_GlobalState.hpp>
+#include <simulator/sim_Input.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -209,15 +210,7 @@ OSIrqFunction OS_IRQTable[OS_IRQ_TABLE_MAX] = {
 
 u8 s_mosaicTable[16][256];
 
-static u8 isMouseDown = 0;
-
 // Local Procedure Declarations
-static void ConvertMsgParams(draw_msg_t *msg);
-static u8 GetNumParamsFromCommandType(draw_command_type_t type);
-static u8 GetParamSizeFromCommandType(draw_command_type_t type);
-static u8 isParamSigned(draw_command_type_t type);
-static u64 map(u64 x, u64 in_min, u64 in_max, u64 out_min, u64 out_max);
-static void process_nibble(unsigned char data4bit, int *Index, int *Pcm16bit);
 static void DrawScreenQuad();
 static void DrawEngine(BOOL isSub);
 
@@ -226,8 +219,6 @@ static u8 s_numG3CommandsThisFrame = 0;
 // Vcount stuff
 static SDL_sem *vcountResetSemaphore;
 static SDL_sem *vcountVblankSemaphore;
-
-SDL_Joystick *s_SIM_SDLJoystick = NULL;
 
 static void DrawScreenQuad() {
 #ifdef SDK_TRACY_ENABLE
@@ -259,10 +250,6 @@ static void DrawScreenQuad() {
 SIM_config_type *SIM_GetConfigPtr() { return &s_SIM_config; }
 
 SDL_Window * SIM_GetSDLWindow() {return window;}
-
-static u64 map(u64 x, u64 in_min, u64 in_max, u64 out_min, u64 out_max) {
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
 
 void SIM_u16ToRGB(u16 in, u8 *r, u8 *g, u8 *b) {
   *r = ( (in & 0x1F) * 527 + 23 ) >> 6;
@@ -864,98 +851,13 @@ static void DrawEngine(BOOL isSub) {
 #endif
 }
 
-static void HandleJoystickKeyDown(int aKey) {
-  if (aKey == s_SIM_config.padSettings.aJoyKey) {
-    // A Button
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111111110;
-  } else if (aKey == s_SIM_config.padSettings.bJoyKey) {
-    // B Button
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111111101;
-  } else if (aKey == s_SIM_config.padSettings.xJoyKey) {
-    // X Button
-    *(vu16 *)HW_BUTTON_XY_BUF = *(vu16 *)HW_BUTTON_XY_BUF & 0b1111100000000000;
-  } else if (aKey == s_SIM_config.padSettings.yJoyKey) {
-    // y Button
-    *(vu16 *)HW_BUTTON_XY_BUF = *(vu16 *)HW_BUTTON_XY_BUF & 0b1111010000000000;
-  } else if (aKey == s_SIM_config.padSettings.upJoyKey) {
-    // Dpad Up
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111110111111;
-  } else if (aKey == s_SIM_config.padSettings.downJoyKey) {
-    // Dpad Down
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111101111111;
-  } else if (aKey == s_SIM_config.padSettings.leftJoyKey) {
-    // Dpad Left
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111011111;
-  } else if (aKey == s_SIM_config.padSettings.rightJoyKey) {
-    // Dpad Right
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111101111;
-  } else if (aKey == s_SIM_config.padSettings.lJoyKey) {
-    // L
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111110111111111;
-  } else if (aKey == s_SIM_config.padSettings.rJoyKey) {
-    // R
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111011111111;
-  } else if (aKey == s_SIM_config.padSettings.startJoyKey) {
-    // Start button
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111110111;
-  } else if (aKey == s_SIM_config.padSettings.selectJoyKey) {
-    // Select button
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111111011;
-  }
-#ifdef SDK_BUILD_NX
-  else if (aKey == 8) {
-    // Left trigger on NX toggles GUI
-    SIM::GUI::Toggle();
-  }
-#endif
-}
 
-static void HandleJoystickKeyUp(int aKey) {
-  if (aKey == s_SIM_config.padSettings.aJoyKey) {
-    // A Button
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000000001;
-  } else if (aKey == s_SIM_config.padSettings.bJoyKey) {
-    // B Button
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000000010;
-  } else if (aKey == s_SIM_config.padSettings.xJoyKey) {
-    // X Button
-    *(vu16 *)HW_BUTTON_XY_BUF = *(vu16 *)HW_BUTTON_XY_BUF | 0b0000010000000000;
-  } else if (aKey == s_SIM_config.padSettings.yJoyKey) {
-    // y Button
-    *(vu16 *)HW_BUTTON_XY_BUF = *(vu16 *)HW_BUTTON_XY_BUF | 0b0000100000000000;
-  } else if (aKey == s_SIM_config.padSettings.upJoyKey) {
-    // Dpad Up
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000001000000;
-  } else if (aKey == s_SIM_config.padSettings.downJoyKey) {
-    // Dpad Down
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000010000000;
-  } else if (aKey == s_SIM_config.padSettings.leftJoyKey) {
-    // Dpad Left
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000100000;
-  } else if (aKey == s_SIM_config.padSettings.rightJoyKey) {
-    // Dpad Right
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000010000;
-  } else if (aKey == s_SIM_config.padSettings.lJoyKey) {
-    // L
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000001000000000;
-  } else if (aKey == s_SIM_config.padSettings.rJoyKey) {
-    // R
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000100000000;
-  } else if (aKey == s_SIM_config.padSettings.startJoyKey) {
-    // Start button
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000001000;
-  } else if (aKey == s_SIM_config.padSettings.selectJoyKey) {
-    // Select button
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000000100;
-  }
-}
+
 
 void *SIM_Render(void *arg) {
 
-  SDL_Event Event;
+  
   char c;
-  int x;
-  int y;
   u8 r;
   u8 g;
   u8 b;
@@ -1068,209 +970,7 @@ void *SIM_Render(void *arg) {
       }
     }
 
-    // Check Joysticks
-    if (s_SIM_SDLJoystick == NULL && SDL_NumJoysticks() >= 1) {
-      s_SIM_SDLJoystick = SDL_JoystickOpen(0);
-    }
-
-    while (SDL_PollEvent(&Event)) {
-      SIM::GUI::ProcessEvent(&Event);
-
-      if (Event.type == SDL_WINDOWEVENT) {
-        switch (Event.window.event) {
-        case SDL_WINDOWEVENT_CLOSE:
-          exit(0);
-          break;
-        }
-      }
-      if (Event.type == SDL_KEYDOWN) {
-        int keyRead = Event.key.keysym.sym;
-        if (keyRead == s_SIM_config.padSettings.aKey) {
-          // A Button
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111111110;
-        } else if (keyRead == s_SIM_config.padSettings.bKey) {
-          // B Button
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111111101;
-        } else if (keyRead == s_SIM_config.padSettings.xKey) {
-          // X Button
-          *(vu16 *)HW_BUTTON_XY_BUF =
-              *(vu16 *)HW_BUTTON_XY_BUF & 0b1111100000000000;
-        } else if (keyRead == s_SIM_config.padSettings.yKey) {
-          // y Button
-          *(vu16 *)HW_BUTTON_XY_BUF =
-              *(vu16 *)HW_BUTTON_XY_BUF & 0b1111010000000000;
-        } else if (keyRead == s_SIM_config.padSettings.upKey) {
-          // Dpad Up
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111110111111;
-        } else if (keyRead == s_SIM_config.padSettings.downKey) {
-          // Dpad Down
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111101111111;
-        } else if (keyRead == s_SIM_config.padSettings.leftKey) {
-          // Dpad Left
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111011111;
-        } else if (keyRead == s_SIM_config.padSettings.rightKey) {
-          // Dpad Right
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111101111;
-        } else if (keyRead == s_SIM_config.padSettings.lKey) {
-          // L
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111110111111111;
-        } else if (keyRead == s_SIM_config.padSettings.rKey) {
-          // R
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111011111111;
-        } else if (keyRead == s_SIM_config.padSettings.startKey) {
-          // Start button
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111110111;
-        } else if (keyRead == s_SIM_config.padSettings.selectKey) {
-          // Select button
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111111011;
-        } else if (keyRead == s_SIM_config.padSettings.guiKey) {
-          // Toggle Debug GUI
-          SIM::GUI::Toggle();
-        } else if (keyRead == s_SIM_config.padSettings.frameCapToggleKey) {
-          // Toggle Frame Cap
-          if (s_SIM_config.capFrameRate) {
-            s_SIM_config.capFrameRate = false;
-            s_SIM_config.vsyncInterval = 0; // VSync Off
-          } else {
-            s_SIM_config.capFrameRate = true;
-            s_SIM_config.vsyncInterval = 1; // Every V-Blank
-          }
-
-          SDL_GL_SetSwapInterval(s_SIM_config.vsyncInterval);
-          
-        } else if(keyRead == s_SIM_config.padSettings.frameCapKey) {
-          sFastForward = true;
-          SDL_GL_SetSwapInterval(0);
-        }
-      }
-      if (Event.type == SDL_KEYUP) {
-        int keyRead = Event.key.keysym.sym;
-        if (keyRead == s_SIM_config.padSettings.aKey) {
-          // A Button
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000000001;
-        } else if (keyRead == s_SIM_config.padSettings.bKey) {
-          // B Button
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000000010;
-        } else if (keyRead == s_SIM_config.padSettings.xKey) {
-          // X Button
-          *(vu16 *)HW_BUTTON_XY_BUF =
-              *(vu16 *)HW_BUTTON_XY_BUF | 0b0000010000000000;
-        } else if (keyRead == s_SIM_config.padSettings.yKey) {
-          // y Button
-          *(vu16 *)HW_BUTTON_XY_BUF =
-              *(vu16 *)HW_BUTTON_XY_BUF | 0b0000100000000000;
-        } else if (keyRead == s_SIM_config.padSettings.upKey) {
-          // Dpad Up
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000001000000;
-        } else if (keyRead == s_SIM_config.padSettings.downKey) {
-          // Dpad Down
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000010000000;
-        } else if (keyRead == s_SIM_config.padSettings.leftKey) {
-          // Dpad Left
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000100000;
-        } else if (keyRead == s_SIM_config.padSettings.rightKey) {
-          // Dpad Right
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000010000;
-        } else if (keyRead == s_SIM_config.padSettings.lKey) {
-          // L
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000001000000000;
-        } else if (keyRead == s_SIM_config.padSettings.rKey) {
-          // R
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000100000000;
-        } else if (keyRead == s_SIM_config.padSettings.startKey) {
-          // Start button
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000001000;
-        } else if (keyRead == s_SIM_config.padSettings.selectKey) {
-          // Select button
-          s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000000100;
-        } else if(keyRead == s_SIM_config.padSettings.frameCapKey) {
-          sFastForward = false;
-          SDL_GL_SetSwapInterval(s_SIM_config.vsyncInterval);
-        }
-      }
-      if (Event.type == SDL_JOYBUTTONDOWN) {
-        HandleJoystickKeyDown(Event.jbutton.button);
-      }
-      if (Event.type == SDL_JOYBUTTONUP) {
-        HandleJoystickKeyUp(Event.jbutton.button);
-      }
-      if (Event.type == SDL_JOYHATMOTION) {
-        if (Event.jhat.value == SDL_HAT_CENTERED) {
-          // send keyUp event for all hats
-          HandleJoystickKeyUp(SIM_CONFIG_JOY_HAT_MASK | SDL_HAT_UP);
-          HandleJoystickKeyUp(SIM_CONFIG_JOY_HAT_MASK | SDL_HAT_DOWN);
-          HandleJoystickKeyUp(SIM_CONFIG_JOY_HAT_MASK | SDL_HAT_LEFT);
-          HandleJoystickKeyUp(SIM_CONFIG_JOY_HAT_MASK | SDL_HAT_RIGHT);
-        } else {
-          if (Event.jhat.value & SDL_HAT_UP) {
-            HandleJoystickKeyDown(SIM_CONFIG_JOY_HAT_MASK | SDL_HAT_UP);
-          } else {
-            HandleJoystickKeyUp(SIM_CONFIG_JOY_HAT_MASK | SDL_HAT_UP);
-          }
-          if (Event.jhat.value & SDL_HAT_DOWN) {
-            HandleJoystickKeyDown(SIM_CONFIG_JOY_HAT_MASK | SDL_HAT_DOWN);
-          } else {
-            HandleJoystickKeyUp(SIM_CONFIG_JOY_HAT_MASK | SDL_HAT_DOWN);
-          }
-          if (Event.jhat.value & SDL_HAT_LEFT) {
-            HandleJoystickKeyDown(SIM_CONFIG_JOY_HAT_MASK | SDL_HAT_LEFT);
-          } else {
-            HandleJoystickKeyUp(SIM_CONFIG_JOY_HAT_MASK | SDL_HAT_LEFT);
-          }
-          if (Event.jhat.value & SDL_HAT_RIGHT) {
-            HandleJoystickKeyDown(SIM_CONFIG_JOY_HAT_MASK | SDL_HAT_RIGHT);
-          } else {
-            HandleJoystickKeyUp(SIM_CONFIG_JOY_HAT_MASK | SDL_HAT_RIGHT);
-          }
-        }
-      }
-      if (Event.type == SDL_JOYAXISMOTION) {
-        if (Event.jaxis.value > s_SIM_config.padSettings.joyAxisDeadzone ||
-            Event.jaxis.value <
-                (s_SIM_config.padSettings.joyAxisDeadzone * -1)) {
-          if (Event.jaxis.value > 0) {
-            HandleJoystickKeyDown(Event.jaxis.axis |
-                                  SIM_CONFIG_JOY_AXIS_PLUS_MASK);
-            HandleJoystickKeyUp(Event.jaxis.axis |
-                                SIM_CONFIG_JOY_AXIS_MINUS_MASK);
-          } else {
-            HandleJoystickKeyDown(Event.jaxis.axis |
-                                  SIM_CONFIG_JOY_AXIS_MINUS_MASK);
-            HandleJoystickKeyUp(Event.jaxis.axis |
-                                SIM_CONFIG_JOY_AXIS_PLUS_MASK);
-          }
-        } else {
-          HandleJoystickKeyUp(Event.jaxis.axis | SIM_CONFIG_JOY_AXIS_PLUS_MASK);
-          HandleJoystickKeyUp(Event.jaxis.axis |
-                              SIM_CONFIG_JOY_AXIS_MINUS_MASK);
-        }
-      }
-      if (Event.type == SDL_MOUSEBUTTONDOWN) {
-        isMouseDown = 1;
-        s_tpData.validity = 0;
-        s_tpData.touch = 1;
-      }
-      if (Event.type == SDL_MOUSEBUTTONUP) {
-        isMouseDown = 0;
-        s_tpData.validity = 0;
-        s_tpData.touch = 0;
-      }
-    }
-    s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT;
-
-    SDL_GetMouseState(&x, &y);
-
-    // Convert touch coordinate to DS screen coordinates
-    if (x >= s_TouchPanelCoords[0] && x <= s_TouchPanelCoords[2] &&
-        y >= s_TouchPanelCoords[1] && y <= s_TouchPanelCoords[3]) {
-      s_tpData.x = (u16)map(x, s_TouchPanelCoords[0], s_TouchPanelCoords[2], 0,
-                            SIM_NDS_SCREEN_WIDTH);
-      s_tpData.y = (u16)map(y, s_TouchPanelCoords[1], s_TouchPanelCoords[3], 0,
-                            SIM_NDS_SCREEN_HEIGHT);
-    } else {
-      s_tpData.validity = 0;
-      s_tpData.touch = 0;
-    }
+    SIM::Input::Process();
 
     // PROSPERO_TODO
     #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_NX)
@@ -1430,6 +1130,14 @@ const char * SIM_GetProjectGitHash() {
 
 const char * SIM_GetExeName() {
   return sExeName;
+}
+
+const u32 * SIM_GetTouchPanelCoords() {
+  return s_TouchPanelCoords;
+}
+
+void SIM_SetFastForward(BOOL fastForward) {
+  sFastForward = fastForward;
 }
 
 #ifdef _WIN32
