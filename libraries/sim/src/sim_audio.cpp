@@ -94,6 +94,11 @@ void SIM_Audio_Init(int aAudioFrequency)
     if(s_requestedAudioSpec.samples & 1) {
         s_requestedAudioSpec.samples += 1;
     }
+
+    #ifdef SDK_BUILD_NX
+    // The SDL audio buffer must be larger on NX to avoid crackling
+    s_requestedAudioSpec.samples *= 4;
+    #endif
     s_requestedAudioSpec.callback = SIM_Audio_Callback;
     if(SDL_OpenAudio(&s_requestedAudioSpec, NULL) < 0) {
         printf("SDL Error %s\n", SDL_GetError());
@@ -112,10 +117,16 @@ void SIM_Audio_Callback(void *userdata, Uint8 *stream, int len)
     #ifdef SDK_TRACY_ENABLE
     TracyCZone(ctx, 1);
     #endif
-    // Run NitroComposer
-    SND_UpdateExChannel();
-    SND_SeqMain(TRUE);
-    SND_ExChannelMain(TRUE);
+    // Run NitroComposer. On NX we must run it 4 times because the audio buffer is 4 times larger
+    #ifdef SDK_BUILD_NX
+    for(int i=0; i < 4; i++) {
+    #endif
+        SND_UpdateExChannel();
+        SND_SeqMain(TRUE);
+        SND_ExChannelMain(TRUE);
+    #ifdef SDK_BUILD_NX
+    }
+    #endif
 
     // get samples from each channel and do the thing
     
