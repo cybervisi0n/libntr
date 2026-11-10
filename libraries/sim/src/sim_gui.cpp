@@ -101,9 +101,13 @@ void Main() {
 void OpenFileDialog(std::function<void(std::string)> callback) {
     sFileDialogCallback = callback;
 
+    #if SIM_IMGUI_FILE_DIALOG_SUPPORT
     IGFD::FileDialogConfig config;
     	config.path = ".";
     ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Select NDS ROM", ".nds,.srl", config);
+    #else 
+    SIM_assert_always();
+    #endif
 }
 
 void NewFrame() {

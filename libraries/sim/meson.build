@@ -122,6 +122,16 @@ if(get_option('tracy_enable') == true)
     ]
 endif
 
+if(build_target != 'prospero' and build_target != 'nx')
+    libsim_args += [
+        '-DSIM_IMGUI_FILE_DIALOG_SUPPORT=0'
+    ]
+else 
+    libsim_args += [
+        '-DSIM_IMGUI_FILE_DIALOG_SUPPORT=1'
+    ]
+endif
+
 
 if(build_target == 'nx')
 glad_lib = meson.get_compiler('c').find_library('glad', dirs: '/opt/devkitpro/portlibs/switch/lib/')

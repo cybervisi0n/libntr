@@ -4,10 +4,7 @@
 #include <nitro.h>
 #include <nitro/types.h>
 
-#ifndef SDK_BUILD_PROSPERO
-//TODO: Add PS5 support for enet
-#include <enet/enet.h>
-#endif
+#include <simulator/sim_ENet.h>
 
 #include <SDL2/SDL.h>
 

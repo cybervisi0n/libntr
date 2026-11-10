@@ -1,7 +1,5 @@
-#ifndef SDK_BUILD_PROSPERO
-#include <enet/enet.h>
-#endif
 #include <nitro.h>
+#include <simulator/sim_ENet.h>
 #include <simulator/sim.h>
 #include <simulator/config/sim_config.h>
 #include <simulator/sim_net.h>

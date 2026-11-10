@@ -11,7 +11,6 @@ libsim_srcs = files(
     'imgui/imgui_impl_sdl2.cpp',
     'imgui/imgui_tables.cpp',
     'imgui/imgui_widgets.cpp',
-    'ImGuiFileDialog/ImGuiFileDialog.cpp',
     'queue.c',
     'sim_assert.c',
     'sim_audio.cpp',
@@ -47,4 +46,8 @@ endif
 
 if(build_target == 'prospero')
 libsim_srcs += files('ps5_heap.cpp')
+endif
+
+if(build_target != 'prospero' and build_target != 'nx')
+libsim_srcs += files('ImGuiFileDialog/ImGuiFileDialog.cpp')
 endif
