@@ -89,7 +89,7 @@ void SIM_ExitNitroMain() {
 
 
 
-    #ifndef SDK_BUILD_PROSPERO
+    #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_NX)
     execl(SIM_GetExeName(), SIM_GetExeName(), nullptr);
     #endif
 

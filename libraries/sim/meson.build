@@ -124,11 +124,11 @@ endif
 
 if(build_target != 'prospero' and build_target != 'nx')
     libsim_args += [
-        '-DSIM_IMGUI_FILE_DIALOG_SUPPORT=0'
+        '-DSIM_IMGUI_FILE_DIALOG_SUPPORT=1'
     ]
 else 
     libsim_args += [
-        '-DSIM_IMGUI_FILE_DIALOG_SUPPORT=1'
+        '-DSIM_IMGUI_FILE_DIALOG_SUPPORT=0'
     ]
 endif
 
