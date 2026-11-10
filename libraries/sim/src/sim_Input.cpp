@@ -7,9 +7,11 @@
 #include <SDL2/SDL.h>
 
 #include "simulator/sim.h"
-#include "simulator/simvariables.h"
 #include "simulator/config/sim_config.h"
 #include "simulator/sim_gui.hpp"
+
+// TODO: remove
+extern TPData s_tpData;
 
 namespace SIM::Input {
 
