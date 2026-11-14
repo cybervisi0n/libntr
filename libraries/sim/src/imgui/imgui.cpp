@@ -16391,14 +16391,14 @@ static bool Platform_OpenInShellFn_DefaultImpl(ImGuiContext*, const char* path)
         return false;
     if (!pid)
     {
-        #ifndef SDK_BUILD_NX
+        #if !defined(SDK_BUILD_NX) && !defined(SDK_BUILD_OUNCE)
         execvp(args[0], const_cast<char **>(args));
         #endif
         exit(-1);
     }
     else
     {
-        #ifdef SDK_BUILD_NX
+        #if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
         return false;
         #else
         int status;

@@ -53,7 +53,7 @@ extern "C" int NitroSpMain(void *arg);
 #include <signal.h>
 #endif
 
-#ifdef SDK_BUILD_NX
+#if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
 #include "switch.h"
 #endif
 
@@ -378,7 +378,7 @@ void *SIM_RenderInit(void *arg) {
     SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
   }
 
-  #ifndef SDK_BUILD_PROSPERO
+  #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_OUNCE)
   //OpenGL is static linked on PS5
   gladLoadGLLoader(SDL_GL_GetProcAddress);
   #endif
@@ -973,7 +973,7 @@ void *SIM_Render(void *arg) {
     SIM::Input::Process();
 
     // PROSPERO_TODO
-    #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_NX)
+    #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_NX) && !defined(SDK_BUILD_OUNCE)
     SIM::GUI::NewFrame();
     SIM::GUI::Main();
     #endif
@@ -1012,7 +1012,7 @@ void *SIM_Render(void *arg) {
     *((u32 *)HW_VBLANK_COUNT_BUF) = *((u32 *)HW_VBLANK_COUNT_BUF) + 1;
 
     // PROSPERO_TODO
-    #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_NX)
+    #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_NX) && !defined(SDK_BUILD_OUNCE)
     SIM::GUI::Render();
     #endif
 
@@ -1150,7 +1150,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline,
 #endif
 
 int main(int argc, char *argv[]) {
-#ifdef SDK_BUILD_NX
+#if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
   // Start up libnx sockets
   socketInitializeDefault();
 #endif

@@ -7,7 +7,7 @@ enet_lib = library('enet')
 
 if(build_target == 'linux' or build_target == 'win64')
 sdl2_lib = meson.get_compiler('c').find_library('SDL2')
-elif(build_target == 'nx')
+elif(build_target == 'nx' or build_target == 'ounce')
 sdl2_lib = meson.get_compiler('c').find_library('SDL2', dirs: '/opt/devkitpro/portlibs/switch/lib/')
 elif(build_target == 'prospero')
 sdl2_lib = meson.get_compiler('c').find_library('SDL2', dirs: prospero_lib_dirs)
@@ -155,10 +155,16 @@ libnx_dep = declare_dependency(dependencies: [libnx_lib])
 libsim_dependencies += libnx_dep
 endif
 
+if(build_target == 'ounce')
+libsim_dependencies += declare_dependency(dependencies: [meson.get_compiler('c').find_library('glapi', dirs: '/opt/devkitpro/portlibs/switch2/lib/')])
+libsim_dependencies += declare_dependency(dependencies: [meson.get_compiler('c').find_library('ouncevk', dirs: '/opt/devkitpro/portlibs/switch2/lib/')])
+libsim_dependencies += declare_dependency(dependencies: [meson.get_compiler('c').find_library('ouncevk-gl', dirs: '/opt/devkitpro/portlibs/switch2/lib/')])
+endif
+
 libsim = library('sim',
     c_pch: nitro_pch,
     include_directories: [nitrosdk_includes, libsim_includes],
-    pic: build_target == 'nx',
+    pic: (build_target == 'nx' or build_target == 'ounce'),
     c_args: libsim_args,
     cpp_args: [libsim_args, '-O2', '-std=c++20'],
     sources: [libsim_srcs, fx_const_h, git_info_h],

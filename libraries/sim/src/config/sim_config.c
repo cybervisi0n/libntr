@@ -342,7 +342,7 @@ BOOL SIM_Config_LoadConfigFile(SIM_config_type * aConfig)
 // Initialize a SIM_config_type to default values
 void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
 {
-#if defined(SDK_BUILD_NX) || defined(SDK_BUILD_PROSPERO)
+#if defined(SDK_BUILD_NX) || defined(SDK_BUILD_PROSPERO) || defined(SDK_BUILD_OUNCE)
     aConfig->internalResolutionScale = 2;
     aConfig->windowHeight = 1080;
     aConfig->windowWidth = 1920;
@@ -379,7 +379,7 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->padSettings.bJoyKey = 1;
     aConfig->padSettings.xJoyKey = 2;
     aConfig->padSettings.yJoyKey = 3;
-#ifdef SDK_BUILD_NX
+#if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
     aConfig->padSettings.upJoyKey = 13;
     aConfig->padSettings.downJoyKey = 15;
     aConfig->padSettings.leftJoyKey = 12;

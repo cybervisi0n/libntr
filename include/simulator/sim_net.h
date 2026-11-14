@@ -61,7 +61,7 @@ typedef enum {
 typedef struct {
     BOOL initialized;
     SIM_Net_State_t state;
-    #ifdef SDK_BUILD_PROSPERO
+    #if defined(SDK_BUILD_PROSPERO) || defined(SDK_BUILD_OUNCE)
     void * enetHost;
     #else
     ENetHost * enetHost;
@@ -69,7 +69,7 @@ typedef struct {
     int playerCount;
     SDL_mutex * playerListMutex;
     SIM_Net_Player_t playerList[SIM_NET_MAX_PLAYERS];
-    #ifdef SDK_BUILD_PROSPERO
+    #if defined(SDK_BUILD_PROSPERO) || defined(SDK_BUILD_OUNCE)
     // TODO: add ENet support for PS5
     void * peerList[SIM_NET_MAX_PLAYERS];
     #else

@@ -689,7 +689,7 @@ static GL3WglProc get_proc(const char *proc)
     return res;
 }
 #else
-#ifndef __SWITCH__
+#if !defined(__SWITCH__) && !defined(SDK_BUILD_OUNCE)
 #include <dlfcn.h>
 #endif
 
@@ -700,7 +700,7 @@ static GL3WGetProcAddressProc gl_get_proc_address;
 
 static void close_libgl(void)
 {
-    #ifndef __SWITCH__
+    #if !defined(__SWITCH__) && !defined(SDK_BUILD_OUNCE)
     if (libgl) {
         dlclose(libgl);
         libgl = NULL;
@@ -720,7 +720,7 @@ static int is_library_loaded(const char* name, void** lib)
 {
 #if defined(__HAIKU__)
     *lib = NULL; // no support for RTLD_NOLOAD on Haiku.
-#elif defined(__PROSPERO__) || defined(__SWITCH__)
+#elif defined(__PROSPERO__) || defined(__SWITCH__) || defined(SDK_BUILD_OUNCE)
     return 1; // GL is static linked on PS5 and switch, PS5 and switch apps dont currently support dlopen
 #else
     *lib = dlopen(name, RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
@@ -733,7 +733,7 @@ static int open_libs(void)
     // On Linux we have two APIs to get process addresses: EGL and GLX.
     // EGL is supported under both X11 and Wayland, whereas GLX is X11-specific.
 
-    #if defined(__PROSPERO__) || defined(__SWITCH__)
+    #if defined(__PROSPERO__) || defined(__SWITCH__) || defined(SDK_BUILD_OUNCE)
     return GL3W_OK;
     #else
 
@@ -788,7 +788,7 @@ static int open_libs(void)
 
 static int open_libgl(void)
 {
-    #if defined(__PROSPERO__) || defined(__SWITCH__)
+    #if defined(__PROSPERO__) || defined(__SWITCH__) || defined(SDK_BUILD_OUNCE)
     return GL3W_OK;
     #else
     int res = open_libs();
@@ -813,7 +813,7 @@ static int open_libgl(void)
 
 static GL3WglProc get_proc(const char* proc)
 {
-    #if defined(__PROSPERO__) || defined(__SWITCH__)
+    #if defined(__PROSPERO__) || defined(__SWITCH__) || defined(SDK_BUILD_OUNCE)
     GL3WglProc res = NULL;
     return res;
     #else

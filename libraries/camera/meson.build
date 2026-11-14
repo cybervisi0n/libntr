@@ -5,7 +5,7 @@ libcamera_includes = include_directories('include')
 libcamera = library('camera',
     c_pch: nitro_pch,
     include_directories: [nitrosdk_includes, libcamera_includes],
-    pic: build_target == 'nx',
+    pic: (build_target == 'nx' or build_target == 'ounce'),
     sources: [libcamera_srcs, fx_const_h],
     native: (build_target == 'linux' or build_target == 'win64')
 )

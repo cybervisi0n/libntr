@@ -47,7 +47,7 @@ static void SendMyPlayer();
 static void InitPacketHeader(SIM_Net_PacketHeader_t * header);
 static BOOL CheckPacketHeader(SIM_Net_PacketHeader_t * header);
 
-#ifndef SDK_BUILD_PROSPERO
+#if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_OUNCE)
 static void ProcessHostEvent(ENetEvent * event);
 static void ProcessClientEvent(ENetEvent * event);
 
@@ -74,7 +74,7 @@ void SIM_Net_Init()
 
 void SIM_Net_Process()
 {
-    #ifndef SDK_BUILD_PROSPERO
+    #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_OUNCE)
     // TODO: add PS5 support for ENet
     if(net.enetHost == NULL) {
         return;
@@ -107,7 +107,7 @@ void SIM_Net_SendBeaconIndication()
 
 BOOL SIM_Net_StartHost()
 {
-    #ifdef SDK_BUILD_PROSPERO
+    #if defined(SDK_BUILD_PROSPERO) || defined(SDK_BUILD_OUNCE)
     // TODO: add PS5 support for ENet
     return FALSE;
     #else
@@ -139,7 +139,7 @@ BOOL SIM_Net_StartHost()
 
 BOOL SIM_Net_StartClient(char * ipAddress)
 {
-    #ifdef SDK_BUILD_PROSPERO
+    #if defined(SDK_BUILD_PROSPERO) || defined(SDK_BUILD_OUNCE)
     return FALSE;
     #else
     if(net.state != SIM_NET_STATE_DISCONNECTED) {
@@ -280,7 +280,7 @@ void SIM_Net_SetMPState(SIM_Net_MPState_t state)
 
 BOOL SIM_Net_JoinMP(u8 * bssid, u8 * ssid)
 {
-    #ifdef SDK_BUILD_PROSPERO
+    #if defined(SDK_BUILD_PROSPERO) || defined(SDK_BUILD_OUNCE)
     // TODO: Add PS5 support for ENet
     return FALSE;
     #else
@@ -328,7 +328,7 @@ BOOL SIM_Net_JoinMP(u8 * bssid, u8 * ssid)
 
 BOOL SIM_Net_DisconnectMP(u16 aidBitmap, u16 * resultBitmap)
 {
-    #ifdef SDK_BUILD_PROSPERO
+    #if defined(SDK_BUILD_PROSPERO) || defined(SDK_BUILD_OUNCE)
     // TODO: Add ENet support for PS5
     return FALSE;
     #else
@@ -387,7 +387,7 @@ BOOL SIM_Net_DisconnectMP(u16 aidBitmap, u16 * resultBitmap)
 
 BOOL SIM_Net_SendMPData(u16 aidBitmap, u8 port, u8 * data, int dataLen)
 {
-    #ifdef SDK_BUILD_PROSPERO
+    #if defined(SDK_BUILD_PROSPERO) || defined(SDK_BUILD_OUNCE)
     // TODO: Add ENet support for PS5
     return FALSE;
     #else
@@ -502,7 +502,7 @@ static void InitMyPlayer()
 // If a host, update in the player list and broadcast the playerlist
 static void SendMyPlayer()
 {
-    #ifndef SDK_BUILD_PROSPERO
+    #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_OUNCE)
     //TODO: Add PS5 support for ENet
     if(net.state == SIM_NET_STATE_CLIENT) {
         SIM_Net_PlayerInfoPacket_t playerInfoPacket = {0};
@@ -533,12 +533,17 @@ static void SendMyPlayer()
 
 static void InitPacketHeader(SIM_Net_PacketHeader_t * header)
 {
+    #ifndef SDK_BUILD_OUNCE
     header->magicNum = htonl(SIM_NET_MAGIC_NUM);
     header->protocolVer = htonl(SIM_NET_PROTOCOL_VER);
+    #endif
 }
 
 static BOOL CheckPacketHeader(SIM_Net_PacketHeader_t * header)
 {
+    #ifdef SDK_BUILD_OUNCE
+    return FALSE;
+    #else
     if(htonl(header->magicNum) != SIM_NET_MAGIC_NUM) {
         return FALSE;
     }
@@ -546,9 +551,10 @@ static BOOL CheckPacketHeader(SIM_Net_PacketHeader_t * header)
         return FALSE;
     }
     return TRUE;
+    #endif
 }
 
-#ifndef SDK_BUILD_PROSPERO
+#if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_OUNCE)
 static void ProcessHostEvent(ENetEvent * event)
 {
     switch(event->type) {
@@ -944,7 +950,7 @@ static void ReceiveMPData(ENetEvent * event)
 
 static void HostUpdatePlayerList()
 {
-    #ifndef SDK_BUILD_PROSPERO
+    #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_OUNCE)
     SIM_Net_PlayerListPacket_t playerListPkt = {};
 
     InitPacketHeader(&playerListPkt.common.header);

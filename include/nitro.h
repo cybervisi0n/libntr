@@ -10,7 +10,7 @@
 #define ATTRIBUTE_ALIGN(x) __attribute__((aligned(x)))
 #endif
 
-#ifdef SDK_BUILD_NX
+#if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
 #include "switch.h"
 #endif
 

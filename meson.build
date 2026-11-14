@@ -150,6 +150,20 @@ if (build_target == 'nx')
     ]
 endif
 
+if (build_target == 'ounce')
+    nitrosdk_args += [
+        '-DSDK_PORT',
+        '-DSDK_AARCH64',
+        '-DSDK_BUILD_OUNCE',
+        '-DSDK_64BIT',
+        '-D_NITRO',
+        '-w',
+        '-I/opt/devkitpro/portlibs/switch2/include',
+        '-I/opt/devkitpro/portlibs/switch/include',
+        '-I/opt/devkitpro/libounce/include'
+    ]
+endif
+
 if (build_target == 'prospero')
     nitrosdk_args += [
         '-DSDK_PORT',

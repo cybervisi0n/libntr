@@ -6,7 +6,7 @@ libmi_includes = include_directories('include')
 libmi = library('mi',
     c_pch: nitro_pch,
     include_directories: [nitrosdk_includes, libmi_includes],
-    pic: build_target == 'nx',
+    pic: (build_target == 'nx' or build_target == 'ounce'),
     sources: [libmi_srcs, fx_const_h],
     native: (build_target == 'linux' or build_target == 'win64')
 )

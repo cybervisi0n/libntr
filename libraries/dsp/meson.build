@@ -5,7 +5,7 @@ libdsp_includes = include_directories('include')
 libdsp = library('dsp',
     c_pch: nitro_pch,
     include_directories: [nitrosdk_includes, libdsp_includes],
-    pic: build_target == 'nx',
+    pic: (build_target == 'nx' or build_target == 'ounce'),
     sources: [libdsp_srcs, fx_const_h],
     native: (build_target == 'linux' or build_target == 'win64')
 )

@@ -35,7 +35,7 @@ endif
 libsim7 = library('sim7',
     c_pch: nitro_pch,
     include_directories: [nitrosdk_includes, libsim7_includes],
-    pic: build_target == 'nx',
+    pic: (build_target == 'nx' or build_target == 'ounce'),
     sources: [libsim7_srcs, fx_const_h],
     dependencies: libsim7_dependencies,
     native: (build_target == 'linux' or build_target == 'win64')

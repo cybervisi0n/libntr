@@ -2,7 +2,7 @@
 #define SIM_ENET_H
 
 //PROSPERO_TODO: Compile ENet for Prospero
-#ifndef SDK_BUILD_PROSPERO
+#if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_OUNCE)
 #ifdef SDK_BUILD_NX
 #include <sys/select.h>
 #endif
