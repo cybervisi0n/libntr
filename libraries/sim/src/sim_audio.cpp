@@ -95,7 +95,7 @@ void SIM_Audio_Init(int aAudioFrequency)
         s_requestedAudioSpec.samples += 1;
     }
 
-    #ifdef SDK_BUILD_NX
+    #if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
     // The SDL audio buffer must be larger on NX to avoid crackling
     s_requestedAudioSpec.samples *= 4;
     #endif
@@ -117,14 +117,14 @@ void SIM_Audio_Callback(void *userdata, Uint8 *stream, int len)
     #ifdef SDK_TRACY_ENABLE
     TracyCZone(ctx, 1);
     #endif
-    // Run NitroComposer. On NX we must run it 4 times because the audio buffer is 4 times larger
-    #ifdef SDK_BUILD_NX
+    // Run NitroComposer. On NX and ounce we must run it 4 times because the audio buffer is 4 times larger
+    #if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
     for(int i=0; i < 4; i++) {
     #endif
         SND_UpdateExChannel();
         SND_SeqMain(TRUE);
         SND_ExChannelMain(TRUE);
-    #ifdef SDK_BUILD_NX
+    #if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
     }
     #endif
 
