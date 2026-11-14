@@ -4,6 +4,8 @@
 
 #include <nitro.h>
 
+#include "simulator/sim_debug.h"
+
 #define NANO 1000000000L
 #define MILLI_TO_NANO 1000000L
 
