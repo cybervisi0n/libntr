@@ -115,6 +115,12 @@ void Process() {
   }
 
   SDL_Event Event;
+  bool touchDown = false;
+  int touchX, touchY = 0;
+  int windowHeight, windowWidth = 0;
+  #if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
+  SDL_GetWindowSizeInPixels(SIM_GetSDLWindow(), &windowWidth, &windowHeight);
+  #endif
   while (SDL_PollEvent(&Event)) {
     SIM::GUI::ProcessEvent(&Event);
 
@@ -287,22 +293,50 @@ void Process() {
                             SIM_CONFIG_JOY_AXIS_MINUS_MASK);
       }
     }
-    if (Event.type == SDL_MOUSEBUTTONDOWN) {
+    if (Event.type == SDL_MOUSEBUTTONDOWN || Event.type == SDL_FINGERDOWN) {
       isMouseDown = 1;
       s_tpData.validity = 0;
       s_tpData.touch = 1;
+
+      #if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
+      if(Event.type == SDL_FINGERDOWN) {
+        touchDown = true;
+        touchX = (int)(Event.tfinger.x * (float)windowWidth);
+        touchY = (int)(Event.tfinger.y * (float)windowHeight);
+      }
+      #endif
     }
-    if (Event.type == SDL_MOUSEBUTTONUP) {
+    if (Event.type == SDL_MOUSEBUTTONUP || Event.type == SDL_FINGERUP) {
       isMouseDown = 0;
       s_tpData.validity = 0;
       s_tpData.touch = 0;
+
+      #if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
+      if(Event.type == SDL_FINGERUP) {
+        touchDown = false;
+      }
+      #endif
     }
+
+    #if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
+    if(Event.type == SDL_FINGERMOTION) {
+      touchX = (int)(Event.tfinger.x * (float)windowWidth);
+      touchY = (int)(Event.tfinger.y * (float)windowHeight);
+    }
+    #endif
   }
 
   int x;
   int y;
 
+  #if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
+  x = touchX;
+  y = touchY;
+  #else
   SDL_GetMouseState(&x, &y);
+  #endif
+
+ 
 
   const u32 * touchPanelCoords = SIM_GetTouchPanelCoords();
 
