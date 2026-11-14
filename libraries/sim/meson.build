@@ -122,7 +122,7 @@ if(get_option('tracy_enable') == true)
     ]
 endif
 
-if(build_target != 'prospero' and build_target != 'nx')
+if(build_target != 'prospero' and build_target != 'nx' and build_target != 'ounce')
     libsim_args += [
         '-DSIM_IMGUI_FILE_DIALOG_SUPPORT=1'
     ]
@@ -156,6 +156,7 @@ libsim_dependencies += libnx_dep
 endif
 
 if(build_target == 'ounce')
+libsim_dependencies += declare_dependency(dependencies: [meson.get_compiler('c').find_library('ounce', dirs: '/opt/devkitpro/libounce/lib/')])
 libsim_dependencies += declare_dependency(dependencies: [meson.get_compiler('c').find_library('glapi', dirs: '/opt/devkitpro/portlibs/switch2/lib/')])
 libsim_dependencies += declare_dependency(dependencies: [meson.get_compiler('c').find_library('ouncevk', dirs: '/opt/devkitpro/portlibs/switch2/lib/')])
 libsim_dependencies += declare_dependency(dependencies: [meson.get_compiler('c').find_library('ouncevk-gl', dirs: '/opt/devkitpro/portlibs/switch2/lib/')])
