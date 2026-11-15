@@ -44,7 +44,7 @@ if(build_target == 'prospero')
             meson.get_compiler('cpp').find_library('SceAgc', dirs: prospero_lib_dirs),
             meson.get_compiler('cpp').find_library('SceAgcDriver', dirs: prospero_lib_dirs),
 
-            # OpenGL libraries
+            # OpenGL libraries (and vulkan, since Zink is a compatibility layer for vulkan)
             meson.get_compiler('cpp').find_library('blake3', dirs: prospero_lib_dirs),
             meson.get_compiler('cpp').find_library('compiler', dirs: prospero_lib_dirs),
             meson.get_compiler('cpp').find_library('gallium', dirs: prospero_lib_dirs),
@@ -61,10 +61,14 @@ if(build_target == 'prospero')
             meson.get_compiler('cpp').find_library('mesa', dirs: prospero_lib_dirs),
             meson.get_compiler('cpp').find_library('mesa_sse41', dirs: prospero_lib_dirs),
             meson.get_compiler('cpp').find_library('nir', dirs: prospero_lib_dirs),
-            meson.get_compiler('cpp').find_library('ps5_opengl_core33', dirs: prospero_lib_dirs),
-            meson.get_compiler('cpp').find_library('psbc.ps5', dirs: prospero_lib_dirs),
-            meson.get_compiler('cpp').find_library('softpipe', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('zink', dirs: prospero_lib_dirs),
             meson.get_compiler('cpp').find_library('vtn', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('EGL', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('z', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('vulkan_radeon', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('vulkan_lite_runtime', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('vulkan_instance', dirs: prospero_lib_dirs),
+            meson.get_compiler('cpp').find_library('vulkan_util', dirs: prospero_lib_dirs),
         ]
     )
     libsim_dependencies += prospero_libs

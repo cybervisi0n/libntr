@@ -87,6 +87,10 @@ static u32 s_TouchPanelCoords[4] = {}; // The bounding box of the touch screen
 
 #include <nitro/wm/ARM7/wm_sp.h>
 
+#ifdef SDK_BUILD_PROSPERO
+extern "C" int sceSystemServiceHideSplashScreen();
+#endif
+
 // Graphics Debug Variables
 u8 s_SIM_DBG_BGenable[4] = {1, 1, 1, 1};
 u8 s_SIM_DBG_OAMenable = 1;
@@ -547,6 +551,10 @@ void *SIM_RenderInit(void *arg) {
 
   // Setup ImGui
   SIM::GUI::Init(window, context);
+
+  #ifdef SDK_BUILD_PROSPERO
+  sceSystemServiceHideSplashScreen();
+  #endif
 
   clock_gettime(CLOCK_MONOTONIC, &s_SIM_lastFrameEnd);
 
