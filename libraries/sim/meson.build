@@ -120,7 +120,6 @@ if(get_option('tracy_enable') == true)
             static : true)
         libsim_dependencies += tracy
     endif
-    libsim_includes += subproject('tracy').get_variable('tracy_public_include_dirs')
     libsim_args += [
         '-DSDK_TRACY_ENABLE'
     ]

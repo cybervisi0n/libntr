@@ -1,6 +1,10 @@
 #include "simulator/sim_g3_Utilities.hpp"
 #include "simulator/sim.h"
 
+#ifdef SDK_TRACY_ENABLE
+#include "tracy/TracyC.h"
+#endif
+
 namespace SIM::G3::Util {
 
 MtxFx33 MultiplyMtxFx33(MtxFx33 a, MtxFx33 b) {
