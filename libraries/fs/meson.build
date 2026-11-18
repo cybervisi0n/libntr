@@ -2,12 +2,19 @@ subdir('src')
 
 libfs_includes = include_directories('include')
 
+libfs_deps = []
+
+if(build_target == 'prospero')
+    libfs_deps += dependency('prospero-headers')
+endif
+
 libfs = library('fs',
     c_pch: nitro_pch,
     include_directories: [nitrosdk_includes, libfs_includes],
     pic: (build_target == 'nx' or build_target == 'ounce'),
     sources: [libfs_srcs, fx_const_h],
-    native: (build_target == 'linux' or build_target == 'win64')
+    native: (build_target == 'linux' or build_target == 'win64'),
+    dependencies: libfs_deps
 )
 
 if (build_target == 'arm')

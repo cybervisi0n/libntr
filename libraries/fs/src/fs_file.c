@@ -22,6 +22,10 @@
 #include <simulator/sim_RomExtractor.h>
 #endif
 
+#ifdef SDK_BUILD_PROSPERO
+#include "prospero/sceKernel.h"
+#endif
+
 #if SDK_VERSION_MAJOR == 5
 #define FS_DEBUG_TRACE(...) (void)0
 #endif
@@ -41,15 +45,6 @@ const char *fsi_assert_irq_enabled = "not IRQ-enabled";
 const char *fsi_assert_arc_free = "archive is still now registered";
 const char *fsi_assert_arc_unloaded = "archive is still now loaded";
 const char *fsi_assert_arc_not_rom = "cannot modify \"rom\" archive";
-#endif
-
-#ifdef SDK_BUILD_PROSPERO
-typedef struct notify_request {
-  char useless1[45];
-  char message[3075];
-} notify_request_t;
-
-int sceKernelSendNotificationRequest(int, notify_request_t*, size_t, int);
 #endif
 
 #define FS_FILE_OPEN_DEBUG FALSE
@@ -569,7 +564,7 @@ BOOL FS_OpenFile (FSFile *p_file, const char *path)
         #endif
 
         #ifdef SDK_BUILD_PROSPERO
-        notify_request_t req = {};
+        sceKernelNotifyRequest_t req = {};
 
         sprintf(req.message, "libntr: Failed to open file '%s'", path);
 

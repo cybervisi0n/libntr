@@ -72,6 +72,9 @@ if(build_target == 'prospero')
         ]
     )
     libsim_dependencies += prospero_libs
+
+    subproject('prospero-headers')
+    libsim_dependencies += dependency('prospero-headers')
 endif
 
 

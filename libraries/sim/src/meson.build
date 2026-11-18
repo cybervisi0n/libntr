@@ -45,10 +45,6 @@ if(build_target == 'linux' or build_target == 'win64')
 libsim_srcs += files('glad.c')
 endif
 
-if(build_target == 'prospero')
-libsim_srcs += files('ps5_heap.cpp')
-endif
-
 if(build_target != 'prospero' and build_target != 'nx' and build_target != 'ounce')
 libsim_srcs += files('ImGuiFileDialog/ImGuiFileDialog.cpp')
 endif

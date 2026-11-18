@@ -57,10 +57,6 @@ extern "C" int NitroSpMain(void *arg);
 #include "switch.h"
 #endif
 
-#ifdef SDK_BUILD_PROSPERO
-#include "ps5_heap.h"
-#endif
-
 #ifdef SDK_TRACY_ENABLE
 #include "tracy/TracyC.h"
 #endif
@@ -1170,10 +1166,6 @@ int main(int argc, char *argv[]) {
   while (!TracyCIsStarted) {
     SDL_Delay(1);
   }
-#endif
-
-#ifdef SDK_BUILD_PROSPERO
-  ps5_heap_initialize();
 #endif
 
   sExeName = argv[0];
