@@ -342,7 +342,7 @@ BOOL SIM_Config_LoadConfigFile(SIM_config_type * aConfig)
 // Initialize a SIM_config_type to default values
 void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
 {
-#if defined(SDK_BUILD_NX) || defined(SDK_BUILD_PROSPERO) || defined(SDK_BUILD_OUNCE)
+#if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
 #ifdef SDK_BUILD_OUNCE
     aConfig->internalResolutionScale = 10;
 #else
@@ -350,6 +350,11 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
 #endif
     aConfig->windowHeight = 1080;
     aConfig->windowWidth = 1920;
+    aConfig->screenLayout = SIM_CONFIG_SCREEN_LAYOUT_LARGE;
+#elif defined(SDK_BUILD_PROSPERO)
+    aConfig->internalResolutionScale = 10;
+    aConfig->windowHeight = 2160;
+    aConfig->windowWidth = 3840;
     aConfig->screenLayout = SIM_CONFIG_SCREEN_LAYOUT_LARGE;
 #else
     aConfig->internalResolutionScale = 10;
