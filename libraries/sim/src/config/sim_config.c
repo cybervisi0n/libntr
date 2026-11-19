@@ -159,6 +159,9 @@ static int IniHandler(void* user, const char* section, const char* name,
     if(MATCH("PAD", "SelectJoyKey")) {
         config->padSettings.selectJoyKey = atoi(value);
     }
+    if(MATCH("PAD", "GUIJoyKey")) {
+        config->padSettings.guiJoyKey = atoi(value);
+    }
     if(MATCH("PAD", "AJoyKeyAlt")) {
         config->padSettings.aJoyKeyAlt = atoi(value);
     }
@@ -194,6 +197,9 @@ static int IniHandler(void* user, const char* section, const char* name,
     }
     if(MATCH("PAD", "SelectJoyKeyAlt")) {
         config->padSettings.selectJoyKeyAlt = atoi(value);
+    }
+    if(MATCH("PAD", "GUIJoyKeyAlt")) {
+        config->padSettings.guiJoyKeyAlt = atoi(value);
     }
 
     //OS NVRAM
@@ -443,6 +449,7 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->padSettings.startJoyKey = 6;
     aConfig->padSettings.selectJoyKey = 4;
 #endif
+    aConfig->padSettings.guiJoyKey = 7;
     aConfig->padSettings.aJoyKeyAlt = -1;
     aConfig->padSettings.bJoyKeyAlt = -1;
     aConfig->padSettings.xJoyKeyAlt = -1;
@@ -455,6 +462,7 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->padSettings.rJoyKeyAlt = -1;
     aConfig->padSettings.startJoyKeyAlt = -1;
     aConfig->padSettings.selectJoyKeyAlt = -1;
+    aConfig->padSettings.guiJoyKeyAlt = -1;
 
     // Set a random MAC address (with a nintendo prefix)
     aConfig->macAddr[0] = 0x98;
@@ -532,6 +540,7 @@ void SIM_Config_SaveConfigFile(SIM_config_type * aConfig)
     fprintf(configFile, "RJoyKey=%d\n", aConfig->padSettings.rJoyKey);
     fprintf(configFile, "StartJoyKey=%d\n", aConfig->padSettings.startJoyKey);
     fprintf(configFile, "SelectJoyKey=%d\n", aConfig->padSettings.selectJoyKey);
+    fprintf(configFile, "GUIJoyKey=%d\n", aConfig->padSettings.guiJoyKey);
     fprintf(configFile, "AJoyKeyAlt=%d\n", aConfig->padSettings.aJoyKeyAlt);
     fprintf(configFile, "BJoyKeyAlt=%d\n", aConfig->padSettings.bJoyKeyAlt);
     fprintf(configFile, "XJoyKeyAlt=%d\n", aConfig->padSettings.xJoyKeyAlt);
@@ -544,6 +553,7 @@ void SIM_Config_SaveConfigFile(SIM_config_type * aConfig)
     fprintf(configFile, "RJoyKeyAlt=%d\n", aConfig->padSettings.rJoyKeyAlt);
     fprintf(configFile, "StartJoyKeyAlt=%d\n", aConfig->padSettings.startJoyKeyAlt);
     fprintf(configFile, "SelectJoyKeyAlt=%d\n", aConfig->padSettings.selectJoyKeyAlt);
+    fprintf(configFile, "GUIJoyKeyAlt=%d\n", aConfig->padSettings.guiJoyKeyAlt);
     fprintf(configFile, "\n");
 
     fprintf(configFile, "[OSNVRAM]\n");

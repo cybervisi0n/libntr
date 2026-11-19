@@ -126,6 +126,10 @@ static void HandleJoystickKeyDown(int aKey) {
           || aKey == simConfig->padSettings.selectJoyKeyAlt) {
     // Select button
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111111011;
+  } else if (aKey == simConfig->padSettings.guiJoyKey
+          || aKey == simConfig->padSettings.guiJoyKeyAlt) {
+    // GUI toggle
+    SIM::GUI::Toggle();
   }
 }
 
