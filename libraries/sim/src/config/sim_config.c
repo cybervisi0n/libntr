@@ -159,6 +159,42 @@ static int IniHandler(void* user, const char* section, const char* name,
     if(MATCH("PAD", "SelectJoyKey")) {
         config->padSettings.selectJoyKey = atoi(value);
     }
+    if(MATCH("PAD", "AJoyKeyAlt")) {
+        config->padSettings.aJoyKeyAlt = atoi(value);
+    }
+    if(MATCH("PAD", "BJoyKeyAlt")) {
+        config->padSettings.bJoyKeyAlt = atoi(value);
+    }
+    if(MATCH("PAD", "XJoyKeyAlt")) {
+        config->padSettings.xJoyKeyAlt = atoi(value);
+    }
+    if(MATCH("PAD", "YJoyKeyAlt")) {
+        config->padSettings.yJoyKeyAlt = atoi(value);
+    }
+    if(MATCH("PAD", "UpJoyKeyAlt")) {
+        config->padSettings.upJoyKeyAlt = atoi(value);
+    }
+    if(MATCH("PAD", "DownJoyKeyAlt")) {
+        config->padSettings.downJoyKeyAlt = atoi(value);
+    }
+    if(MATCH("PAD", "LeftJoyKeyAlt")) {
+        config->padSettings.leftJoyKeyAlt = atoi(value);
+    }
+    if(MATCH("PAD", "RightJoyKeyAlt")) {
+        config->padSettings.rightJoyKeyAlt = atoi(value);
+    }
+    if(MATCH("PAD", "LJoyKeyAlt")) {
+        config->padSettings.lJoyKeyAlt = atoi(value);
+    }
+    if(MATCH("PAD", "RJoyKeyAlt")) {
+        config->padSettings.rJoyKeyAlt = atoi(value);
+    }
+    if(MATCH("PAD", "StartJoyKeyAlt")) {
+        config->padSettings.startJoyKeyAlt = atoi(value);
+    }
+    if(MATCH("PAD", "SelectJoyKeyAlt")) {
+        config->padSettings.selectJoyKeyAlt = atoi(value);
+    }
 
     //OS NVRAM
     //Owner Info
@@ -407,6 +443,18 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->padSettings.startJoyKey = 6;
     aConfig->padSettings.selectJoyKey = 4;
 #endif
+    aConfig->padSettings.aJoyKeyAlt = -1;
+    aConfig->padSettings.bJoyKeyAlt = -1;
+    aConfig->padSettings.xJoyKeyAlt = -1;
+    aConfig->padSettings.yJoyKeyAlt = -1;
+    aConfig->padSettings.upJoyKeyAlt = -1;
+    aConfig->padSettings.downJoyKeyAlt = -1;
+    aConfig->padSettings.leftJoyKeyAlt = -1;
+    aConfig->padSettings.rightJoyKeyAlt = -1;
+    aConfig->padSettings.lJoyKeyAlt = -1;
+    aConfig->padSettings.rJoyKeyAlt = -1;
+    aConfig->padSettings.startJoyKeyAlt = -1;
+    aConfig->padSettings.selectJoyKeyAlt = -1;
 
     // Set a random MAC address (with a nintendo prefix)
     aConfig->macAddr[0] = 0x98;
@@ -484,6 +532,18 @@ void SIM_Config_SaveConfigFile(SIM_config_type * aConfig)
     fprintf(configFile, "RJoyKey=%d\n", aConfig->padSettings.rJoyKey);
     fprintf(configFile, "StartJoyKey=%d\n", aConfig->padSettings.startJoyKey);
     fprintf(configFile, "SelectJoyKey=%d\n", aConfig->padSettings.selectJoyKey);
+    fprintf(configFile, "AJoyKeyAlt=%d\n", aConfig->padSettings.aJoyKeyAlt);
+    fprintf(configFile, "BJoyKeyAlt=%d\n", aConfig->padSettings.bJoyKeyAlt);
+    fprintf(configFile, "XJoyKeyAlt=%d\n", aConfig->padSettings.xJoyKeyAlt);
+    fprintf(configFile, "YJoyKeyAlt=%d\n", aConfig->padSettings.yJoyKeyAlt);
+    fprintf(configFile, "UpJoyKeyAlt=%d\n", aConfig->padSettings.upJoyKeyAlt);
+    fprintf(configFile, "DownJoyKeyAlt=%d\n", aConfig->padSettings.downJoyKeyAlt);
+    fprintf(configFile, "LeftJoyKeyAlt=%d\n", aConfig->padSettings.leftJoyKeyAlt);
+    fprintf(configFile, "RightJoyKeyAlt=%d\n", aConfig->padSettings.rightJoyKeyAlt);
+    fprintf(configFile, "LJoyKeyAlt=%d\n", aConfig->padSettings.lJoyKeyAlt);
+    fprintf(configFile, "RJoyKeyAlt=%d\n", aConfig->padSettings.rJoyKeyAlt);
+    fprintf(configFile, "StartJoyKeyAlt=%d\n", aConfig->padSettings.startJoyKeyAlt);
+    fprintf(configFile, "SelectJoyKeyAlt=%d\n", aConfig->padSettings.selectJoyKeyAlt);
     fprintf(configFile, "\n");
 
     fprintf(configFile, "[OSNVRAM]\n");

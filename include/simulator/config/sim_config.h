@@ -45,6 +45,19 @@ typedef struct {
     int rJoyKey;
     int startJoyKey;
     int selectJoyKey;
+
+    int aJoyKeyAlt;
+    int bJoyKeyAlt;
+    int xJoyKeyAlt;
+    int yJoyKeyAlt;
+    int upJoyKeyAlt;
+    int downJoyKeyAlt;
+    int leftJoyKeyAlt;
+    int rightJoyKeyAlt;
+    int lJoyKeyAlt;
+    int rJoyKeyAlt;
+    int startJoyKeyAlt;
+    int selectJoyKeyAlt;
 } SIM_config_pad_settings_type;
 
 typedef struct {

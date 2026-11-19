@@ -25,40 +25,52 @@ static u64 map(u64 x, u64 in_min, u64 in_max, u64 out_min, u64 out_max) {
 
 static void HandleJoystickKeyUp(int aKey) {
   auto* simConfig = SIM_GetConfigPtr();
-  if (aKey == simConfig->padSettings.aJoyKey) {
+  if (aKey == simConfig->padSettings.aJoyKey
+   || aKey == simConfig->padSettings.aJoyKeyAlt) {
     // A Button
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000000001;
-  } else if (aKey == simConfig->padSettings.bJoyKey) {
+  } else if (aKey == simConfig->padSettings.bJoyKey
+          || aKey == simConfig->padSettings.bJoyKeyAlt) {
     // B Button
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000000010;
-  } else if (aKey == simConfig->padSettings.xJoyKey) {
+  } else if (aKey == simConfig->padSettings.xJoyKey
+          || aKey == simConfig->padSettings.xJoyKeyAlt) {
     // X Button
     *(vu16 *)HW_BUTTON_XY_BUF = *(vu16 *)HW_BUTTON_XY_BUF | 0b0000010000000000;
-  } else if (aKey == simConfig->padSettings.yJoyKey) {
+  } else if (aKey == simConfig->padSettings.yJoyKey
+          || aKey == simConfig->padSettings.yJoyKeyAlt) {
     // y Button
     *(vu16 *)HW_BUTTON_XY_BUF = *(vu16 *)HW_BUTTON_XY_BUF | 0b0000100000000000;
-  } else if (aKey == simConfig->padSettings.upJoyKey) {
+  } else if (aKey == simConfig->padSettings.upJoyKey
+          || aKey == simConfig->padSettings.upJoyKeyAlt) {
     // Dpad Up
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000001000000;
-  } else if (aKey == simConfig->padSettings.downJoyKey) {
+  } else if (aKey == simConfig->padSettings.downJoyKey
+          || aKey == simConfig->padSettings.downJoyKeyAlt) {
     // Dpad Down
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000010000000;
-  } else if (aKey == simConfig->padSettings.leftJoyKey) {
+  } else if (aKey == simConfig->padSettings.leftJoyKey
+          || aKey == simConfig->padSettings.leftJoyKeyAlt) {
     // Dpad Left
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000100000;
-  } else if (aKey == simConfig->padSettings.rightJoyKey) {
+  } else if (aKey == simConfig->padSettings.rightJoyKey
+          || aKey == simConfig->padSettings.rightJoyKeyAlt) {
     // Dpad Right
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000010000;
-  } else if (aKey == simConfig->padSettings.lJoyKey) {
+  } else if (aKey == simConfig->padSettings.lJoyKey
+          || aKey == simConfig->padSettings.lJoyKeyAlt) {
     // L
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000001000000000;
-  } else if (aKey == simConfig->padSettings.rJoyKey) {
+  } else if (aKey == simConfig->padSettings.rJoyKey
+          || aKey == simConfig->padSettings.rJoyKeyAlt) {
     // R
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000100000000;
-  } else if (aKey == simConfig->padSettings.startJoyKey) {
+  } else if (aKey == simConfig->padSettings.startJoyKey
+          || aKey == simConfig->padSettings.startJoyKeyAlt) {
     // Start button
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000001000;
-  } else if (aKey == simConfig->padSettings.selectJoyKey) {
+  } else if (aKey == simConfig->padSettings.selectJoyKey
+          || aKey == simConfig->padSettings.selectJoyKeyAlt) {
     // Select button
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000000100;
   }
@@ -66,40 +78,52 @@ static void HandleJoystickKeyUp(int aKey) {
 
 static void HandleJoystickKeyDown(int aKey) {
   auto * simConfig = SIM_GetConfigPtr();
-  if (aKey == simConfig->padSettings.aJoyKey) {
+  if (aKey == simConfig->padSettings.aJoyKey
+   || aKey == simConfig->padSettings.aJoyKeyAlt) {
     // A Button
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111111110;
-  } else if (aKey == simConfig->padSettings.bJoyKey) {
+  } else if (aKey == simConfig->padSettings.bJoyKey
+          || aKey == simConfig->padSettings.bJoyKeyAlt) {
     // B Button
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111111101;
-  } else if (aKey == simConfig->padSettings.xJoyKey) {
+  } else if (aKey == simConfig->padSettings.xJoyKey
+          || aKey == simConfig->padSettings.xJoyKeyAlt) {
     // X Button
     *(vu16 *)HW_BUTTON_XY_BUF = *(vu16 *)HW_BUTTON_XY_BUF & 0b1111100000000000;
-  } else if (aKey == simConfig->padSettings.yJoyKey) {
+  } else if (aKey == simConfig->padSettings.yJoyKey
+          || aKey == simConfig->padSettings.yJoyKeyAlt) {
     // y Button
     *(vu16 *)HW_BUTTON_XY_BUF = *(vu16 *)HW_BUTTON_XY_BUF & 0b1111010000000000;
-  } else if (aKey == simConfig->padSettings.upJoyKey) {
+  } else if (aKey == simConfig->padSettings.upJoyKey
+          || aKey == simConfig->padSettings.upJoyKeyAlt) {
     // Dpad Up
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111110111111;
-  } else if (aKey == simConfig->padSettings.downJoyKey) {
+  } else if (aKey == simConfig->padSettings.downJoyKey
+          || aKey == simConfig->padSettings.downJoyKeyAlt) {
     // Dpad Down
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111101111111;
-  } else if (aKey == simConfig->padSettings.leftJoyKey) {
+  } else if (aKey == simConfig->padSettings.leftJoyKey
+          || aKey == simConfig->padSettings.leftJoyKeyAlt) {
     // Dpad Left
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111011111;
-  } else if (aKey == simConfig->padSettings.rightJoyKey) {
+  } else if (aKey == simConfig->padSettings.rightJoyKey
+          || aKey == simConfig->padSettings.rightJoyKeyAlt) {
     // Dpad Right
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111101111;
-  } else if (aKey == simConfig->padSettings.lJoyKey) {
+  } else if (aKey == simConfig->padSettings.lJoyKey
+          || aKey == simConfig->padSettings.lJoyKeyAlt) {
     // L
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111110111111111;
-  } else if (aKey == simConfig->padSettings.rJoyKey) {
+  } else if (aKey == simConfig->padSettings.rJoyKey
+          || aKey == simConfig->padSettings.rJoyKeyAlt) {
     // R
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111011111111;
-  } else if (aKey == simConfig->padSettings.startJoyKey) {
+  } else if (aKey == simConfig->padSettings.startJoyKey
+          || aKey == simConfig->padSettings.startJoyKeyAlt) {
     // Start button
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111110111;
-  } else if (aKey == simConfig->padSettings.selectJoyKey) {
+  } else if (aKey == simConfig->padSettings.selectJoyKey
+          || aKey == simConfig->padSettings.selectJoyKeyAlt) {
     // Select button
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111111011;
   }

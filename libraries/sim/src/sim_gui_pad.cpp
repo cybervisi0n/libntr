@@ -10,6 +10,8 @@
 #include <string>
 #include <SDL2/SDL.h>
 
+#include <nitro/types.h>
+
 namespace SIM::GUI {
 
 static constexpr ImVec2 BtnSize = {50, 20};
@@ -62,7 +64,9 @@ static void SetJoystickKeyConfig(int& config) {
 
 static std::string GetJoystickKeyName(int key) {
     std::string ret = "";
-    if(key & SIM_CONFIG_JOY_HAT_MASK) {
+    if(key == -1) {
+        ret = "";
+    } else if(key & SIM_CONFIG_JOY_HAT_MASK) {
         ret = std::format("Hat {}", key & ~(SIM_CONFIG_JOY_HAT_MASK));
     } else if(key & SIM_CONFIG_JOY_AXIS_MINUS_MASK) {
         ret = std::format("Axis {}-", key & ~(SIM_CONFIG_JOY_AXIS_MINUS_MASK));
@@ -147,6 +151,27 @@ void AppPadMain(bool *openState) {
     JoystickKeySettingButton("Right  ", 25, sConfig->padSettings.rightJoyKey);
     JoystickKeySettingButton("Start  ", 26, sConfig->padSettings.startJoyKey);
     JoystickKeySettingButton("Select ", 27, sConfig->padSettings.selectJoyKey);
+
+    ImGui::Columns(1, "pad3", false);
+    ImGui::Separator();
+    ImGui::Text("Gamepad Alternate");
+    ImGui::Columns(2, "padJoystickAlt", true);
+
+    JoystickKeySettingButton("A ", 16, sConfig->padSettings.aJoyKeyAlt);
+    JoystickKeySettingButton("B ", 17, sConfig->padSettings.bJoyKeyAlt);
+    JoystickKeySettingButton("X ", 18, sConfig->padSettings.xJoyKeyAlt);
+    JoystickKeySettingButton("Y ", 19, sConfig->padSettings.yJoyKeyAlt);
+    JoystickKeySettingButton("L ", 20, sConfig->padSettings.lJoyKeyAlt);
+    JoystickKeySettingButton("R ", 21, sConfig->padSettings.rJoyKeyAlt);
+
+    ImGui::NextColumn();
+
+    JoystickKeySettingButton("Up     ", 22, sConfig->padSettings.upJoyKeyAlt);
+    JoystickKeySettingButton("Down   ", 23, sConfig->padSettings.downJoyKeyAlt);
+    JoystickKeySettingButton("Left   ", 24, sConfig->padSettings.leftJoyKeyAlt);
+    JoystickKeySettingButton("Right  ", 25, sConfig->padSettings.rightJoyKeyAlt);
+    JoystickKeySettingButton("Start  ", 26, sConfig->padSettings.startJoyKeyAlt);
+    JoystickKeySettingButton("Select ", 27, sConfig->padSettings.selectJoyKeyAlt);
 
     ImGui::End();
 
