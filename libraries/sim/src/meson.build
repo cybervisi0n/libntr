@@ -33,6 +33,7 @@ libsim_srcs = files(
 	'sim_gui_info.cpp',
     'sim_gui_net.cpp',
     'sim_gui_pad.cpp',
+    'sim_gui_utils.cpp',
     'sim_Input.cpp',
     'sim_main.cpp',
     'sim_net.cpp',

@@ -20,10 +20,6 @@ void AppInfoMain(bool *openState) {
     float frameTimeMs = static_cast<float>(SIM_GetFullFrameTime()) / 1000000.0f;
     ImGui::Text("%.0ffps", 1000.0f / frameTimeMs);
 
-    //AppButton("ImGui Demo", &sShowImGuiDemo, nullptr, ImGui::ShowDemoWindow);
-
-    //ImGui::Checkbox("Pause Game Logic", &sPauseGameLogic);
-
     ImGui::End();
 }
 

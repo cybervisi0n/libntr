@@ -177,6 +177,10 @@ bool IsGameLogicPaused() {
     return sPauseGameLogic;
 }
 
+void SetGameLogicPaused(bool paused) {
+    sPauseGameLogic = paused;
+}
+
 // Generic button to open another GUI applet
 void AppButton(const char * label, bool * state, void (*initFunc)(void), void (*appFunc)(bool *)) {
     if(ImGui::Button(label, sButtonSize)) {

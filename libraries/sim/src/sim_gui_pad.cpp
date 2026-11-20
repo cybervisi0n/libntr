@@ -5,6 +5,7 @@
 #include "simulator/config/sim_config.h"
 
 #include "gui_internal.hpp"
+#include "gui_utils.hpp"
 
 #include <format>
 #include <string>
@@ -15,6 +16,9 @@
 namespace SIM::GUI {
 
 static constexpr ImVec2 BtnSize = {50, 20};
+
+static constexpr auto MaxWindowWidth = 400;
+static constexpr auto MaxWindowHeight = 800;
 
 static SIM_config_type * sConfig;
 static bool sConfigChanged = false;
@@ -107,7 +111,28 @@ void AppPadInit() {
 }
 
 void AppPadMain(bool *openState) {
-    ImGui::Begin("Input", openState);
+    bool configChanged = false;
+    int screenLayout = sConfig->screenLayout;
+    bool swapScreens = sConfig->swapScreens;
+    int vSyncInterval = sConfig->vsyncInterval;
+    bool frameLimit = sConfig->capFrameRate;
+    bool fullScreen = sConfig->fullScreen;
+
+    u32 windowWidth = std::min<u32>(PercentXPx(0.5f), MaxWindowWidth);
+    u32 windowHeight = std::min<u32>(PercentYPx(0.75f), MaxWindowHeight);
+
+    u32 windowX = (float)CenteredXPx(windowWidth);
+    u32 windowY = (float)CenteredYPx(windowHeight);
+
+
+    ImGui::SetNextWindowPos(ImVec2(static_cast<float>(windowX), static_cast<float>(windowY)));
+    ImGui::SetNextWindowSize(ImVec2(static_cast<float>(windowWidth), static_cast<float>(windowHeight)));
+    
+    ImGui::Begin("Input", openState, 
+        ImGuiWindowFlags_NoMove | 
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoCollapse
+    );
 
     ImGui::Text("Keyboard");
     ImGui::Columns(2, "padKeyboard", true);

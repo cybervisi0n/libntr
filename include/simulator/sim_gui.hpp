@@ -17,6 +17,7 @@ void Toggle();
 void Enable();
 void OpenFileDialog(std::function<void(std::string)> callback);
 bool IsGameLogicPaused();
+void SetGameLogicPaused(bool paused);
 void AppButton(const char * label, bool * state, void (*aInitFunc)(void), void (*aAppFunc)(bool *));
 
 

@@ -5,8 +5,9 @@
 #include "simulator/config/sim_config.h"
 
 #include "gui_internal.hpp"
+#include "gui_utils.hpp"
 
-#include <array>
+#include <algorithm>
 #include <SDL2/SDL.h>
 
 namespace SIM::GUI {
@@ -16,6 +17,9 @@ static constexpr u8 MinMasterVolume = 0;
 static constexpr u8 MaxMasterVolume = 127;
 static constexpr u8 MinInternalRes = 1;
 static constexpr u8 MaxInternalRes = 20;
+
+static constexpr auto MaxWindowWidth = 300;
+static constexpr auto MaxWindowHeight = 600;
 
 static SIM_config_type * sConfig;
 
@@ -31,6 +35,8 @@ static constexpr const char * VblankStrings[] = {
     "Every second V-Blank"
 };
 
+static bool sPauseGameLogic = false;
+
 void AppConfigInit() {
     sConfig = SIM_GetConfigPtr();
 }
@@ -43,10 +49,21 @@ void AppConfigMain(bool *openState) {
     bool frameLimit = sConfig->capFrameRate;
     bool fullScreen = sConfig->fullScreen;
 
+    u32 windowWidth = std::min<u32>(PercentXPx(0.5f), MaxWindowWidth);
+    u32 windowHeight = std::min<u32>(PercentYPx(0.75f), MaxWindowHeight);
 
-    ImGui::SetNextWindowPos(ImVec2(0.25f, 0.25f));
+    u32 windowX = (float)CenteredXPx(windowWidth);
+    u32 windowY = (float)CenteredYPx(windowHeight);
+
+
+    ImGui::SetNextWindowPos(ImVec2(static_cast<float>(windowX), static_cast<float>(windowY)));
+    ImGui::SetNextWindowSize(ImVec2(static_cast<float>(windowWidth), static_cast<float>(windowHeight)));
     
-    ImGui::Begin("Settings", openState, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+    ImGui::Begin("Settings", openState, 
+        ImGuiWindowFlags_NoMove | 
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoCollapse
+    );
 
     ImGui::Text("Internal Resolution");
     if(ImGui::SliderScalar(" ", ImGuiDataType_U8, &sConfig->internalResolutionScale, &MinInternalRes, &MaxInternalRes, "%dx NDS")) {
@@ -75,6 +92,9 @@ void AppConfigMain(bool *openState) {
     if(ImGui::SliderScalar("  ", ImGuiDataType_U8, &sConfig->masterVolume, &MinMasterVolume, &MaxMasterVolume)) {
         configChanged = true;
     }
+
+    ImGui::Checkbox("Pause Game Logic", &sPauseGameLogic);
+    SetGameLogicPaused(sPauseGameLogic);
 
     ImGui::End();
 
