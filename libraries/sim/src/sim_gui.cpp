@@ -22,13 +22,28 @@ static constexpr ImVec2 sButtonSize = {100, 20};
 static bool sShowAppConfig = false;
 static bool sShowAppPad = false;
 static bool sShowAppNet = false;
+static bool sShowAppDebug = false;
+static bool sShowAppInfo = false;
 static bool sShowImGuiDemo = false;
 static bool sShowWindowPrjSpecific = false;
+
+enum class MainMenuTab {
+    Settings,
+    Controls,
+    Multiplayer,
+    Application,
+    Debug,
+    Info,
+    Count
+};
+
+static MainMenuTab sActiveMenuWindow = MainMenuTab::Count;
 
 static std::function<void(std::string)> sFileDialogCallback = nullptr;
 
 void PrjMain(bool *) __attribute__((weak));
 
+#if 0
 void __attribute__((weak)) PrjMain(bool * openState) {
     ImGui::OpenPopup("Application-Specific GUI");
     if(ImGui::BeginPopupModal("Application-Specific GUI", openState, ImGuiWindowFlags_Modal | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove)) {
@@ -36,6 +51,7 @@ void __attribute__((weak)) PrjMain(bool * openState) {
         ImGui::EndPopup();
     }
 }
+#endif
 
 void Init(SDL_Window * window, SDL_GLContext context) {
     sWindow = window;
@@ -43,8 +59,9 @@ void Init(SDL_Window * window, SDL_GLContext context) {
 
     sImguiContext = ImGui::CreateContext(NULL);
 
-    ImGuiIO igIO = ImGui::GetIO();
+    ImGuiIO& igIO = ImGui::GetIO();
 	igIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+    igIO.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;       // Enable Gamepad Controls
 	igIO.DisplaySize.x = (float)(SIM_NDS_SCREEN_WIDTH*SIM_NDS_WINDOW_SCALE_FACTOR);
 	igIO.DisplaySize.y = (float)(SIM_NDS_SCREEN_HEIGHT*2*SIM_NDS_WINDOW_SCALE_FACTOR);
 
@@ -60,24 +77,39 @@ void Init(SDL_Window * window, SDL_GLContext context) {
     //ioptr->Fonts.AddFontDefault(NULL);
 }
 
+static void MainMenuItem(const char * title, MainMenuTab tabId, bool& appActive, void (*initFunc)(void), void (*appFunc)(bool *)) {
+    if(ImGui::MenuItem(title, nullptr, &appActive)) {
+        sActiveMenuWindow = tabId;
+        if(initFunc) {
+            initFunc();
+        }
+    }
+
+    if(sActiveMenuWindow == tabId && appActive) {
+        appFunc(&appActive);
+    } else {
+        appActive = false;
+    }
+}
+
 void Main() {
     if(sEnabled) {
-        ImGui::Begin("libntr", &sEnabled);
+        //ImGui::SetNavCursorVisible(true);
+        ImGui::BeginMainMenuBar();
+        MainMenuItem("Settings", MainMenuTab::Settings, sShowAppConfig, AppConfigInit, AppConfigMain);
+        MainMenuItem("Controls", MainMenuTab::Controls, sShowAppPad, AppPadInit, AppPadMain);
+        MainMenuItem("Multiplayer", MainMenuTab::Multiplayer, sShowAppNet, AppNetInit, AppNetMain);
+        if(PrjMain != nullptr) {
+            MainMenuItem("Application", MainMenuTab::Application, sShowWindowPrjSpecific, nullptr, PrjMain);
+        }
+        MainMenuItem("Debug", MainMenuTab::Debug, sShowAppDebug, nullptr, AppDebugMain);
+        MainMenuItem("Info", MainMenuTab::Info, sShowAppInfo, nullptr, AppInfoMain);
+        if(ImGui::MenuItem("Close Menu")) {
+            sEnabled = false;
+            sActiveMenuWindow = MainMenuTab::Count;
+        }
 
-        ImGui::Text("Git rev: %s", SIM_GetLibntrGitHash());
-
-        float renderTimeMs = static_cast<float>(SIM_GetRenderFrameTime()) / 1000000.0f;
-        ImGui::Text("Render time: %.3fms", renderTimeMs);
-
-        float frameTimeMs = static_cast<float>(SIM_GetFullFrameTime()) / 1000000.0f;
-        ImGui::Text("%.0ffps", 1000.0f / frameTimeMs);
-
-
-        AppButton("Config", &sShowAppConfig, AppConfigInit, AppConfigMain);
-        AppButton("Input", &sShowAppPad, AppPadInit, AppPadMain);
-        AppButton("Multiplayer", &sShowAppNet, AppNetInit, AppNetMain);
-        AppButton("ImGui Demo", &sShowImGuiDemo, nullptr, ImGui::ShowDemoWindow);
-        AppButton("Application", &sShowWindowPrjSpecific, nullptr, PrjMain);
+        ImGui::EndMainMenuBar();
 
         #if SIM_IMGUI_FILE_DIALOG_SUPPORT
         if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey", ImGuiWindowFlags_NoCollapse, ImVec2(200, 200))) {
@@ -95,10 +127,6 @@ void Main() {
           ImGuiFileDialog::Instance()->Close();
         }
         #endif
-
-        ImGui::Checkbox("Pause Game Logic", &sPauseGameLogic);
-
-        ImGui::End();
     }
 }
 
@@ -120,10 +148,12 @@ void NewFrame() {
     ImGui::NewFrame();
 }
 
-void ProcessEvent(SDL_Event * event) {
+bool ProcessEvent(SDL_Event * event) {
     if(sEnabled) {
-        ImGui_ImplSDL2_ProcessEvent(event);
+        return ImGui_ImplSDL2_ProcessEvent(event);
     }
+
+    return false;
 }
 
 void Render() {

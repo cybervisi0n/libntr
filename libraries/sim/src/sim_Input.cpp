@@ -133,6 +133,8 @@ static void HandleJoystickKeyDown(int aKey) {
   }
 }
 
+static bool * sAxisIsInDeadzone = nullptr;
+static int sNumAxes = 0;
 
 void Process() {
   auto * simConfig = SIM_GetConfigPtr();
@@ -140,6 +142,15 @@ void Process() {
   // Check Joysticks
   if (sSDLJoystick == NULL && SDL_NumJoysticks() >= 1) {
     sSDLJoystick = SDL_JoystickOpen(0);
+    sNumAxes = SDL_JoystickNumAxes(sSDLJoystick);
+
+    if(sNumAxes > 0) {
+      if(sAxisIsInDeadzone != nullptr) {
+        delete[] sAxisIsInDeadzone;
+      }
+
+      sAxisIsInDeadzone = new bool[sNumAxes];
+    }
   }
 
   SDL_Event Event;
@@ -301,24 +312,34 @@ void Process() {
       }
     }
     if (Event.type == SDL_JOYAXISMOTION) {
+      int axisNum = Event.jaxis.axis;
       if (Event.jaxis.value > simConfig->padSettings.joyAxisDeadzone ||
           Event.jaxis.value <
               (simConfig->padSettings.joyAxisDeadzone * -1)) {
+        int axisNum = Event.jaxis.axis;
+        if(axisNum < sNumAxes && sAxisIsInDeadzone != nullptr) {
+          sAxisIsInDeadzone[axisNum] = false;
+        }
+
         if (Event.jaxis.value > 0) {
-          HandleJoystickKeyDown(Event.jaxis.axis |
+          HandleJoystickKeyDown(axisNum |
                                 SIM_CONFIG_JOY_AXIS_PLUS_MASK);
-          HandleJoystickKeyUp(Event.jaxis.axis |
+          HandleJoystickKeyUp(axisNum |
                               SIM_CONFIG_JOY_AXIS_MINUS_MASK);
         } else {
-          HandleJoystickKeyDown(Event.jaxis.axis |
+          HandleJoystickKeyDown(axisNum |
                                 SIM_CONFIG_JOY_AXIS_MINUS_MASK);
-          HandleJoystickKeyUp(Event.jaxis.axis |
+          HandleJoystickKeyUp(axisNum |
                               SIM_CONFIG_JOY_AXIS_PLUS_MASK);
         }
       } else {
-        HandleJoystickKeyUp(Event.jaxis.axis | SIM_CONFIG_JOY_AXIS_PLUS_MASK);
-        HandleJoystickKeyUp(Event.jaxis.axis |
-                            SIM_CONFIG_JOY_AXIS_MINUS_MASK);
+        if(axisNum < sNumAxes && sAxisIsInDeadzone != nullptr &&
+           sAxisIsInDeadzone[axisNum] == false) {
+          sAxisIsInDeadzone[axisNum] = true;
+          HandleJoystickKeyUp(axisNum | SIM_CONFIG_JOY_AXIS_PLUS_MASK);
+          HandleJoystickKeyUp(axisNum |
+                              SIM_CONFIG_JOY_AXIS_MINUS_MASK);
+        }
       }
     }
     if (Event.type == SDL_MOUSEBUTTONDOWN || Event.type == SDL_FINGERDOWN) {

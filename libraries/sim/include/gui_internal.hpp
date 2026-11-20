@@ -8,6 +8,8 @@ void AppNetInit();
 void AppNetMain(bool * openState);
 void AppPadInit();
 void AppPadMain(bool * openState);
+void AppDebugMain(bool * openState);
+void AppInfoMain(bool * openState);
 
 }
 

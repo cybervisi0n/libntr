@@ -42,8 +42,11 @@ void AppConfigMain(bool *openState) {
     int vSyncInterval = sConfig->vsyncInterval;
     bool frameLimit = sConfig->capFrameRate;
     bool fullScreen = sConfig->fullScreen;
+
+
+    ImGui::SetNextWindowPos(ImVec2(0.25f, 0.25f));
     
-    ImGui::Begin("Config", openState);
+    ImGui::Begin("Settings", openState, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
     ImGui::Text("Internal Resolution");
     if(ImGui::SliderScalar(" ", ImGuiDataType_U8, &sConfig->internalResolutionScale, &MinInternalRes, &MaxInternalRes, "%dx NDS")) {

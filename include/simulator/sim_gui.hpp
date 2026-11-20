@@ -11,7 +11,7 @@ namespace SIM::GUI {
 void Init(SDL_Window * window, SDL_GLContext context);
 void Main();
 void NewFrame();
-void ProcessEvent(SDL_Event * event);
+bool ProcessEvent(SDL_Event * event);
 void Render();
 void Toggle();
 void Enable();
