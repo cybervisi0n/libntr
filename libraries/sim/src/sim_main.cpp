@@ -977,10 +977,10 @@ void *SIM_Render(void *arg) {
     SIM::Input::Process();
 
     // PROSPERO_TODO
-    #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_NX) && !defined(SDK_BUILD_OUNCE)
+    //#if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_NX) && !defined(SDK_BUILD_OUNCE)
     SIM::GUI::NewFrame();
     SIM::GUI::Main();
-    #endif
+    //#endif
 
     memset(bgtex, 0,
            sizeof(u8) * 4 * SIM_NDS_SCREEN_WIDTH * SIM_NDS_SCREEN_HEIGHT * 2);
@@ -1016,9 +1016,9 @@ void *SIM_Render(void *arg) {
     *((u32 *)HW_VBLANK_COUNT_BUF) = *((u32 *)HW_VBLANK_COUNT_BUF) + 1;
 
     // PROSPERO_TODO
-    #if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_NX) && !defined(SDK_BUILD_OUNCE)
+    //#if !defined(SDK_BUILD_PROSPERO) && !defined(SDK_BUILD_NX) && !defined(SDK_BUILD_OUNCE)
     SIM::GUI::Render();
-    #endif
+    //#endif
 
     // Calculate frametime
     struct timespec curTime;

@@ -134,7 +134,8 @@ if(build_target != 'prospero' and build_target != 'nx' and build_target != 'ounc
     ]
 else 
     libsim_args += [
-        '-DSIM_IMGUI_FILE_DIALOG_SUPPORT=0'
+        '-DSIM_IMGUI_FILE_DIALOG_SUPPORT=0',
+        '-DIMGUI_IMPL_OPENGL_LOADER_CUSTOM'
     ]
 endif
 

@@ -190,6 +190,10 @@
 #include "imgui_impl_opengl3_loader.h"
 #endif
 
+#ifdef IMGUI_IMPL_OPENGL_LOADER_CUSTOM
+#include "simulator/sim_opengl.h"
+#endif
+
 // Vertex arrays are not supported on ES2/WebGL1 unless Emscripten which uses an extension
 #ifndef IMGUI_IMPL_OPENGL_ES2
 #define IMGUI_IMPL_OPENGL_USE_VERTEX_ARRAY
@@ -311,6 +315,10 @@ bool ImGui_ImplOpenGL3_InitLoader()
 {
     // Lazily initialize our loader if not already done
     // (to facilitate handling multiple DLL boundaries and multiple context shutdowns we call this from all main entry points)
+#if defined(SDK_BUILD_PROSPERO) || defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
+    // OpenGL is static linked on these platforms
+    return true;
+#endif
 #ifdef IMGUI_IMPL_OPENGL_LOADER_IMGL3W
     if (glGetIntegerv == nullptr && imgl3wInit() != 0)
     {
