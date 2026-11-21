@@ -455,8 +455,13 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->padSettings.bJoyKeyAlt = -1;
     aConfig->padSettings.xJoyKeyAlt = -1;
     aConfig->padSettings.yJoyKeyAlt = -1;
+#ifdef SDK_BUILD_PROSPERO
+    aConfig->padSettings.upJoyKeyAlt = 1 | SIM_CONFIG_JOY_AXIS_MINUS_MASK;
+    aConfig->padSettings.downJoyKeyAlt = 1 | SIM_CONFIG_JOY_AXIS_PLUS_MASK;
+#else
     aConfig->padSettings.upJoyKeyAlt = 1 | SIM_CONFIG_JOY_AXIS_PLUS_MASK;
     aConfig->padSettings.downJoyKeyAlt = 1 | SIM_CONFIG_JOY_AXIS_MINUS_MASK;
+#endif
     aConfig->padSettings.leftJoyKeyAlt = 0 | SIM_CONFIG_JOY_AXIS_MINUS_MASK;
     aConfig->padSettings.rightJoyKeyAlt = 0 | SIM_CONFIG_JOY_AXIS_PLUS_MASK;
     aConfig->padSettings.lJoyKeyAlt = -1;
