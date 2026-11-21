@@ -175,7 +175,7 @@ void Process() {
     if(SIM::GUI::ProcessEvent(&Event) && Event.type != SDL_WINDOWEVENT) {
       // Check for GUI keys to toggle gui and skip the rest of the key handling
 
-      if(Event.type == SDL_KEYDOWN && Event.key.keysym.sym == simConfig->padSettings.guiKey) {
+      if(Event.type == SDL_KEYDOWN && (Event.key.keysym.sym == simConfig->padSettings.guiKey || Event.key.keysym.sym == SDLK_F1)) {
         SIM::GUI::Toggle();
       }
 
@@ -234,7 +234,7 @@ void Process() {
       } else if (keyRead == simConfig->padSettings.selectKey) {
         // Select button
         s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT & 0b1111111111111011;
-      } else if (keyRead == simConfig->padSettings.guiKey) {
+      } else if (keyRead == simConfig->padSettings.guiKey || keyRead == SDLK_F1) {
         // Toggle Debug GUI
         SIM::GUI::Toggle();
       } else if (keyRead == simConfig->padSettings.frameCapToggleKey) {
