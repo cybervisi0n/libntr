@@ -16,6 +16,7 @@ namespace SIM::GUI {
 static constexpr ImVec2 BtnSize = {100, 20};
 static char sHostBuf[16] = {0};
 static SIM_config_type * sConfig;
+static bool sInitialized = false;
 
 
 static const char * NetStateToString(SIM_Net_State_t state)
@@ -36,10 +37,14 @@ static const char * NetStateToString(SIM_Net_State_t state)
 void AppNetInit() {
     sConfig = SIM_GetConfigPtr();
     strncpy(sHostBuf, sConfig->netSettings.serverIp, 15);
+    sInitialized = true;
 }
 
-void AppNetMain(bool *openState) {
-    ImGui::Begin("Multiplayer", openState);
+void AppNetMain() {
+    //ImGui::Begin("Multiplayer", openState);
+    if(!sInitialized) {
+        AppNetInit();
+    }
 
     #ifdef SDK_BUILD_PROSPERO
     ImGui::Text("Not currently supported on PS5");
@@ -122,7 +127,7 @@ void AppNetMain(bool *openState) {
     }
     #endif
 
-    ImGui::End();
+    //ImGui::End();
 }
 
 }

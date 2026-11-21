@@ -439,6 +439,7 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->padSettings.rJoyKey = 7;
     aConfig->padSettings.startJoyKey = 10;
     aConfig->padSettings.selectJoyKey = 11;
+    aConfig->padSettings.guiJoyKey = 4;
 #else
     aConfig->padSettings.upJoyKey = SDL_HAT_UP | SIM_CONFIG_JOY_HAT_MASK;
     aConfig->padSettings.downJoyKey = SDL_HAT_DOWN | SIM_CONFIG_JOY_HAT_MASK;
@@ -448,8 +449,8 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->padSettings.rJoyKey = 10;
     aConfig->padSettings.startJoyKey = 6;
     aConfig->padSettings.selectJoyKey = 4;
-#endif
     aConfig->padSettings.guiJoyKey = 7;
+#endif
     aConfig->padSettings.aJoyKeyAlt = -1;
     aConfig->padSettings.bJoyKeyAlt = -1;
     aConfig->padSettings.xJoyKeyAlt = -1;

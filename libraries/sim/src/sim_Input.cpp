@@ -10,6 +10,8 @@
 #include "simulator/config/sim_config.h"
 #include "simulator/sim_gui.hpp"
 
+#include "imgui_impl_sdl2.h"
+
 // TODO: remove
 extern TPData s_tpData;
 
@@ -142,6 +144,8 @@ void Process() {
   // Check Joysticks
   if (sSDLJoystick == NULL && SDL_NumJoysticks() >= 1) {
     sSDLJoystick = SDL_JoystickOpen(0);
+    ImGui_ImplSDL2_SetGamepadMode(ImGui_ImplSDL2_GamepadMode_AutoFirst);
+
     sNumAxes = SDL_JoystickNumAxes(sSDLJoystick);
 
     if(sNumAxes > 0) {
@@ -168,7 +172,20 @@ void Process() {
   SDL_GetWindowSizeInPixels(SIM_GetSDLWindow(), &windowWidth, &windowHeight);
   #endif
   while (SDL_PollEvent(&Event)) {
-    SIM::GUI::ProcessEvent(&Event);
+    if(SIM::GUI::ProcessEvent(&Event) && Event.type != SDL_WINDOWEVENT) {
+      // Check for GUI keys to toggle gui and skip the rest of the key handling
+
+      if(Event.type == SDL_KEYDOWN && Event.key.keysym.sym == simConfig->padSettings.guiKey) {
+        SIM::GUI::Toggle();
+      }
+
+      if(Event.type == SDL_JOYBUTTONDOWN && 
+        (Event.jbutton.button == simConfig->padSettings.guiJoyKey || Event.jbutton.button == simConfig->padSettings.guiJoyKeyAlt)) {
+        SIM::GUI::Toggle();
+      }
+
+      continue;
+    }
 
     if (Event.type == SDL_WINDOWEVENT) {
       switch (Event.window.event) {

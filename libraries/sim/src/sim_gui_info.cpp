@@ -7,8 +7,8 @@
 
 namespace SIM::GUI {
 
-void AppInfoMain(bool *openState) {
-    ImGui::Begin("libntr", openState);
+void AppInfoMain() {
+    //ImGui::Begin("libntr");
 
     ImGui::Text("https://github.com/cybervisi0n/libntr");
 
@@ -20,7 +20,7 @@ void AppInfoMain(bool *openState) {
     float frameTimeMs = static_cast<float>(SIM_GetFullFrameTime()) / 1000000.0f;
     ImGui::Text("%.0ffps", 1000.0f / frameTimeMs);
 
-    ImGui::End();
+    //ImGui::End();
 }
 
 }

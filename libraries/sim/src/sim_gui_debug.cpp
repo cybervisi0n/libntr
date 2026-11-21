@@ -7,10 +7,12 @@
 
 namespace SIM::GUI {
 
-void AppDebugMain(bool *openState) {
-    ImGui::Begin("Debug", openState);
+void AppDebugMain() {
+    //ImGui::Begin("Debug", openState);
 
-    ImGui::End();
+    ImGui::Text("Debug menu");
+
+    //ImGui::End();
 }
 
 }

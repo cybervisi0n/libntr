@@ -18,8 +18,7 @@ static constexpr u8 MaxMasterVolume = 127;
 static constexpr u8 MinInternalRes = 1;
 static constexpr u8 MaxInternalRes = 20;
 
-static constexpr auto MaxWindowWidth = 300;
-static constexpr auto MaxWindowHeight = 600;
+static bool sInitialized = false;
 
 static SIM_config_type * sConfig;
 
@@ -39,31 +38,19 @@ static bool sPauseGameLogic = false;
 
 void AppConfigInit() {
     sConfig = SIM_GetConfigPtr();
+    sInitialized = true;
 }
 
-void AppConfigMain(bool *openState) {
+void AppConfigMain() {
+    if(!sInitialized) {
+        AppConfigInit();
+    }
     bool configChanged = false;
     int screenLayout = sConfig->screenLayout;
     bool swapScreens = sConfig->swapScreens;
     int vSyncInterval = sConfig->vsyncInterval;
     bool frameLimit = sConfig->capFrameRate;
     bool fullScreen = sConfig->fullScreen;
-
-    u32 windowWidth = std::min<u32>(PercentXPx(0.5f), MaxWindowWidth);
-    u32 windowHeight = std::min<u32>(PercentYPx(0.75f), MaxWindowHeight);
-
-    u32 windowX = (float)CenteredXPx(windowWidth);
-    u32 windowY = (float)CenteredYPx(windowHeight);
-
-
-    ImGui::SetNextWindowPos(ImVec2(static_cast<float>(windowX), static_cast<float>(windowY)));
-    ImGui::SetNextWindowSize(ImVec2(static_cast<float>(windowWidth), static_cast<float>(windowHeight)));
-    
-    ImGui::Begin("Settings", openState, 
-        ImGuiWindowFlags_NoMove | 
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse
-    );
 
     ImGui::Text("Internal Resolution");
     if(ImGui::SliderScalar(" ", ImGuiDataType_U8, &sConfig->internalResolutionScale, &MinInternalRes, &MaxInternalRes, "%dx NDS")) {
@@ -96,7 +83,7 @@ void AppConfigMain(bool *openState) {
     ImGui::Checkbox("Pause Game Logic", &sPauseGameLogic);
     SetGameLogicPaused(sPauseGameLogic);
 
-    ImGui::End();
+    //ImGui::End();
 
     if(configChanged) {
         sConfig->screenLayout = static_cast<SIM_config_screen_layout_type>(screenLayout);

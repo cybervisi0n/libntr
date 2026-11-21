@@ -17,11 +17,9 @@ namespace SIM::GUI {
 
 static constexpr ImVec2 BtnSize = {50, 20};
 
-static constexpr auto MaxWindowWidth = 400;
-static constexpr auto MaxWindowHeight = 800;
-
 static SIM_config_type * sConfig;
 static bool sConfigChanged = false;
+static bool sInitialized = false;
 
 static void SetKeyConfig(int& config) {
     SDL_Event Event;
@@ -108,31 +106,19 @@ static void JoystickKeySettingButton(const char * keyName, int btnId, int& key) 
 
 void AppPadInit() {
     sConfig = SIM_GetConfigPtr();
+    sInitialized = true;
 }
 
-void AppPadMain(bool *openState) {
+void AppPadMain() {
+    if(!sInitialized) {
+        AppPadInit();
+    }
     bool configChanged = false;
     int screenLayout = sConfig->screenLayout;
     bool swapScreens = sConfig->swapScreens;
     int vSyncInterval = sConfig->vsyncInterval;
     bool frameLimit = sConfig->capFrameRate;
     bool fullScreen = sConfig->fullScreen;
-
-    u32 windowWidth = std::min<u32>(PercentXPx(0.5f), MaxWindowWidth);
-    u32 windowHeight = std::min<u32>(PercentYPx(0.75f), MaxWindowHeight);
-
-    u32 windowX = (float)CenteredXPx(windowWidth);
-    u32 windowY = (float)CenteredYPx(windowHeight);
-
-
-    ImGui::SetNextWindowPos(ImVec2(static_cast<float>(windowX), static_cast<float>(windowY)));
-    ImGui::SetNextWindowSize(ImVec2(static_cast<float>(windowWidth), static_cast<float>(windowHeight)));
-    
-    ImGui::Begin("Input", openState, 
-        ImGuiWindowFlags_NoMove | 
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse
-    );
 
     ImGui::Text("Keyboard");
     ImGui::Columns(2, "padKeyboard", true);
@@ -200,7 +186,7 @@ void AppPadMain(bool *openState) {
     JoystickKeySettingButton("Start  ", 39, sConfig->padSettings.startJoyKeyAlt);
     JoystickKeySettingButton("Select ", 40, sConfig->padSettings.selectJoyKeyAlt);
 
-    ImGui::End();
+    ImGui::Columns(1, "pad4", false);
 
     if(sConfigChanged) {
         SIM_Config_SaveConfigFile(sConfig);
