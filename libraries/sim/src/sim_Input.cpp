@@ -153,6 +153,13 @@ void Process() {
     }
   }
 
+  if(sSDLJoystick != nullptr) {
+    if(!SDL_JoystickGetAttached(sSDLJoystick)) {
+      SDL_JoystickClose(sSDLJoystick);
+      sSDLJoystick = nullptr;
+    }
+  }
+
   SDL_Event Event;
   bool touchDown = false;
   int touchX, touchY = 0;
