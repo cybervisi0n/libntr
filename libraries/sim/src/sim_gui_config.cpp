@@ -51,6 +51,7 @@ void AppConfigMain() {
     int vSyncInterval = sConfig->vsyncInterval;
     bool frameLimit = sConfig->capFrameRate;
     bool fullScreen = sConfig->fullScreen;
+    bool touchCursor = sConfig->useTouchCursor;
 
     ImGui::Text("Internal Resolution");
     if(ImGui::SliderScalar(" ", ImGuiDataType_U8, &sConfig->internalResolutionScale, &MinInternalRes, &MaxInternalRes, "%dx NDS")) {
@@ -80,6 +81,10 @@ void AppConfigMain() {
         configChanged = true;
     }
 
+    if(ImGui::Checkbox("Use touch cursor", &touchCursor)) {
+        configChanged = true;
+    }
+
     ImGui::Checkbox("Pause Game Logic", &sPauseGameLogic);
     SetGameLogicPaused(sPauseGameLogic);
 
@@ -99,6 +104,7 @@ void AppConfigMain() {
             SDL_GL_SetSwapInterval(vSyncInterval);
         }
         sConfig->capFrameRate = frameLimit;
+        sConfig->useTouchCursor = touchCursor;
 
         SIM_Config_SaveConfigFile(sConfig);
     }

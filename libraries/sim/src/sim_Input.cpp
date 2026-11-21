@@ -138,7 +138,7 @@ static void HandleJoystickKeyDown(int aKey) {
           || aKey == simConfig->padSettings.guiJoyKeyAlt) {
     // GUI toggle
     SIM::GUI::Toggle();
-  } else if(aKey == simConfig->padSettings.touchJoyKey) {
+  } else if(aKey == simConfig->padSettings.touchJoyKey && simConfig->useTouchCursor) {
     s_tpData.touch = 1;
     sTouchButtonDown = true;
   }

@@ -83,6 +83,7 @@ typedef struct {
     SIM_config_pad_settings_type padSettings; /* Input pad settings */
     NVRAMConfig osNvramConfig; /* OS NVRAM config */
     SIM_config_net_settings_type netSettings; /* Net Settings */
+    u8 useTouchCursor; /* True to use on-screen touch cursor, false to disable */
 } SIM_config_type;
 
 #ifdef __cplusplus

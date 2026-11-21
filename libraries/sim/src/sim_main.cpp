@@ -973,7 +973,9 @@ void *SIM_Render(void *arg) {
     DrawEngine(TRUE);
 
     // Draw touch cursor
-    SIM::GetTouchCursor().Draw();
+    if(s_SIM_config.useTouchCursor) {
+      SIM::GetTouchCursor().Draw();
+    }
 
     // Run HBlank Interrupt
     OS_IRQTable[OS_IE_H_BLANK - 1]();

@@ -73,6 +73,9 @@ static int IniHandler(void* user, const char* section, const char* name,
             }
         }
     }
+    if(MATCH("General", "UseTouchCursor")) {
+        config->useTouchCursor = StringToBool(value);
+    }
 
     // PAD
     if(MATCH("PAD", "JoyAxisDeadzone")) {
@@ -418,6 +421,11 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->vsyncInterval = 1;
     aConfig->capFrameRate = TRUE;
     aConfig->masterVolume = 64;
+#if defined(SDK_BUILD_PROSPERO) || defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
+    aConfig->useTouchCursor = TRUE;
+#else
+    aConfig->useTouchCursor = FALSE;
+#endif
 
     aConfig->padSettings.joyAxisDeadzone = 32767 / 4;
     aConfig->padSettings.aKey = SDLK_z;
@@ -464,13 +472,8 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->padSettings.bJoyKeyAlt = -1;
     aConfig->padSettings.xJoyKeyAlt = -1;
     aConfig->padSettings.yJoyKeyAlt = -1;
-#ifdef SDK_BUILD_PROSPERO
     aConfig->padSettings.upJoyKeyAlt = 1 | SIM_CONFIG_JOY_AXIS_MINUS_MASK;
     aConfig->padSettings.downJoyKeyAlt = 1 | SIM_CONFIG_JOY_AXIS_PLUS_MASK;
-#else
-    aConfig->padSettings.upJoyKeyAlt = 1 | SIM_CONFIG_JOY_AXIS_PLUS_MASK;
-    aConfig->padSettings.downJoyKeyAlt = 1 | SIM_CONFIG_JOY_AXIS_MINUS_MASK;
-#endif
     aConfig->padSettings.leftJoyKeyAlt = 0 | SIM_CONFIG_JOY_AXIS_MINUS_MASK;
     aConfig->padSettings.rightJoyKeyAlt = 0 | SIM_CONFIG_JOY_AXIS_PLUS_MASK;
     aConfig->padSettings.lJoyKeyAlt = -1;
@@ -482,7 +485,11 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->padSettings.touchCursorUpDownAxis = 3;
     aConfig->padSettings.touchCursorLeftRightAxis = 2;
 
+#if defined(SDK_BUILD_NX) || defined(SDK_BUILD_OUNCE)
+    aConfig->padSettings.touchJoyKey = 5;
+#else
     aConfig->padSettings.touchJoyKey = 8;
+#endif
 
     // Set a random MAC address (with a nintendo prefix)
     aConfig->macAddr[0] = 0x98;
@@ -529,6 +536,7 @@ void SIM_Config_SaveConfigFile(SIM_config_type * aConfig)
                                                               aConfig->macAddr[3],
                                                               aConfig->macAddr[4],
                                                               aConfig->macAddr[5]);
+    fprintf(configFile, "UseTouchCursor=%s\n", BoolToString(aConfig->useTouchCursor));
     fprintf(configFile, "\n");
 
     fprintf(configFile, "[PAD]\n");

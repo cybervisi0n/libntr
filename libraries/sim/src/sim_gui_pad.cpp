@@ -163,6 +163,7 @@ void AppPadMain() {
     JoystickKeySettingButton("Right  ", 26, sConfig->padSettings.rightJoyKey);
     JoystickKeySettingButton("Start  ", 27, sConfig->padSettings.startJoyKey);
     JoystickKeySettingButton("Select ", 28, sConfig->padSettings.selectJoyKey);
+    JoystickKeySettingButton("Touch  ", 28, sConfig->padSettings.touchJoyKey);
 
     ImGui::Columns(1, "pad3", false);
     ImGui::Separator();
