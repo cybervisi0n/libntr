@@ -63,19 +63,19 @@ void TouchCursor::Draw() {
     /* u32[4] = top left (x,y) bottom right (x,y)*/
 
     // Limit coords to inside the touch panel
-    if(mX < touchPanelCoords[0]) {
+    if(mX < (int)touchPanelCoords[0]) {
         mX = touchPanelCoords[0];
     }
 
-    if(mY < touchPanelCoords[1]) {
+    if(mY < (int)touchPanelCoords[1]) {
         mY = touchPanelCoords[1];
     }
 
-    if(mX > touchPanelCoords[2]) {
+    if(mX > (int)touchPanelCoords[2]) {
         mX = touchPanelCoords[2];
     }
 
-    if(mY > touchPanelCoords[3]) {
+    if(mY > (int)touchPanelCoords[3]) {
         mY = touchPanelCoords[3];
     }
 
@@ -90,13 +90,7 @@ void TouchCursor::Draw() {
     float cursorDeltaY = ((float)CursorSizePixels / windowHeight);
 
     float cursorCenterX = (((float)mX / windowWidth) * 2.0f) - 1.0f;
-    float cursorCenterY = (((float)mY / windowHeight) * 2.0f) - 1.0f;
-
-
-
-
-
-
+    float cursorCenterY = -((((float)mY / windowHeight) * 2.0f) - 1.0f);
 
     cursorVerts[0] = {
         cursorCenterX - cursorDeltaX,

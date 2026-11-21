@@ -22,6 +22,8 @@ static SDL_Joystick *sSDLJoystick = NULL;
 
 static u8 isMouseDown = 0;
 
+static bool sTouchButtonDown = false;
+
 static u64 map(u64 x, u64 in_min, u64 in_max, u64 out_min, u64 out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
@@ -76,6 +78,9 @@ static void HandleJoystickKeyUp(int aKey) {
           || aKey == simConfig->padSettings.selectJoyKeyAlt) {
     // Select button
     s_reg_PAD_KEYINPUT = s_reg_PAD_KEYINPUT | 0b0000000000000100;
+  } else if(aKey == simConfig->padSettings.touchJoyKey) {
+    s_tpData.touch = 0;
+    sTouchButtonDown = false;
   }
 }
 
@@ -133,18 +138,9 @@ static void HandleJoystickKeyDown(int aKey) {
           || aKey == simConfig->padSettings.guiJoyKeyAlt) {
     // GUI toggle
     SIM::GUI::Toggle();
-  } else if(aKey == simConfig->padSettings.touchCursorUpJoyKey) {
-    auto& touchCursor = GetTouchCursor();
-    touchCursor.DeltaY(-1);
-  } else if(aKey == simConfig->padSettings.touchCursorDownJoyKey) {
-    auto& touchCursor = GetTouchCursor();
-    touchCursor.DeltaY(1);
-  } else if(aKey == simConfig->padSettings.touchCursorLeftJoyKey) {
-    auto& touchCursor = GetTouchCursor();
-    touchCursor.DeltaX(-1);
-  } else if(aKey == simConfig->padSettings.touchCursorRightJoyKey) {
-    auto& touchCursor = GetTouchCursor();
-    touchCursor.DeltaX(1);
+  } else if(aKey == simConfig->padSettings.touchJoyKey) {
+    s_tpData.touch = 1;
+    sTouchButtonDown = true;
   }
 }
 
@@ -174,6 +170,23 @@ void Process() {
     if(!SDL_JoystickGetAttached(sSDLJoystick)) {
       SDL_JoystickClose(sSDLJoystick);
       sSDLJoystick = nullptr;
+    }
+  }
+
+  if(sSDLJoystick) {
+    // check the axis for the touch cursor
+    s16 axis = SDL_JoystickGetAxis(sSDLJoystick, simConfig->padSettings.touchCursorUpDownAxis);
+
+    if(axis > simConfig->padSettings.joyAxisDeadzone ||
+       axis < -(simConfig->padSettings.joyAxisDeadzone)) {
+        GetTouchCursor().DeltaY(axis / 4096);
+    }
+
+    axis = SDL_JoystickGetAxis(sSDLJoystick, simConfig->padSettings.touchCursorLeftRightAxis);
+
+    if(axis > simConfig->padSettings.joyAxisDeadzone ||
+       axis < -(simConfig->padSettings.joyAxisDeadzone)) {
+        GetTouchCursor().DeltaX(axis / 4096);
     }
   }
 
@@ -422,6 +435,11 @@ void Process() {
   SDL_GetMouseState(&x, &y);
   #endif
 
+  if(sTouchButtonDown) {
+    auto& touchCursor = GetTouchCursor();
+    x = touchCursor.GetX();
+    y = touchCursor.GetY();
+  }
  
 
   const u32 * touchPanelCoords = SIM_GetTouchPanelCoords();
