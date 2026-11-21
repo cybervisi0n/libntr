@@ -33,6 +33,9 @@ static bool sShowWindowPrjSpecific = false;
 
 static std::function<void(std::string)> sFileDialogCallback = nullptr;
 
+void __attribute__((weak)) PrjMain(bool * ) {
+    ImGui::Text("No application-specific menu defined.");
+}
 void PrjMain() __attribute__((weak));
 
 void Init(SDL_Window * window, SDL_GLContext context) {
@@ -88,9 +91,7 @@ void Main() {
             MainMenuTab("Controls", AppPadMain);
             MainMenuTab("Multiplayer", AppNetMain);
             MainMenuTab("Debug", AppDebugMain);
-            if(PrjMain) {
-                MainMenuTab("App", PrjMain);
-            }
+            MainMenuTab("App", PrjMain);
             MainMenuTab("Info", AppInfoMain);
             if(ImGui::TabItemButton("Close Menu")) {
                 sEnabled = false;
