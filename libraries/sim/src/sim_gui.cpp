@@ -33,7 +33,7 @@ static bool sShowWindowPrjSpecific = false;
 
 static std::function<void(std::string)> sFileDialogCallback = nullptr;
 
-void __attribute__((weak)) PrjMain(bool * ) {
+void __attribute__((weak)) PrjMain() {
     ImGui::Text("No application-specific menu defined.");
 }
 void PrjMain() __attribute__((weak));
