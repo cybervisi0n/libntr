@@ -162,6 +162,18 @@ static int IniHandler(void* user, const char* section, const char* name,
     if(MATCH("PAD", "GUIJoyKey")) {
         config->padSettings.guiJoyKey = atoi(value);
     }
+    if(MATCH("PAD", "TouchCursorUpJoyKey")) {
+        config->padSettings.touchCursorUpJoyKey = atoi(value);
+    }
+    if(MATCH("PAD", "TouchCursorDownJoyKey")) {
+        config->padSettings.touchCursorDownJoyKey = atoi(value);
+    }
+    if(MATCH("PAD", "TouchCursorLeftJoyKey")) {
+        config->padSettings.touchCursorLeftJoyKey = atoi(value);
+    }
+    if(MATCH("PAD", "TouchCursorRightJoyKey")) {
+        config->padSettings.touchCursorRightJoyKey = atoi(value);
+    }
     if(MATCH("PAD", "AJoyKeyAlt")) {
         config->padSettings.aJoyKeyAlt = atoi(value);
     }
@@ -408,7 +420,7 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->swapScreens = FALSE;
     aConfig->vsyncInterval = 1;
     aConfig->capFrameRate = TRUE;
-    aConfig->masterVolume = 127;
+    aConfig->masterVolume = 64;
 
     aConfig->padSettings.joyAxisDeadzone = 32767 / 4;
     aConfig->padSettings.aKey = SDLK_z;
@@ -469,6 +481,11 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
     aConfig->padSettings.startJoyKeyAlt = -1;
     aConfig->padSettings.selectJoyKeyAlt = -1;
     aConfig->padSettings.guiJoyKeyAlt = -1;
+
+    aConfig->padSettings.touchCursorUpJoyKey = 3 | SIM_CONFIG_JOY_AXIS_MINUS_MASK;
+    aConfig->padSettings.touchCursorDownJoyKey = 3 | SIM_CONFIG_JOY_AXIS_PLUS_MASK;
+    aConfig->padSettings.touchCursorLeftJoyKey = 2 | SIM_CONFIG_JOY_AXIS_MINUS_MASK;
+    aConfig->padSettings.touchCursorRightJoyKey = 2 | SIM_CONFIG_JOY_AXIS_PLUS_MASK;
 
     // Set a random MAC address (with a nintendo prefix)
     aConfig->macAddr[0] = 0x98;
@@ -547,6 +564,10 @@ void SIM_Config_SaveConfigFile(SIM_config_type * aConfig)
     fprintf(configFile, "StartJoyKey=%d\n", aConfig->padSettings.startJoyKey);
     fprintf(configFile, "SelectJoyKey=%d\n", aConfig->padSettings.selectJoyKey);
     fprintf(configFile, "GUIJoyKey=%d\n", aConfig->padSettings.guiJoyKey);
+    fprintf(configFile, "TouchCursorUpJoyKey=%d\n", aConfig->padSettings.touchCursorUpJoyKey);
+    fprintf(configFile, "TouchCursorDownJoyKey=%d\n", aConfig->padSettings.touchCursorDownJoyKey);
+    fprintf(configFile, "TouchCursorLeftJoyKey=%d\n", aConfig->padSettings.touchCursorLeftJoyKey);
+    fprintf(configFile, "TouchCursorRightJoyKey=%d\n", aConfig->padSettings.touchCursorRightJoyKey);
     fprintf(configFile, "AJoyKeyAlt=%d\n", aConfig->padSettings.aJoyKeyAlt);
     fprintf(configFile, "BJoyKeyAlt=%d\n", aConfig->padSettings.bJoyKeyAlt);
     fprintf(configFile, "XJoyKeyAlt=%d\n", aConfig->padSettings.xJoyKeyAlt);

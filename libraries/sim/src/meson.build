@@ -41,6 +41,7 @@ libsim_srcs = files(
     'sim_RomExtractor.cpp',
     'sim_screenquads.cpp',
     'sim_shaders.cpp',
+    'sim_TouchCursor.cpp',
     'sim_vars.c'
 )
 

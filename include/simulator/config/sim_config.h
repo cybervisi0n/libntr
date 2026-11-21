@@ -46,6 +46,10 @@ typedef struct {
     int startJoyKey;
     int selectJoyKey;
     int guiJoyKey;
+    int touchCursorUpJoyKey;
+    int touchCursorDownJoyKey;
+    int touchCursorLeftJoyKey;
+    int touchCursorRightJoyKey;
 
     int aJoyKeyAlt;
     int bJoyKeyAlt;

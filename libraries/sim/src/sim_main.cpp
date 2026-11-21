@@ -36,6 +36,8 @@ extern "C" int NitroSpMain(void *arg);
 #include <simulator/sim_gui.hpp>
 #include <simulator/sim_RenderContextManager.hpp>
 #include <simulator/sim_NitroMainThread.hpp>
+#include "sim_TouchCursor.hpp"
+#include "sim_internal.hpp"
 
 #include <math.h>
 #include <time.h>
@@ -439,43 +441,6 @@ void *SIM_RenderInit(void *arg) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);                \
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _width, _height, 0, GL_RGBA,        \
                GL_UNSIGNED_BYTE, NULL);
-
-#define CompileShaderCommon(_id, _source)                                      \
-  glShaderSource(_id, 1, &_source, NULL);                                      \
-  glCompileShader(_id);                                                        \
-  glGetShaderiv(_id, GL_COMPILE_STATUS, &status);                              \
-  if (status != GL_TRUE) {                                                     \
-    glGetShaderiv(g2FragmentShader, GL_INFO_LOG_LENGTH, &logSize);             \
-    errorBuf = static_cast<GLchar *>(malloc(logSize * sizeof(GLchar)));        \
-    glGetShaderInfoLog(_id, logSize, &logSize, (GLchar *)errorBuf);            \
-    printf("ERROR COMPILING _source SHADER:\n%s\n", errorBuf);                 \
-    free(errorBuf);                                                            \
-  }
-
-#define CompileVertexShader(_id, _source)                                      \
-  _id = glCreateShader(GL_VERTEX_SHADER);                                      \
-  CompileShaderCommon(_id, _source);
-
-#define CompileFragmentShader(_id, _source)                                    \
-  _id = glCreateShader(GL_FRAGMENT_SHADER);                                    \
-  CompileShaderCommon(_id, _source);
-
-#define LinkShader(_id, _vertex, _fragment)                                    \
-  glAttachShader(_id, _vertex);                                                \
-  glAttachShader(_id, _fragment);                                              \
-  glLinkProgram(_id);                                                          \
-  glErrCode = glGetError();                                                    \
-  glGetProgramiv(_id, GL_LINK_STATUS, &status);                                \
-  if (status != GL_TRUE) {                                                     \
-    glGetProgramiv(_id, GL_INFO_LOG_LENGTH, &logSize);                         \
-    errorBuf = (GLchar *)malloc(logSize * sizeof(GLchar));                     \
-    glGetProgramInfoLog(_id, logSize, &logSize, (GLchar *)errorBuf);           \
-    glErrCode = glGetError();                                                  \
-    printf("ERROR LINKING _id SHADER:\n%s\n", errorBuf);                       \
-    free(errorBuf);                                                            \
-  }                                                                            \
-  glValidateProgram(_id);                                                      \
-  glUseProgram(_id);
 
   GenerateTexture(dummyScreenTextureId, SIM_NDS_SCREEN_WIDTH,
                   SIM_NDS_SCREEN_HEIGHT * 2);
@@ -1007,6 +972,9 @@ void *SIM_Render(void *arg) {
     // SUB engine
     DrawEngine(TRUE);
 
+    // Draw touch cursor
+    SIM::GetTouchCursor().Draw();
+
     // Run HBlank Interrupt
     OS_IRQTable[OS_IE_H_BLANK - 1]();
 
@@ -1247,6 +1215,7 @@ int main(int argc, char *argv[]) {
   SIM_RenderInit(NULL);
   SIM::G3::GetGlobalState().InitGlRenderer();
   SIM::G3::GetGlobalState().GetGlRenderer()->SetShaderProgramId(g3shaderProgramID);
+  SIM::GetTouchCursor().Init();
 
 // Init Sockets (only needed on windows)
 #ifdef SDK_BUILD_WIN64

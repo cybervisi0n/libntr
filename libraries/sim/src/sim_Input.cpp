@@ -11,6 +11,7 @@
 #include "simulator/sim_gui.hpp"
 
 #include "imgui_impl_sdl2.h"
+#include "sim_TouchCursor.hpp"
 
 // TODO: remove
 extern TPData s_tpData;
@@ -132,6 +133,18 @@ static void HandleJoystickKeyDown(int aKey) {
           || aKey == simConfig->padSettings.guiJoyKeyAlt) {
     // GUI toggle
     SIM::GUI::Toggle();
+  } else if(aKey == simConfig->padSettings.touchCursorUpJoyKey) {
+    auto& touchCursor = GetTouchCursor();
+    touchCursor.DeltaY(-1);
+  } else if(aKey == simConfig->padSettings.touchCursorDownJoyKey) {
+    auto& touchCursor = GetTouchCursor();
+    touchCursor.DeltaY(1);
+  } else if(aKey == simConfig->padSettings.touchCursorLeftJoyKey) {
+    auto& touchCursor = GetTouchCursor();
+    touchCursor.DeltaX(-1);
+  } else if(aKey == simConfig->padSettings.touchCursorRightJoyKey) {
+    auto& touchCursor = GetTouchCursor();
+    touchCursor.DeltaX(1);
   }
 }
 
