@@ -481,7 +481,11 @@ void TP_GetLatestRawPointInAuto (TPData * result)
     curr_index = tpState.index;
 
     if (tpState.frequence == 1 || tpState.bufSize == 1) {
+        #ifdef SDK_PORT
+        *result = s_tpData;
+        #else
         *result = tpState.samplingBufs[curr_index];
+        #endif
         return;
     }
 
