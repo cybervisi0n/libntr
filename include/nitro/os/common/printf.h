@@ -39,7 +39,7 @@ typedef enum {
 typedef void (*OSFPutStringHookType)(int type, int console, const char *str);
 #endif
 
-#if !defined(SDK_FINALROM) || defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_WIN64)
+#ifndef SDK_FINALROM
     extern void (*OS_PutString) (const char * str);
     #if SDK_VERSION_MAJOR == 5
     extern void (*OS_FPutString)(int console, const char *str);
@@ -57,7 +57,7 @@ int OS_SNPrintf(char * dst, size_t len, const char * fmt, ...);
 int OS_VSNPrintf(char * dst, size_t len, const char * fmt, va_list vlist);
 int OS_VSNPrintfEx(char * dst, size_t len, const char * fmt, va_list vlist);
 
-#if !defined(SDK_FINALROM) || defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_WIN64)
+#ifndef SDK_FINALROM
     void OS_PutChar(char c);
     void OS_VPrintf(const char * fmt, va_list vlist);
     void OS_TVPrintf(const char * fmt, va_list vlist);

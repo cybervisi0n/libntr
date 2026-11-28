@@ -13,7 +13,7 @@
     void ISDPrint(const char *);
 #endif
 
-#if !defined(SDK_FINALROM) || defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_WIN64)
+#ifndef SDK_FINALROM
     static char common_buffer[256];
 #endif
 
@@ -29,7 +29,7 @@
     void OSi_TPanic(const char * file, int line, const char * fmt, ...);
 #endif
 
-#if !defined(SDK_FINALROM) || defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_WIN64)
+#ifndef SDK_FINALROM
     SDK_WEAK_SYMBOL void OS_PutChar (char c)
     {
         char str[2];
@@ -43,7 +43,7 @@
 
 static void OS_PutStringInit(const char * str);
 
-#if !defined(SDK_FINALROM) || defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_WIN64)
+#ifndef SDK_FINALROM
     static void OS_PutStringAris(const char * str);
     static void OS_PutStringISD(const char * str);
 
@@ -52,7 +52,7 @@ static void OS_PutStringInit(const char * str);
     #endif
 #endif
 
-#if !defined(SDK_FINALROM) || defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_WIN64)
+#ifndef SDK_FINALROM
     void (*OS_PutString) (const char * str) = OS_PutStringInit;
 #endif
 
@@ -65,7 +65,7 @@ static void putsWrap(const char *str)
 
 static void OS_PutStringInit (const char * str)
 {
-#if !defined(SDK_FINALROM) || defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_WIN64)
+#ifndef SDK_FINALROM
     OSIntrMode intr = OS_DisableInterrupts();
 
 #ifdef SDK_ARM9
@@ -92,7 +92,7 @@ static void OS_PutStringInit (const char * str)
 #endif
 }
 
-#if !defined(SDK_FINALROM) || defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_WIN64)
+#ifndef SDK_FINALROM
     #ifdef SDK_CW_WARNOFF_SAFESTRB
         #include <nitro/code32.h>
     #endif
@@ -112,7 +112,7 @@ static void OS_PutStringInit (const char * str)
     #endif
 #endif
 
-#if !defined(SDK_FINALROM) || defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_WIN64)
+#ifndef SDK_FINALROM
     static void OS_PutStringISD (const char * str)
     {
         OS_InitLock();
@@ -124,7 +124,7 @@ static void OS_PutStringInit (const char * str)
     }
 #endif
 
-#if !defined(SDK_FINALROM) || defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_WIN64)
+#ifndef SDK_FINALROM
     #if defined(SDK_ARM9) || defined(SDK_USE_VSNPRINTF)
         SDK_WEAK_SYMBOL void OS_VPrintf (const char * fmt, va_list vlist)
         {
@@ -151,7 +151,7 @@ static void OS_PutStringInit (const char * str)
     }
 #endif
 
-#if !defined(SDK_FINALROM) || defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_WIN64)
+#ifndef SDK_FINALROM
 #ifdef SDK_BUILD_ARM
     SDK_WEAK_SYMBOL void OS_Printf (const char * fmt, ...)
     {
@@ -182,7 +182,7 @@ static void OS_PutStringInit (const char * str)
     }
 #endif
 
-#if !defined(SDK_FINALROM) || defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_WIN64)
+#ifndef SDK_FINALROM
     SDK_WEAK_SYMBOL void OSi_Warning (const char * file, int line, const char * fmt, ...)
     {
         va_list vlist;
@@ -206,7 +206,7 @@ static void OS_PutStringInit (const char * str)
     }
 #endif
 
-#if !defined(SDK_FINALROM) || defined(SDK_BUILD_LINUX) || defined(SDK_BUILD_WIN64)
+#ifndef SDK_FINALROM
     void (*OSi_FuncTerminate) (void) = OS_Terminate;
 
     SDK_WEAK_SYMBOL void OSi_Panic (const char * file, int line, const char * fmt, ...)
