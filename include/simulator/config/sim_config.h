@@ -3,6 +3,8 @@
 
 #include <nitro.h>
 
+#include "simulator/sim_ctrdg.h"
+
 typedef enum {
     SIM_CONFIG_SCREEN_LAYOUT_VERTICAL, /* Vertical screen layout (like a real DS) */
     SIM_CONFIG_SCREEN_LAYOUT_HORIZONTAL, /* DS screens side by side */
@@ -13,6 +15,8 @@ typedef enum {
 #define SIM_CONFIG_JOY_AXIS_PLUS_MASK (0x20000)
 #define SIM_CONFIG_JOY_AXIS_MINUS_MASK (0x40000)
 #define SIM_CONFIG_JOY_INVALID_KEY (-1)
+
+#define SIM_CONFIG_AGB_ROM_FILE_NAME_LEN 64
 
 typedef struct {
     int aKey;
@@ -84,6 +88,8 @@ typedef struct {
     NVRAMConfig osNvramConfig; /* OS NVRAM config */
     SIM_config_net_settings_type netSettings; /* Net Settings */
     u8 useTouchCursor; /* True to use on-screen touch cursor, false to disable */
+    SIM_CTRDG_Slot2Type slot2Type; /* Slot 2 device type */
+    char agbRomFileName[SIM_CONFIG_AGB_ROM_FILE_NAME_LEN]; /* Slot 2 GBA ROM file name */
 } SIM_config_type;
 
 #ifdef __cplusplus

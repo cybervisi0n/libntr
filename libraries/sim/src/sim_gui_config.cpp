@@ -34,6 +34,11 @@ static constexpr const char * VblankStrings[] = {
     "Every second V-Blank"
 };
 
+static constexpr const char * Slot2Strings[] = {
+    "Nothing",
+    "GBA Game"
+};
+
 static bool sPauseGameLogic = false;
 
 void AppConfigInit() {
@@ -52,6 +57,7 @@ void AppConfigMain() {
     bool frameLimit = sConfig->capFrameRate;
     bool fullScreen = sConfig->fullScreen;
     bool touchCursor = sConfig->useTouchCursor;
+    int slot2Type = sConfig->slot2Type;
 
     ImGui::Text("Internal Resolution");
     if(ImGui::SliderScalar(" ", ImGuiDataType_U8, &sConfig->internalResolutionScale, &MinInternalRes, &MaxInternalRes, "%dx NDS")) {
@@ -85,6 +91,10 @@ void AppConfigMain() {
         configChanged = true;
     }
 
+    if(ImGui::Combo("Slot 2", &slot2Type, Slot2Strings, 2, 2)) {
+        configChanged = true;
+    }
+
     ImGui::Checkbox("Pause Game Logic", &sPauseGameLogic);
     SetGameLogicPaused(sPauseGameLogic);
 
@@ -105,6 +115,7 @@ void AppConfigMain() {
         }
         sConfig->capFrameRate = frameLimit;
         sConfig->useTouchCursor = touchCursor;
+        sConfig->slot2Type = static_cast<SIM_CTRDG_Slot2Type>(slot2Type);
 
         SIM_Config_SaveConfigFile(sConfig);
     }

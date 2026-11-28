@@ -10,6 +10,7 @@
 #include <SDL2/SDL.h>
 
 #include <stdlib.h>
+#include "simulator/sim_ctrdg.h"
 
 #ifdef SDK_BUILD_PROSPERO
 #define SIM_CONFIG_FILE_PATH "/app0/sim_config.ini"
@@ -23,6 +24,8 @@ static const char * BoolToString(BOOL arg);
 static BOOL StringToBool(const char * str);
 static const char * ScreenLayoutTypeToString(SIM_config_screen_layout_type layout);
 static SIM_config_screen_layout_type StringToScreenLayoutType(const char * str);
+static const char * Slot2TypeToString(SIM_CTRDG_Slot2Type deviceType);
+static SIM_CTRDG_Slot2Type StringToSlot2Type(const char * str);
 
 
 static int IniHandler(void* user, const char* section, const char* name,
@@ -75,6 +78,14 @@ static int IniHandler(void* user, const char* section, const char* name,
     }
     if(MATCH("General", "UseTouchCursor")) {
         config->useTouchCursor = StringToBool(value);
+    }
+
+    if(MATCH("General", "Slot2Device")) {
+        config->slot2Type = StringToSlot2Type(value);
+    }
+
+    if(MATCH("General", "AgbRomFileName")) {
+        strncpy(config->agbRomFileName, value, SIM_CONFIG_AGB_ROM_FILE_NAME_LEN - 1);
     }
 
     // PAD
@@ -385,6 +396,34 @@ static SIM_config_screen_layout_type StringToScreenLayoutType(const char * str)
     return ret;
 }
 
+static const char * Slot2TypeToString(SIM_CTRDG_Slot2Type deviceType) {
+    const char * ret = "";
+    switch(deviceType) {
+        default:
+        case SIM_CTRDG_SLOT2TYPE_NOTHING:
+            ret = "Nothing";
+            break;
+        case SIM_CTRDG_SLOT2TYPE_AGBCARTRIDGE:
+            ret = "AgbCartridge";
+            break;
+    }
+
+    return ret;
+}
+
+static SIM_CTRDG_Slot2Type StringToSlot2Type(const char * str)
+{
+    SIM_CTRDG_Slot2Type ret = SIM_CTRDG_SLOT2TYPE_NOTHING;
+
+    if(strcmp(str, "AgbCartridge") == 0) {
+        ret = SIM_CTRDG_SLOT2TYPE_AGBCARTRIDGE;
+    } else {
+        ret = SIM_CTRDG_SLOT2TYPE_NOTHING;
+    }
+    
+    return ret;
+}
+
 
 
 // Loads the configuration file. If it does not exist, return false
@@ -426,6 +465,8 @@ void SIM_Config_LoadDefaults(SIM_config_type * aConfig)
 #else
     aConfig->useTouchCursor = FALSE;
 #endif
+    aConfig->slot2Type = SIM_CTRDG_SLOT2TYPE_NOTHING;
+    memset(aConfig->agbRomFileName, 0, SIM_CONFIG_AGB_ROM_FILE_NAME_LEN);
 
     aConfig->padSettings.joyAxisDeadzone = 32767 / 4;
     aConfig->padSettings.aKey = SDLK_z;
@@ -537,6 +578,9 @@ void SIM_Config_SaveConfigFile(SIM_config_type * aConfig)
                                                               aConfig->macAddr[4],
                                                               aConfig->macAddr[5]);
     fprintf(configFile, "UseTouchCursor=%s\n", BoolToString(aConfig->useTouchCursor));
+    const char * slot2String = Slot2TypeToString(aConfig->slot2Type);
+    fprintf(configFile, "Slot2Device=%s\n", slot2String);
+    fprintf(configFile, "AgbRomFileName=%s\n", aConfig->agbRomFileName);
     fprintf(configFile, "\n");
 
     fprintf(configFile, "[PAD]\n");
