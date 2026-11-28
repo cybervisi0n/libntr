@@ -91,9 +91,11 @@ void AppConfigMain() {
         configChanged = true;
     }
 
+    #if 0
     if(ImGui::Combo("Slot 2", &slot2Type, Slot2Strings, 2, 2)) {
         configChanged = true;
     }
+    #endif
 
     ImGui::Checkbox("Pause Game Logic", &sPauseGameLogic);
     SetGameLogicPaused(sPauseGameLogic);
